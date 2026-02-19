@@ -5,6 +5,13 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
+class MaterialComponent(BaseModel):
+    """One material component with its percentage."""
+
+    name: str = Field(description="Material name, e.g. 'хлопок'")
+    percentage: float | None = Field(default=None, description="Percentage 0-100, or null if unknown")
+
+
 class ProductCard(BaseModel):
     """Enriched product description — output of Level 0."""
 
@@ -13,8 +20,8 @@ class ProductCard(BaseModel):
         description="Normalized, cleaned-up description in Russian"
     )
     material: str | None = None
-    material_composition_pct: dict[str, float] | None = Field(
-        default=None, description="Material composition percentages, e.g. {'хлопок': 80, 'полиэстер': 20}"
+    material_composition_pct: list[MaterialComponent] | None = Field(
+        default=None, description="Material composition percentages, e.g. [{'name': 'хлопок', 'percentage': 80}]"
     )
     function: str | None = Field(default=None, description="Primary function of the product")
     processing_degree: str | None = Field(

@@ -3,7 +3,7 @@
 **Исходное описание:** {{ card.original_description }}
 **Нормализованное описание:** {{ card.normalized_description }}
 {% if card.material %}**Материал:** {{ card.material }}{% endif %}
-{% if card.material_composition_pct %}**Состав:** {% for k, v in card.material_composition_pct.items() %}{{ k }}: {{ v }}%{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+{% if card.material_composition_pct %}**Состав:** {% for c in card.material_composition_pct %}{{ c.name }}: {{ c.percentage }}%{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
 {% if card.function %}**Функция:** {{ card.function }}{% endif %}
 {% if card.processing_degree %}**Степень обработки:** {{ card.processing_degree }}{% endif %}
 {% if card.physical_state %}**Физическое состояние:** {{ card.physical_state }}{% endif %}
