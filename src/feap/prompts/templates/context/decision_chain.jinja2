@@ -1,0 +1,8 @@
+## ЦЕПОЧКА РЕШЕНИЙ (предыдущие уровни)
+
+{% for entry in chain %}
+### Уровень {{ entry.level }}: {{ entry.code }} — {{ entry.name }}
+**Обоснование:** {{ entry.reasoning }}
+**Применённые правила:** {{ entry.rules_applied | join(', ') }}
+**Уверенность:** {{ "%.0f" | format(entry.confidence * 100) }}%
+{% endfor %}

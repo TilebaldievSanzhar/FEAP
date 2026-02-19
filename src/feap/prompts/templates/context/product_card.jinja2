@@ -1,0 +1,17 @@
+## КАРТОЧКА ТОВАРА
+
+**Исходное описание:** {{ card.original_description }}
+**Нормализованное описание:** {{ card.normalized_description }}
+{% if card.material %}**Материал:** {{ card.material }}{% endif %}
+{% if card.material_composition_pct %}**Состав:** {% for k, v in card.material_composition_pct.items() %}{{ k }}: {{ v }}%{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+{% if card.function %}**Функция:** {{ card.function }}{% endif %}
+{% if card.processing_degree %}**Степень обработки:** {{ card.processing_degree }}{% endif %}
+{% if card.physical_state %}**Физическое состояние:** {{ card.physical_state }}{% endif %}
+{% if card.dimensions %}**Размеры:** {{ card.dimensions }}{% endif %}
+{% if card.weight %}**Вес:** {{ card.weight }}{% endif %}
+{% if card.packaging %}**Упаковка:** {{ card.packaging }}{% endif %}
+{% if card.is_set %}**Является набором:** Да{% endif %}
+{% if card.is_disassembled %}**В разобранном виде:** Да{% endif %}
+{% if card.has_electric_motor %}**Электродвигатель:** Да{% endif %}
+{% if card.power_source %}**Источник питания:** {{ card.power_source }}{% endif %}
+{% if card.intended_use %}**Назначение:** {{ card.intended_use }}{% endif %}

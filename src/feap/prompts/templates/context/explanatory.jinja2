@@ -1,0 +1,7 @@
+## ПОЯСНЕНИЯ К ПОЗИЦИЯМ
+
+{% for expl in explanations %}
+### Позиция {{ expl.code }} ({{ expl.section_type | default('общее') }})
+
+{{ expl.chunk_text }}
+{% endfor %}

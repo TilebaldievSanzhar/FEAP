@@ -1,0 +1,14 @@
+.git
+.idea
+.vscode
+.claude/
+venv
+.venv
+__pycache__
+*.py[cod]
+*.egg-info
+.env
+.env.example
+nul
+data/pdfs
+data/parsed

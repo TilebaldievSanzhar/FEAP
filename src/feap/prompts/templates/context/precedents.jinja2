@@ -1,0 +1,7 @@
+## ПРЕЦЕДЕНТЫ КЛАССИФИКАЦИИ
+
+{% for p in precedents %}
+- **Товар:** {{ p.description }}
+  **Код:** {{ p.code }}
+  {% if p.source %}**Источник:** {{ p.source }}{% endif %}
+{% endfor %}

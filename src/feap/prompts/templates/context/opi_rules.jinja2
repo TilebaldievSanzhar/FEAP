@@ -1,0 +1,9 @@
+## ОСНОВНЫЕ ПРАВИЛА ИНТЕРПРЕТАЦИИ (ОПИ)
+
+{% for rule in rules %}
+### Правило {{ rule.rule_number }}
+
+{{ rule.rule_text }}
+
+**Инструкция по применению:** {{ rule.prompt_instruction }}
+{% endfor %}

@@ -1,0 +1,5 @@
+## {{ title | default("ДОСТУПНЫЕ ВАРИАНТЫ") }}
+
+{% for node in nodes %}
+- **{{ node.code }}** — {{ node.name }}
+{% endfor %}

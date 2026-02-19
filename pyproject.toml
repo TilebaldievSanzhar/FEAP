@@ -1,0 +1,41 @@
+[project]
+name = "feap"
+version = "0.1.0"
+description = "Cascading LLM classifier for ТН ВЭД ЕАЭС customs tariff codes"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "anthropic>=0.52",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "openpyxl>=3.1",
+    "pymupdf>=1.25",
+    "jinja2>=3.1",
+    "pgvector>=0.3",
+    "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.25",
+    "ruff>=0.9",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100

@@ -1,0 +1,7 @@
+## ПРИМЕЧАНИЯ
+
+{% for note in notes %}
+### {% if note.scope_type == 'section' %}Раздел{% else %}Группа{% endif %} {{ note.scope_code }}{% if note.note_number %}, примечание {{ note.note_number }}{% endif %} [{{ note.note_type }}]
+
+{{ note.note_text }}
+{% endfor %}
