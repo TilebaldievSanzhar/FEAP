@@ -1,4 +1,4 @@
-"""Master script: load tree.json into PostgreSQL tnved_tree table.
+"""Master script: load tree.json and opi_rules.json into PostgreSQL.
 
 Usage:
     python scripts/seed_db.py
@@ -18,11 +18,65 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 TREE_PATH = PROJECT_ROOT / "data" / "parsed" / "tree.json"
+OPI_PATH = PROJECT_ROOT / "data" / "parsed" / "opi_rules.json"
+
+
+def seed_tree(conn, nodes: list[dict]) -> None:
+    from sqlalchemy import text
+
+    conn.execute(text("TRUNCATE tnved_tree CASCADE"))
+
+    batch_size = 1000
+    for i in range(0, len(nodes), batch_size):
+        batch = nodes[i : i + batch_size]
+        conn.execute(
+            text("""
+                INSERT INTO tnved_tree
+                    (id, code, code_formatted, level, parent_id, name, name_full,
+                     section_roman, group_code, duty_rate, is_leaf)
+                VALUES
+                    (:id, :code, :code_formatted, :level, :parent_id, :name, :name_full,
+                     :section_roman, :group_code, :duty_rate, :is_leaf)
+            """),
+            [
+                {
+                    "id": n["id"],
+                    "code": n["code"],
+                    "code_formatted": n["code_formatted"],
+                    "level": n["level"],
+                    "parent_id": n["parent_id"],
+                    "name": n["name"],
+                    "name_full": n["name_full"],
+                    "section_roman": n["section_roman"],
+                    "group_code": n["group_code"],
+                    "duty_rate": n["duty_rate"],
+                    "is_leaf": n["is_leaf"],
+                }
+                for n in batch
+            ],
+        )
+        print(f"  Inserted {min(i + batch_size, len(nodes))}/{len(nodes)}")
+
+    conn.execute(text(f"SELECT setval('tnved_tree_id_seq', {len(nodes)})"))
+
+
+def seed_opi(conn, rules: list[dict]) -> None:
+    from sqlalchemy import text
+
+    conn.execute(text("TRUNCATE tnved_opi"))
+    conn.execute(
+        text("""
+            INSERT INTO tnved_opi
+                (rule_number, rule_text, prompt_instruction, applicable_levels, priority)
+            VALUES
+                (:rule_number, :rule_text, :prompt_instruction, :applicable_levels, :priority)
+        """),
+        rules,
+    )
+    print(f"  Inserted {len(rules)} OPI rules")
 
 
 def main() -> None:
-    # Use sync psycopg2/asyncpg is not needed for bulk insert
-    import sqlalchemy
     from sqlalchemy import create_engine, text
 
     db_url = os.environ.get(
@@ -32,51 +86,30 @@ def main() -> None:
 
     engine = create_engine(db_url)
 
-    with open(TREE_PATH, encoding="utf-8") as f:
-        nodes = json.load(f)
+    with engine.connect() as conn:
+        tree_count = conn.execute(text("SELECT COUNT(*) FROM tnved_tree")).scalar()
+        opi_count = conn.execute(text("SELECT COUNT(*) FROM tnved_opi")).scalar()
 
-    print(f"Loading {len(nodes)} nodes into tnved_tree...")
+    if tree_count and tree_count > 0:
+        print(f"tnved_tree already contains {tree_count} rows — skipping tree seed.")
+    else:
+        with open(TREE_PATH, encoding="utf-8") as f:
+            nodes = json.load(f)
+        print(f"Loading {len(nodes)} nodes into tnved_tree...")
+        with engine.begin() as conn:
+            seed_tree(conn, nodes)
+        print("Tree done!")
 
-    with engine.begin() as conn:
-        # Clear existing data
-        conn.execute(text("TRUNCATE tnved_tree CASCADE"))
+    if opi_count and opi_count > 0:
+        print(f"tnved_opi already contains {opi_count} rows — skipping OPI seed.")
+    else:
+        with open(OPI_PATH, encoding="utf-8") as f:
+            rules = json.load(f)
+        print(f"Loading {len(rules)} OPI rules into tnved_opi...")
+        with engine.begin() as conn:
+            seed_opi(conn, rules)
+        print("OPI done!")
 
-        # Bulk insert in batches
-        batch_size = 1000
-        for i in range(0, len(nodes), batch_size):
-            batch = nodes[i : i + batch_size]
-            conn.execute(
-                text("""
-                    INSERT INTO tnved_tree
-                        (id, code, code_formatted, level, parent_id, name, name_full,
-                         section_roman, group_code, duty_rate, is_leaf)
-                    VALUES
-                        (:id, :code, :code_formatted, :level, :parent_id, :name, :name_full,
-                         :section_roman, :group_code, :duty_rate, :is_leaf)
-                """),
-                [
-                    {
-                        "id": n["id"],
-                        "code": n["code"],
-                        "code_formatted": n["code_formatted"],
-                        "level": n["level"],
-                        "parent_id": n["parent_id"],
-                        "name": n["name"],
-                        "name_full": n["name_full"],
-                        "section_roman": n["section_roman"],
-                        "group_code": n["group_code"],
-                        "duty_rate": n["duty_rate"],
-                        "is_leaf": n["is_leaf"],
-                    }
-                    for n in batch
-                ],
-            )
-            print(f"  Inserted {min(i + batch_size, len(nodes))}/{len(nodes)}")
-
-        # Reset sequence
-        conn.execute(text(f"SELECT setval('tnved_tree_id_seq', {len(nodes)})"))
-
-    print("Done!")
     engine.dispose()
 
 

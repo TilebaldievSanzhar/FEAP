@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.34",
     "sqlalchemy[asyncio]>=2.0",
     "asyncpg>=0.30",
+    "psycopg2-binary>=2.9",
     "alembic>=1.14",
     "anthropic>=0.52",
     "pydantic>=2.10",
@@ -32,6 +33,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+feap = ["prompts/templates/**/*.jinja2"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

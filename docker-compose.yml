@@ -22,6 +22,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-feap}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-feap}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in .env}
@@ -31,14 +33,13 @@ services:
 
   migrate:
     build: .
+    restart: "no"
     depends_on:
       db:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-feap}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-feap}
     command: ["alembic", "upgrade", "head"]
-    profiles:
-      - migrate
 
   seed:
     build: .
@@ -51,6 +52,7 @@ services:
       sh -c "
         python scripts/parse_excel.py &&
         python scripts/build_tree.py &&
+        python scripts/parse_opi.py &&
         python scripts/seed_db.py
       "
     profiles:

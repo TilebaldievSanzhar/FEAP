@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-# Level -> model mapping
+from feap.config import settings
+
+# Level -> model tier mapping
 # Level 0 (enrichment): lightweight
 # Level 1 (section): lightweight
 # Level 2 (group): lightweight/medium
@@ -10,13 +12,13 @@ from __future__ import annotations
 # Level 4 (subposition): medium
 # Level 5 (subsubposition): lightweight
 
-LEVEL_MODELS: dict[int, str] = {
-    0: "claude-sonnet-4-6",
-    1: "claude-sonnet-4-6",
-    2: "claude-sonnet-4-6",
-    3: "claude-opus-4-6",
-    4: "claude-sonnet-4-6",
-    5: "claude-sonnet-4-6",
+LEVEL_TIER: dict[int, str] = {
+    0: "light",
+    1: "light",
+    2: "medium",
+    3: "heavy",
+    4: "medium",
+    5: "light",
 }
 
 # Max tokens per level
@@ -29,9 +31,16 @@ LEVEL_MAX_TOKENS: dict[int, int] = {
     5: 1024,
 }
 
+_TIER_TO_SETTING = {
+    "light": lambda: settings.LLM_MODEL_LIGHT,
+    "medium": lambda: settings.LLM_MODEL_MEDIUM,
+    "heavy": lambda: settings.LLM_MODEL_HEAVY,
+}
+
 
 def get_model(level: int) -> str:
-    return LEVEL_MODELS.get(level, "claude-sonnet-4-6")
+    tier = LEVEL_TIER.get(level, "medium")
+    return _TIER_TO_SETTING[tier]()
 
 
 def get_max_tokens(level: int) -> int:

@@ -31,7 +31,7 @@ async def embed_query(text: str) -> list[float]:
         VOYAGE_API_URL,
         json={
             "input": [text],
-            "model": "voyage-3",
+            "model": settings.VOYAGE_MODEL,
             "input_type": "query",
         },
     )
@@ -51,7 +51,7 @@ async def embed_documents(texts: list[str], batch_size: int = 128) -> list[list[
             VOYAGE_API_URL,
             json={
                 "input": batch,
-                "model": "voyage-3",
+                "model": settings.VOYAGE_MODEL,
                 "input_type": "document",
             },
         )

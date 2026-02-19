@@ -98,21 +98,28 @@ cp .env.example .env
 ```env
 POSTGRES_PASSWORD=your_secure_password
 ANTHROPIC_API_KEY=sk-ant-your-key-here
-VOYAGE_API_KEY=pa-your-key-here
+VOYAGE_API_KEY=pa-your-key-here   # опционально, для RAG
 ```
 
-### 2. Запуск
+### 2. Первый запуск
 
 ```bash
-# Поднять PostgreSQL + приложение
+# Шаг 1: поднять всё (PostgreSQL → миграции → приложение — автоматически)
 docker compose up -d
 
-# Применить миграции БД
-docker compose run --rm migrate
-
-# Загрузить данные ТН ВЭД (парсинг Excel → БД)
+# Шаг 2: загрузить данные ТН ВЭД (разово, при первом деплое)
 docker compose run --rm seed
 ```
+
+> **Что происходит при `docker compose up -d`:**
+> 1. Стартует PostgreSQL (`db`) — ждёт healthcheck
+> 2. Автоматически применяются Alembic-миграции (`migrate`) — создаются все таблицы
+> 3. Стартует FastAPI-приложение (`app`) — только после успешных миграций
+>
+> **Что делает `seed`:** парсит Excel с 13 279 листовыми кодами → строит иерархию
+> (21 раздел → 96 групп → 1 228 позиций → 5 612 субпозиций → листья) → загружает
+> в `tnved_tree`. Также загружает правила ОПИ 1–6 в `tnved_opi`. Безопасно
+> запускать повторно — пропустит таблицы, в которых уже есть данные.
 
 Приложение доступно по адресу: **http://localhost:8000**
 
@@ -124,7 +131,44 @@ curl http://localhost:8000/health
 
 # Swagger UI
 open http://localhost:8000/docs
+
+# Количество загруженных кодов в БД
+docker compose exec db psql -U feap -d feap \
+  -c "SELECT level, COUNT(*) FROM tnved_tree GROUP BY level ORDER BY level;"
 ```
+
+### 4. Обновление
+
+```bash
+# После изменений кода — пересборка и рестарт (миграции применятся автоматически)
+docker compose up -d --build
+
+# После обновления Excel-файла номенклатуры — принудительная перезагрузка
+docker compose exec db psql -U feap -d feap -c "TRUNCATE tnved_tree CASCADE; TRUNCATE tnved_opi;"
+docker compose run --rm seed
+```
+
+### 5. RAG (пояснения к ТН ВЭД — опционально)
+
+Для работы уровней L3/L4 с контекстом пояснений нужно загрузить PDF-файлы ЕЭК.
+Это разовый длительный процесс (~97 файлов, несколько часов на эмбеддинги):
+
+```bash
+# Скачать PDF пояснений с сайта ЕЭК
+docker compose run --rm seed python scripts/download_pdfs.py
+
+# Распарсить PDF → структурированные чанки
+docker compose run --rm seed python scripts/parse_explanatory_pdfs.py
+
+# Распарсить примечания к разделам/группам
+docker compose run --rm seed python scripts/parse_notes_pdf.py
+
+# Сгенерировать эмбеддинги через Voyage AI и загрузить в pgvector
+docker compose run --rm seed python scripts/generate_embeddings.py
+```
+
+> Без этого шага классификация работает, но на уровнях L3/L4 не будет
+> контекста пояснений из RAG — только дерево и примечания.
 
 ## API
 
@@ -176,6 +220,8 @@ pytest
 
 ## Переменные окружения
 
+### Инфраструктура
+
 | Переменная          | Описание                        | По умолчанию |
 |---------------------|---------------------------------|--------------|
 | `POSTGRES_USER`     | Пользователь PostgreSQL         | `feap`       |
@@ -184,8 +230,29 @@ pytest
 | `POSTGRES_PORT`     | Внешний порт PostgreSQL         | `5432`       |
 | `APP_PORT`          | Внешний порт приложения         | `8000`       |
 | `DATABASE_URL`      | URL подключения (для локальной разработки) | `postgresql+asyncpg://feap:feap@localhost:5432/feap` |
+
+### Anthropic (LLM)
+
+| Переменная          | Описание                        | По умолчанию |
+|---------------------|---------------------------------|--------------|
 | `ANTHROPIC_API_KEY` | API-ключ Anthropic Claude       | — (обязательно) |
-| `VOYAGE_API_KEY`    | API-ключ Voyage AI (для RAG)    | — (опционально) |
+| `LLM_MODEL_LIGHT`  | Модель для простых уровней (L0, L1, L5) | `claude-haiku-4-5-20251001` |
+| `LLM_MODEL_MEDIUM` | Модель для средних уровней (L2, L4)     | `claude-sonnet-4-6` |
+| `LLM_MODEL_HEAVY`  | Модель для сложного уровня (L3 — позиция) | `claude-opus-4-6` |
+
+### Voyage AI (эмбеддинги)
+
+| Переменная             | Описание                       | По умолчанию |
+|------------------------|--------------------------------|--------------|
+| `VOYAGE_API_KEY`       | API-ключ Voyage AI             | — (опционально) |
+| `VOYAGE_MODEL`         | Модель эмбеддингов             | `voyage-3`   |
+| `VOYAGE_EMBEDDING_DIM` | Размерность вектора            | `1024`       |
+
+### Каскад
+
+| Переменная              | Описание                             | По умолчанию |
+|-------------------------|--------------------------------------|--------------|
+| `CASCADE_MAX_BACKTRACK` | Макс. количество откатов на сессию   | `3`          |
 
 ## Лицензия
 

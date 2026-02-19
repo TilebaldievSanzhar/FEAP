@@ -43,7 +43,7 @@ async def classify(
         max_tokens=max_tokens,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
-        output_schema=output_model,
+        output_format=output_model,
     )
 
-    return response.parsed
+    return response.parsed_output

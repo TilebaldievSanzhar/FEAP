@@ -3,6 +3,8 @@ from __future__ import annotations
 import datetime as dt
 
 from pgvector.sqlalchemy import Vector
+
+from feap.config import settings
 from sqlalchemy import (
     Boolean,
     Date,
@@ -101,7 +103,7 @@ class ExplanatoryNote(Base):
 
     chunk_index: Mapped[int | None] = mapped_column(Integer)
     chunk_text: Mapped[str | None] = mapped_column(Text)
-    embedding = mapped_column(Vector(1024), nullable=True)
+    embedding = mapped_column(Vector(settings.VOYAGE_EMBEDDING_DIM), nullable=True)
 
     source_file: Mapped[str | None] = mapped_column(String(100))
     page_number: Mapped[int | None] = mapped_column(Integer)

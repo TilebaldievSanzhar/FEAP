@@ -12,11 +12,10 @@ from __future__ import annotations
 import logging
 
 from feap.cascade.levels.base import CascadeState
+from feap.config import settings
 from feap.schemas.common import BacktrackTrigger
 
 logger = logging.getLogger(__name__)
-
-MAX_BACKTRACKS = 3
 
 
 class BacktrackLimitExceeded(Exception):
@@ -34,9 +33,9 @@ def apply_backtrack(state: CascadeState, trigger: BacktrackTrigger, attempt: int
     Returns:
         Level number to restart from
     """
-    if attempt >= MAX_BACKTRACKS:
+    if attempt >= settings.CASCADE_MAX_BACKTRACK:
         raise BacktrackLimitExceeded(
-            f"Exceeded maximum backtracks ({MAX_BACKTRACKS}). "
+            f"Exceeded maximum backtracks ({settings.CASCADE_MAX_BACKTRACK}). "
             f"Last trigger: {trigger.reason}"
         )
 

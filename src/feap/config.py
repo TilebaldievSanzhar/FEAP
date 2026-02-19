@@ -4,9 +4,22 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
+    # --- Database ---
     DATABASE_URL: str = "postgresql+asyncpg://feap:feap@localhost:5432/feap"
+
+    # --- Anthropic ---
     ANTHROPIC_API_KEY: str = ""
+    LLM_MODEL_LIGHT: str = "claude-haiku-4-5-20251001"
+    LLM_MODEL_MEDIUM: str = "claude-sonnet-4-6"
+    LLM_MODEL_HEAVY: str = "claude-opus-4-6"
+
+    # --- Voyage AI ---
     VOYAGE_API_KEY: str = ""
+    VOYAGE_MODEL: str = "voyage-3"
+    VOYAGE_EMBEDDING_DIM: int = 1024
+
+    # --- Cascade tuning ---
+    CASCADE_MAX_BACKTRACK: int = 3
 
     # Sync URL for Alembic / scripts
     @property

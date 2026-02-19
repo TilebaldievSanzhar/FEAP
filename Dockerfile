@@ -15,7 +15,8 @@ COPY src/ src/
 
 RUN pip install --no-cache-dir .
 
-COPY alembic.ini migrations/ ./migrations/
+COPY alembic.ini .
+COPY migrations/ migrations/
 COPY data/ data/
 COPY scripts/ scripts/
 
