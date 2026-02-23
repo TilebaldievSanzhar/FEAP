@@ -13,6 +13,7 @@ from feap.schemas.api import (
     AnswerRequest,
     ClassifyRequest,
     ClassifyResponse,
+    CodeLookupResponse,
     TnvedNodeResponse,
 )
 
@@ -107,6 +108,34 @@ async def get_tree(
         ))
 
     return responses
+
+
+@router.get("/tnved/lookup/{code}", response_model=CodeLookupResponse)
+async def lookup_code(
+    code: str,
+    db: AsyncSession = Depends(get_db),
+) -> CodeLookupResponse:
+    """Справка по 10-значному коду ТН ВЭД: тариф, НДС, акциз и т.д."""
+    if not code.isdigit() or len(code) != 10:
+        raise HTTPException(400, "Код должен состоять ровно из 10 цифр.")
+
+    result = await db.execute(
+        select(TnvedNode).where(TnvedNode.code == code, TnvedNode.is_leaf.is_(True)).limit(1)
+    )
+    node = result.scalar_one_or_none()
+    if not node:
+        raise HTTPException(404, f"Код {code} не найден в номенклатуре.")
+
+    return CodeLookupResponse(
+        code=node.code,
+        code_formatted=node.code_formatted or code,
+        name=node.name,
+        duty_rate=node.duty_rate,
+        vat_rate=node.vat_rate,
+        excise=node.excise,
+        unit_primary=node.unit_primary,
+        unit_secondary=node.unit_secondary,
+    )
 
 
 @router.get("/tnved/code/{code}")

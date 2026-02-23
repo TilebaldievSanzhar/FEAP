@@ -35,3 +35,16 @@ class TnvedNodeResponse(BaseModel):
     name: str
     duty_rate: str | None
     children_count: int = 0
+
+
+class CodeLookupResponse(BaseModel):
+    """Справка по 10-значному коду ТН ВЭД."""
+
+    code: str
+    code_formatted: str
+    name: str
+    duty_rate: str | None = None
+    vat_rate: str | None = None
+    excise: str | None = None
+    unit_primary: str | None = None
+    unit_secondary: str | None = None
