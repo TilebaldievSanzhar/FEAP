@@ -81,6 +81,15 @@ class Level4Subposition(BaseCascadeLevel):
             output_model=SubpositionResult,
         )
 
+        # If LLM signals missing parameters, propagate to state and stop
+        if result.missing_parameters:
+            state.missing_parameters = result.missing_parameters
+            state.clarifying_question = (
+                f"Для определения субпозиции необходимо уточнить: "
+                f"{', '.join(result.missing_parameters)}"
+            )
+            return result
+
         state.subposition = result.selected_subposition
 
         sp_name = ""

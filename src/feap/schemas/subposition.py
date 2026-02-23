@@ -22,4 +22,8 @@ class SubpositionResult(BaseModel):
     selected_subposition: str
     applied_rules: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
+    missing_parameters: list[str] = Field(
+        default_factory=list,
+        description="Parameters needed but not provided — requires user input",
+    )
     backtrack_trigger: BacktrackTrigger | None = None

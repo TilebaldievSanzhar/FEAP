@@ -101,6 +101,15 @@ class Level3Position(BaseCascadeLevel):
             output_model=PositionResult,
         )
 
+        # If LLM signals missing parameters, propagate to state and stop
+        if result.missing_parameters:
+            state.missing_parameters = result.missing_parameters
+            state.clarifying_question = (
+                f"Для определения позиции необходимо уточнить: "
+                f"{', '.join(result.missing_parameters)}"
+            )
+            return result
+
         state.position = result.selected_position
 
         pos_name = ""

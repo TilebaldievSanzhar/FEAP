@@ -20,6 +20,8 @@ class Settings(BaseSettings):
 
     # --- Cascade tuning ---
     CASCADE_MAX_BACKTRACK: int = 3
+    SESSION_TTL_MINUTES: int = 30
+    SESSION_MAX_ANSWERS: int = 3
 
     # Sync URL for Alembic / scripts
     @property

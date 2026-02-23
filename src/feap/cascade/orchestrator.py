@@ -16,6 +16,8 @@ from feap.cascade.levels.level3 import Level3Position
 from feap.cascade.levels.level4 import Level4Subposition
 from feap.cascade.levels.level5 import Level5Subsubposition
 from feap.cascade.validator import validate_and_build_result
+from feap.config import settings
+from feap.db.queries import delete_session, load_session, save_session
 from feap.schemas.api import ClassifyResponse
 from feap.schemas.validation import ClassificationResult, PartialResult
 
@@ -49,13 +51,15 @@ class CascadeOrchestrator:
             )
 
         try:
-            result = await self._run_cascade(state, db)
+            result = await self._run_cascade(state, db, start_level_idx=0)
             return ClassifyResponse(
                 session_id=session_id,
                 status="completed",
                 result=result,
             )
         except _NeedsInput as e:
+            state.stopped_at_level = e.partial.determined_to_level
+            await save_session(db, session_id, state.to_dict())
             return ClassifyResponse(
                 session_id=session_id,
                 status="needs_input",
@@ -75,12 +79,92 @@ class CascadeOrchestrator:
                 error=str(e),
             )
 
+    async def resume(
+        self,
+        session_id: str,
+        answers: dict[str, str],
+        db: AsyncSession,
+    ) -> ClassifyResponse:
+        """Resume a paused classification with user-provided answers."""
+        state_dict = await load_session(db, session_id)
+        if state_dict is None:
+            raise SessionNotFound(session_id)
+
+        state = CascadeState.from_dict(state_dict)
+
+        # Check answer iteration limit
+        state.answer_count += 1
+        if state.answer_count > settings.SESSION_MAX_ANSWERS:
+            await delete_session(db, session_id)
+            return ClassifyResponse(
+                session_id=session_id,
+                status="error",
+                error=f"Превышен лимит уточнений ({settings.SESSION_MAX_ANSWERS}). "
+                      f"Попробуйте заново с более полным описанием.",
+            )
+
+        # Merge answers into product description and product card
+        answers_text = "\n".join(f"{k}: {v}" for k, v in answers.items())
+        state.product_description += "\n" + answers_text
+
+        if state.product_card is not None:
+            # Merge answers into product card as additional fields
+            for key, value in answers.items():
+                state.product_card[key] = value
+        else:
+            # L0 stopped before creating product_card — answers go into description only
+            pass
+
+        # Clear needs_input signals
+        state.missing_parameters = []
+        state.clarifying_question = None
+
+        # Determine which level to resume from
+        resume_level = state.stopped_at_level or 0
+        start_idx = next(
+            (i for i, lv in enumerate(LEVELS) if lv.level >= resume_level),
+            0,
+        )
+
+        try:
+            result = await self._run_cascade(state, db, start_level_idx=start_idx)
+            await delete_session(db, session_id)
+            return ClassifyResponse(
+                session_id=session_id,
+                status="completed",
+                result=result,
+            )
+        except _NeedsInput as e:
+            state.stopped_at_level = e.partial.determined_to_level
+            await save_session(db, session_id, state.to_dict())
+            return ClassifyResponse(
+                session_id=session_id,
+                status="needs_input",
+                partial=e.partial,
+            )
+        except BacktrackLimitExceeded as e:
+            await delete_session(db, session_id)
+            return ClassifyResponse(
+                session_id=session_id,
+                status="error",
+                error=str(e),
+            )
+        except Exception as e:
+            logger.exception("Cascade resume error")
+            await delete_session(db, session_id)
+            return ClassifyResponse(
+                session_id=session_id,
+                status="error",
+                error=str(e),
+            )
+
     async def _run_cascade(
         self,
         state: CascadeState,
         db: AsyncSession,
+        start_level_idx: int = 0,
     ) -> ClassificationResult:
-        current_level_idx = 0
+        current_level_idx = start_level_idx
         backtrack_count = 0
 
         while current_level_idx < len(LEVELS):
@@ -101,23 +185,28 @@ class CascadeOrchestrator:
                 logger.info("Backtracking to level %d (attempt %d)", target, backtrack_count)
                 continue
 
-            # Check if level 0 needs user input
-            if level.level == 0 and state.clarifying_question and not state.product_card:
+            # Generalized needs_input check — works for any level
+            if state.missing_parameters:
+                # Determine the furthest code reached so far
+                partial_code = (
+                    state.code_10
+                    or state.subposition
+                    or state.position
+                    or state.group
+                    or state.section
+                    or ""
+                )
+                # Build question list from parameters
+                questions = [
+                    f"Укажите: {param}" for param in state.missing_parameters
+                ]
                 raise _NeedsInput(PartialResult(
-                    partial_code="",
-                    determined_to_level=0,
-                    missing_parameters=state.missing_parameters,
-                    question=state.clarifying_question,
-                ))
-
-            # Check if level 5 needs user input (missing technical parameters)
-            if level.level == 5 and state.missing_parameters:
-                raise _NeedsInput(PartialResult(
-                    partial_code=state.subposition or "",
-                    determined_to_level=4,
+                    partial_code=partial_code,
+                    determined_to_level=level.level,
                     missing_parameters=state.missing_parameters,
                     question=state.clarifying_question or "Необходимы дополнительные данные",
-                    classification_chain_so_far=[e for e in state.chain],
+                    questions=questions,
+                    classification_chain_so_far=list(state.chain),
                 ))
 
             current_level_idx += 1
@@ -129,3 +218,9 @@ class CascadeOrchestrator:
 class _NeedsInput(Exception):
     def __init__(self, partial: PartialResult):
         self.partial = partial
+
+
+class SessionNotFound(Exception):
+    def __init__(self, session_id: str):
+        self.session_id = session_id
+        super().__init__(f"Session {session_id} not found")

@@ -40,4 +40,8 @@ class PartialResult(BaseModel):
     determined_to_level: int
     missing_parameters: list[str]
     question: str
+    questions: list[str] = Field(
+        default_factory=list,
+        description="Specific clarifying questions for the user",
+    )
     classification_chain_so_far: list[DecisionChainEntry] = Field(default_factory=list)

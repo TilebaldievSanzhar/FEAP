@@ -5,7 +5,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from feap.db.models import ExplanatoryNote, OpiRule, TnvedNode, TnvedNote
+from feap.db.models import ClassificationSession, ExplanatoryNote, OpiRule, TnvedNode, TnvedNote
 
 
 # ── Tree navigation ──────────────────────────────────────────────────────────
@@ -139,3 +139,54 @@ async def search_explanatory_notes(
         stmt = stmt.where(ExplanatoryNote.code.startswith(code_prefix))
     result = await session.execute(stmt)
     return list(result.scalars().all())
+
+
+# ── Session persistence ─────────────────────────────────────────────────────
+
+async def save_session(
+    session: AsyncSession,
+    session_id: str,
+    state_dict: dict,
+) -> None:
+    """Upsert a classification session state."""
+    result = await session.execute(
+        select(ClassificationSession).where(
+            ClassificationSession.session_id == session_id
+        )
+    )
+    existing = result.scalar_one_or_none()
+    if existing:
+        existing.state = state_dict
+    else:
+        session.add(ClassificationSession(session_id=session_id, state=state_dict))
+    await session.commit()
+
+
+async def load_session(
+    session: AsyncSession,
+    session_id: str,
+) -> dict | None:
+    """Load a classification session state. Returns None if not found."""
+    result = await session.execute(
+        select(ClassificationSession).where(
+            ClassificationSession.session_id == session_id
+        )
+    )
+    row = result.scalar_one_or_none()
+    return row.state if row else None
+
+
+async def delete_session(
+    session: AsyncSession,
+    session_id: str,
+) -> None:
+    """Delete a classification session after successful completion."""
+    result = await session.execute(
+        select(ClassificationSession).where(
+            ClassificationSession.session_id == session_id
+        )
+    )
+    row = result.scalar_one_or_none()
+    if row:
+        await session.delete(row)
+        await session.commit()

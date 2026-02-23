@@ -602,16 +602,71 @@ pdftotext -layout psn85.pdf psn85.txt
 - LLM ищет наиболее близкий товар в пояснениях через RAG
 - Пониженный confidence → флаг requires_human_review
 
-### Недостаточно данных для выбора на нижних уровнях
-Система ОСТАНАВЛИВАЕТСЯ и возвращает:
+### Недостаточно данных для выбора
+Система ОСТАНАВЛИВАЕТСЯ на **любом уровне** (L0–L5) и возвращает `needs_input`:
 ```json
 {
   "partial_code": "8509 80",
   "determined_to_level": 4,
   "missing_parameters": ["мощность электродвигателя"],
-  "question": "Укажите мощность электродвигателя (в Вт или кВт)"
+  "question": "Для выбора точного кода необходимо уточнить: мощность электродвигателя",
+  "questions": ["Укажите: мощность электродвигателя"],
+  "classification_chain_so_far": [...]
 }
 ```
+
+Поле `missing_parameters` поддерживается в схемах уровней L0 (через `missing_info`), L3 (`PositionResult`), L4 (`SubpositionResult`) и L5 (`SubsubpositionResult`). Оркестратор проверяет `state.missing_parameters` **после каждого уровня** и останавливает каскад.
+
+---
+
+## 12а. Механизм уточнений (needs_input / session resumption)
+
+### Архитектура
+
+```
+POST /classify → каскад L0..L5
+                    │
+          ┌─ completed → ClassifyResponse(status="completed")
+          │
+          └─ needs_input → сохранить CascadeState в БД
+                          → ClassifyResponse(status="needs_input", partial=...)
+                                │
+                    POST /classify/{session_id}/answer
+                                │
+                          загрузить CascadeState из БД
+                          дополнить product_card ответами
+                          перезапустить каскад с stopped_at_level
+                                │
+                      ┌─ completed → удалить сессию, вернуть результат
+                      └─ needs_input → обновить сессию, вернуть partial
+```
+
+### Хранение состояния
+
+Таблица `classification_sessions`:
+- `session_id` (UUID) — уникальный идентификатор
+- `state` (JSONB) — сериализованный `CascadeState` (через `to_dict()`/`from_dict()`)
+- TTL: `SESSION_TTL_MINUTES` (по умолчанию 30 минут)
+- Лимит итераций: `SESSION_MAX_ANSWERS` (по умолчанию 3)
+
+### Уровни, поддерживающие needs_input
+
+| Уровень | Источник сигнала | Когда срабатывает |
+|---------|-----------------|-------------------|
+| L0 | `ProductCard.missing_info` + `clarifying_questions` | Недостаточно данных для карточки товара |
+| L3 | `PositionResult.missing_parameters` | Неоднозначность между позициями из-за неизвестного параметра |
+| L4 | `SubpositionResult.missing_parameters` | Неоднозначность субпозиций |
+| L5 | `SubsubpositionResult.missing_parameters` | Технический параметр для финального кода |
+
+### Resume flow
+
+1. Клиент отправляет `POST /classify/{session_id}/answer` с `answers: dict[str, str]`
+2. Оркестратор загружает `CascadeState` из БД
+3. Ответы мержатся в `product_description` и `product_card`
+4. `missing_parameters` и `clarifying_question` очищаются
+5. Каскад перезапускается с `stopped_at_level` (не с нуля)
+6. При успехе — сессия удаляется из БД
+7. При повторном needs_input — сессия обновляется
 
 ---
 

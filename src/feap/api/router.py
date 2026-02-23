@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.api.deps import get_db, get_orchestrator
-from feap.cascade.orchestrator import CascadeOrchestrator
+from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
 from feap.db.models import TnvedNode
 from feap.schemas.api import (
     AnswerRequest,
@@ -41,15 +41,23 @@ async def answer_question(
     session_id: str,
     request: AnswerRequest,
     db: AsyncSession = Depends(get_db),
+    orchestrator: CascadeOrchestrator = Depends(get_orchestrator),
 ) -> ClassifyResponse:
-    """Answer a clarifying question from a previous classification attempt.
+    """Provide answers to clarifying questions from a previous classification.
 
-    TODO: Implement session resumption from saved state.
+    Resumes the cascade from the level where it stopped, using the saved state.
     """
-    raise HTTPException(
-        status_code=501,
-        detail="Session resumption not yet implemented. Re-submit with more details.",
-    )
+    try:
+        return await orchestrator.resume(
+            session_id=session_id,
+            answers=request.answers,
+            db=db,
+        )
+    except SessionNotFound:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Сессия {session_id} не найдена или истекла.",
+        )
 
 
 @router.get("/tnved/tree")

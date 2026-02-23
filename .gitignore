@@ -16,3 +16,4 @@ data/parsed/
 *.swp
 *.swo
 nul
+benchmark

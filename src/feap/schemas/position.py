@@ -34,4 +34,8 @@ class PositionResult(BaseModel):
     selected_position: str
     applied_rules: list[str] = Field(default_factory=list)
     precedents_found: list[str] = Field(default_factory=list)
+    missing_parameters: list[str] = Field(
+        default_factory=list,
+        description="Parameters needed but not provided — requires user input",
+    )
     backtrack_trigger: BacktrackTrigger | None = None

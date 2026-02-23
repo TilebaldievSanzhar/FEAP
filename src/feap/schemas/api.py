@@ -23,7 +23,9 @@ class ClassifyResponse(BaseModel):
 
 
 class AnswerRequest(BaseModel):
-    answer: str = Field(description="User's answer to a clarifying question")
+    answers: dict[str, str] = Field(
+        description="Key-value answers to clarifying questions, e.g. {'мощность': '1.5 кВт'}"
+    )
 
 
 class TnvedNodeResponse(BaseModel):

@@ -65,16 +65,19 @@ class Level5Subsubposition(BaseCascadeLevel):
             output_model=SubsubpositionResult,
         )
 
-        state.code_10 = result.selected_code_10
-        if not result.final_code:
-            result.final_code = _format_code(result.selected_code_10)
-
+        # If LLM signals missing parameters, propagate to state and stop
+        # Do NOT write code_10 or add decision — the orchestrator will raise _NeedsInput
         if result.missing_parameters:
             state.missing_parameters = result.missing_parameters
             state.clarifying_question = (
                 f"Для выбора точного кода необходимо уточнить: "
                 f"{', '.join(result.missing_parameters)}"
             )
+            return result
+
+        state.code_10 = result.selected_code_10
+        if not result.final_code:
+            result.final_code = _format_code(result.selected_code_10)
 
         leaf_name = ""
         for c in leaves:
