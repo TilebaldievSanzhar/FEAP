@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class MaterialComponent(BaseModel):
@@ -44,3 +44,13 @@ class ProductCard(BaseModel):
     )
     missing_info: list[str] = Field(default_factory=list)
     clarifying_questions: list[str] = Field(default_factory=list)
+
+    @field_validator("missing_info", "clarifying_questions", mode="before")
+    @classmethod
+    def _coerce_to_list(cls, v: object) -> list[str]:
+        """LLM sometimes returns a string instead of a list — coerce it."""
+        if isinstance(v, str):
+            return [v] if v.strip() else []
+        if v is None:
+            return []
+        return v

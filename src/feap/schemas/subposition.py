@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from feap.schemas.common import BacktrackTrigger
 
@@ -27,3 +27,12 @@ class SubpositionResult(BaseModel):
         description="Parameters needed but not provided — requires user input",
     )
     backtrack_trigger: BacktrackTrigger | None = None
+
+    @field_validator("missing_parameters", mode="before")
+    @classmethod
+    def _coerce_to_list(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [v] if v.strip() else []
+        if v is None:
+            return []
+        return v

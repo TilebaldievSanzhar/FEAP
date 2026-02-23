@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class SubsubpositionResult(BaseModel):
@@ -18,3 +18,12 @@ class SubsubpositionResult(BaseModel):
         description="Parameters needed but not provided — requires user input",
     )
     final_code: str = Field(default="", description="Final formatted code (computed post-hoc)")
+
+    @field_validator("missing_parameters", mode="before")
+    @classmethod
+    def _coerce_to_list(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [v] if v.strip() else []
+        if v is None:
+            return []
+        return v
