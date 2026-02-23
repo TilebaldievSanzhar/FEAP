@@ -66,6 +66,8 @@ class Level5Subsubposition(BaseCascadeLevel):
         )
 
         state.code_10 = result.selected_code_10
+        if not result.final_code:
+            result.final_code = _format_code(result.selected_code_10)
 
         if result.missing_parameters:
             state.missing_parameters = result.missing_parameters
