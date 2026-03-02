@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import datetime as dt
 
-from pgvector.sqlalchemy import Vector
-
-from feap.config import settings
 from sqlalchemy import (
     Boolean,
     Date,
@@ -90,25 +87,28 @@ class TnvedNote(Base):
     )
 
 
-# ── Пояснения (чанки для RAG) ───────────────────────────────────────────────
+# ── Пояснения (полные секции, прямая загрузка по коду) ────────────────────────
 
 class ExplanatoryNote(Base):
     __tablename__ = "tnved_explanatory_notes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
-    code_level: Mapped[int] = mapped_column(Integer, nullable=False)
-    section_type: Mapped[str | None] = mapped_column(String(20), comment="general|includes|excludes|examples")
+    group_code: Mapped[str] = mapped_column(String(2), nullable=False)
+    code_level: Mapped[int] = mapped_column(Integer, nullable=False, comment="1=group,2=position,3=subposition")
+    section_type: Mapped[str | None] = mapped_column(String(20), comment="general|includes|excludes")
+    title: Mapped[str | None] = mapped_column(Text)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-
-    chunk_index: Mapped[int | None] = mapped_column(Integer)
-    chunk_text: Mapped[str | None] = mapped_column(Text)
-    embedding = mapped_column(Vector(settings.VOYAGE_EMBEDDING_DIM), nullable=True)
+    content_tokens: Mapped[int | None] = mapped_column(Integer, comment="Approximate token count")
 
     source_file: Mapped[str | None] = mapped_column(String(100))
     page_number: Mapped[int | None] = mapped_column(Integer)
     updated_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_expl_group", "group_code"),
     )
 
 

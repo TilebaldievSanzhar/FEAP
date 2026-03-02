@@ -10,10 +10,9 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
-from feap.db.queries import get_children, get_node_by_code, get_notes, get_opi_rules
+from feap.db.queries import get_children, get_explanations_by_codes, get_node_by_code, get_notes, get_opi_rules
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
-from feap.rag.retriever import retrieve_explanations
 from feap.schemas.common import DecisionChainEntry
 from feap.schemas.position import PositionResult, ShortlistResult
 
@@ -69,13 +68,12 @@ class Level3Position(BaseCascadeLevel):
             p for p in positions_data if p["code"] in shortlist.shortlisted
         ]
 
-        # RAG: retrieve explanatory notes for candidates
-        explanations = await retrieve_explanations(
-            db,
-            state.product_card.get("normalized_description", state.product_description),
-            code_prefix=group_code,
-            limit=8,
-        )
+        # Direct loading: explanatory notes for candidate codes
+        explanations_rows = await get_explanations_by_codes(db, shortlist.shortlisted)
+        explanations = [
+            {"code": e.code, "section_type": e.section_type, "title": e.title, "content": e.content}
+            for e in explanations_rows
+        ]
 
         opi_rules = await get_opi_rules(db, level=3)
         rules_data = [

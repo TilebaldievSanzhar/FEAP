@@ -1,4 +1,9 @@
-"""RAG retriever: find relevant explanatory notes via pgvector."""
+"""RAG retriever: vector similarity search via pgvector.
+
+NOTE: No longer used for explanatory notes (replaced by direct DB loading
+in level3.py and level4.py). Kept for future use with classification
+precedents and court decisions.
+"""
 
 from __future__ import annotations
 

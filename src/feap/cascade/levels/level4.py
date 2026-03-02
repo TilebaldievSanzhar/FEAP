@@ -5,10 +5,9 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
-from feap.db.queries import get_children, get_node_by_code, get_opi_rules
+from feap.db.queries import get_children, get_explanations_for_position, get_node_by_code, get_opi_rules
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
-from feap.rag.retriever import retrieve_explanations
 from feap.schemas.common import DecisionChainEntry
 from feap.schemas.subposition import SubpositionResult
 
@@ -50,13 +49,12 @@ class Level4Subposition(BaseCascadeLevel):
             ))
             return result
 
-        # RAG
-        explanations = await retrieve_explanations(
-            db,
-            state.product_card.get("normalized_description", state.product_description),
-            code_prefix=position_code,
-            limit=5,
-        )
+        # Direct loading: explanatory notes for position
+        explanations_rows = await get_explanations_for_position(db, position_code)
+        explanations = [
+            {"code": e.code, "section_type": e.section_type, "title": e.title, "content": e.content}
+            for e in explanations_rows
+        ]
 
         opi_rules = await get_opi_rules(db, level=4)
         rules_data = [

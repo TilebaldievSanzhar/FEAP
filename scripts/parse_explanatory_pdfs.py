@@ -1,4 +1,4 @@
-"""Parse explanatory notes PDFs (пояснения) into structured chunks.
+"""Parse explanatory notes PDFs (пояснения) into structured sections.
 
 Reads PDFs from data/pdfs/psn/psn{01-97}.pdf
 Produces data/parsed/explanatory_notes.json
@@ -7,10 +7,10 @@ Each PDF covers one group (e.g., psn85.pdf = group 85).
 Structure inside PDF:
   - General notes for the group
   - Per-position explanations (XX.YY pattern like 85.01)
-  - Includes/excludes sections
-  - Examples and definitions
+  - Includes/excludes sections within each position
 
-We parse into chunks suitable for embedding + RAG.
+Output: one record per logical section (general / includes / excludes),
+NOT per chunk. Full text is preserved for direct DB loading.
 """
 
 from __future__ import annotations
@@ -23,14 +23,38 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PSN_DIR = PROJECT_ROOT / "data" / "pdfs" / "psn"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "explanatory_notes.json"
 
-# Regex patterns
+# ── Regex patterns ──────────────────────────────────────────────────────────
+
 POSITION_HEADER = re.compile(r"^(\d{2})\.(\d{2})\b")
-INCLUDES_MARKER = re.compile(
-    r"(В данную (?:позицию|субпозицию|товарную позицию|группу) включа(?:ют|е)ся)",
+
+SUBPOSITION_HEADER = re.compile(r"^(\d{4})\.(\d{2})\b")
+
+# Excludes markers (checked BEFORE includes, because "не включаются" contains "включаются")
+EXCLUDES_MARKERS = re.compile(
+    r"(?:"
+    r"[Вв] данную (?:позицию|товарную позицию|субпозицию|группу) (?:также )?не включа(?:ют|е)ся"
+    r"|[Вв] данную (?:позицию|товарную позицию|субпозицию|группу) не входят"
+    r"|[Нн]е включа(?:ют|е)ся"
+    r"|[Сс]юда не включа(?:ют|е)ся"
+    r")",
     re.IGNORECASE,
 )
-EXCLUDES_MARKER = re.compile(
-    r"(В данную (?:позицию|субпозицию|товарную позицию|группу) не включа(?:ют|е)ся)",
+
+# Includes markers
+INCLUDES_MARKERS = re.compile(
+    r"(?:"
+    r"[Вв] данную (?:позицию|товарную позицию|субпозицию|группу) (?:также )?включа(?:ют|е)ся"
+    r"|[Сс]юда (?:также )?включа(?:ют|е)ся"
+    r"|[Кк] данной категории относятся"
+    r"|[Вв]ключа(?:ют|е)ся также"
+    r")",
+    re.IGNORECASE,
+)
+
+# Extract referenced codes from excludes: "(товарная позиция 85.02)" or "(группа 84)"
+REFERENCE_PATTERN = re.compile(
+    r"\((?:товарн(?:ая|ые) позици(?:я|и)|группа|позици(?:я|и))\s+"
+    r"(\d{2}\.\d{2})\)",
     re.IGNORECASE,
 )
 
@@ -49,7 +73,6 @@ def extract_text_from_pdf(pdf_path: Path) -> str:
 
 def split_into_positions(text: str, group_code: str) -> list[dict]:
     """Split the full text into per-position sections."""
-    # Find all position headers
     lines = text.split("\n")
     positions: list[dict] = []
     current: dict | None = None
@@ -90,7 +113,7 @@ def split_into_positions(text: str, group_code: str) -> list[dict]:
     # Add general notes for the group
     if general_lines:
         general_text = "\n".join(general_lines).strip()
-        if len(general_text) > 50:  # Skip near-empty general sections
+        if len(general_text) > 50:
             positions.insert(
                 0,
                 {
@@ -105,52 +128,78 @@ def split_into_positions(text: str, group_code: str) -> list[dict]:
     return positions
 
 
-def classify_sections(content: str) -> str:
-    """Determine section type of content block."""
-    if EXCLUDES_MARKER.search(content[:500]):
-        return "excludes"
-    if INCLUDES_MARKER.search(content[:500]):
-        return "includes"
-    return "general"
+def split_into_sections(content: str) -> list[dict]:
+    """Split position content into logical sections: general, includes, excludes.
 
-
-def chunk_text(text: str, max_tokens: int = 1200, overlap: int = 150) -> list[str]:
-    """Split text into overlapping chunks.
-
-    Uses rough token estimation: 1 token ≈ 4 chars for Russian text.
+    Returns list of {"section_type": str, "content": str} dicts.
+    Handles multiple includes/excludes blocks by merging them.
     """
-    max_chars = max_tokens * 4
-    overlap_chars = overlap * 4
+    # Find all marker positions
+    markers: list[tuple[int, str]] = []
 
-    if len(text) <= max_chars:
-        return [text]
+    for match in EXCLUDES_MARKERS.finditer(content):
+        markers.append((match.start(), "excludes"))
 
-    chunks: list[str] = []
-    start = 0
-    while start < len(text):
-        end = start + max_chars
+    for match in INCLUDES_MARKERS.finditer(content):
+        # Make sure this isn't inside an excludes marker ("не включаются" contains "включаются")
+        # Check if there's a "не" before this match within 5 chars
+        start = max(0, match.start() - 10)
+        prefix = content[start:match.start()].lower()
+        if "не " in prefix or "не\n" in prefix:
+            continue
+        markers.append((match.start(), "includes"))
 
-        # Try to break at paragraph or sentence boundary
-        if end < len(text):
-            # Look for paragraph break
-            para_break = text.rfind("\n\n", start + max_chars // 2, end)
-            if para_break > start:
-                end = para_break
-            else:
-                # Look for sentence break
-                sent_break = text.rfind(". ", start + max_chars // 2, end)
-                if sent_break > start:
-                    end = sent_break + 1
+    # Sort by position
+    markers.sort(key=lambda x: x[0])
 
-        chunks.append(text[start:end].strip())
-        start = end - overlap_chars
+    if not markers:
+        # No markers found — entire content is general
+        return [{"section_type": "general", "content": content.strip()}]
 
-    return [c for c in chunks if len(c) > 20]
+    sections: dict[str, list[str]] = {
+        "general": [],
+        "includes": [],
+        "excludes": [],
+    }
+
+    # Text before first marker is general
+    first_pos = markers[0][0]
+    general_text = content[:first_pos].strip()
+    if general_text:
+        sections["general"].append(general_text)
+
+    # Process each marker section
+    for i, (pos, section_type) in enumerate(markers):
+        end_pos = markers[i + 1][0] if i + 1 < len(markers) else len(content)
+        section_text = content[pos:end_pos].strip()
+        if section_text:
+            sections[section_type].append(section_text)
+
+    result: list[dict] = []
+    for section_type in ("general", "includes", "excludes"):
+        texts = sections[section_type]
+        if texts:
+            merged = "\n\n".join(texts)
+            result.append({"section_type": section_type, "content": merged})
+
+    return result
+
+
+def extract_references(text: str) -> list[str]:
+    """Extract referenced position codes from excludes text."""
+    refs = REFERENCE_PATTERN.findall(text)
+    # Normalize: "85.02" -> "8502"
+    return [r.replace(".", "") for r in refs]
+
+
+def estimate_tokens(text: str) -> int:
+    """Rough token estimation: ~4 chars per token for Russian text."""
+    return len(text) // 4
 
 
 def parse_all_pdfs() -> list[dict]:
-    """Parse all available explanatory note PDFs."""
-    all_chunks: list[dict] = []
+    """Parse all available explanatory note PDFs into section-based records."""
+    all_records: list[dict] = []
 
     pdf_files = sorted(PSN_DIR.glob("psn*.pdf"))
     if not pdf_files:
@@ -175,36 +224,50 @@ def parse_all_pdfs() -> list[dict]:
             continue
 
         positions = split_into_positions(text, group_code)
-        print(f"    Found {len(positions)} position sections")
+        print(f"    Found {len(positions)} position blocks")
 
+        record_count = 0
         for pos in positions:
-            section_type = classify_sections(pos["content"])
-            chunks = chunk_text(pos["content"])
+            sections = split_into_sections(pos["content"])
 
-            for i, chunk in enumerate(chunks):
-                all_chunks.append({
+            for section in sections:
+                content = section["content"]
+                if len(content) < 50:
+                    continue
+
+                record = {
                     "code": pos["code"],
+                    "group_code": pos["group_code"],
                     "code_level": pos["code_level"],
-                    "section_type": section_type,
-                    "content": pos["content"] if i == 0 else "",  # Full content only in first chunk
-                    "chunk_index": i,
-                    "chunk_text": chunk,
+                    "section_type": section["section_type"],
+                    "title": pos.get("title", ""),
+                    "content": content,
+                    "content_tokens": estimate_tokens(content),
                     "source_file": pdf_path.name,
-                })
+                }
 
-    print(f"\nTotal chunks: {len(all_chunks)}")
-    return all_chunks
+                # Extract references from excludes sections
+                if section["section_type"] == "excludes":
+                    record["references_to"] = extract_references(content)
+
+                all_records.append(record)
+                record_count += 1
+
+        print(f"    Produced {record_count} section records")
+
+    print(f"\nTotal records: {len(all_records)}")
+    return all_records
 
 
 def main() -> None:
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    chunks = parse_all_pdfs()
-    if chunks:
+    records = parse_all_pdfs()
+    if records:
         with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-            json.dump(chunks, f, ensure_ascii=False, indent=2)
+            json.dump(records, f, ensure_ascii=False, indent=2)
         print(f"Written to {OUTPUT_PATH}")
     else:
-        print("No chunks produced. Ensure PDFs are downloaded first.")
+        print("No records produced. Ensure PDFs are downloaded first.")
 
 
 if __name__ == "__main__":

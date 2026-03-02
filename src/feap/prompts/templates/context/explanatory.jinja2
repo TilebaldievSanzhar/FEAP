@@ -1,7 +1,15 @@
 ## ПОЯСНЕНИЯ К ПОЗИЦИЯМ
 
-{% for expl in explanations %}
-### Позиция {{ expl.code }} ({{ expl.section_type | default('общее') }})
+{% set section_labels = {'general': 'ОБЩИЕ ПОЛОЖЕНИЯ', 'includes': 'ВКЛЮЧАЮТСЯ', 'excludes': 'НЕ ВКЛЮЧАЮТСЯ'} %}
+{% for code, notes in explanations | groupby('code') %}
+### Позиция {{ code }}
+{% for note in notes %}
 
-{{ expl.chunk_text }}
+#### {{ section_labels[note.section_type] if note.section_type in section_labels else note.section_type | upper }}
+{% if note.title %}({{ note.title }})
+{% endif %}
+
+{{ note.content }}
+{% endfor %}
+
 {% endfor %}

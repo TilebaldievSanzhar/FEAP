@@ -120,24 +120,33 @@ async def get_opi_rules(session: AsyncSession, level: int | None = None) -> list
     return list(result.scalars().all())
 
 
-# ── RAG: explanatory notes vector search ─────────────────────────────────────
+# ── Explanatory notes: direct loading by code ────────────────────────────────
 
-async def search_explanatory_notes(
+async def get_explanations_by_codes(
     session: AsyncSession,
-    query_embedding: list[float],
-    code_prefix: str | None = None,
-    limit: int = 5,
+    codes: list[str],
 ) -> list[ExplanatoryNote]:
-    """Vector similarity search over explanatory note chunks."""
-    stmt = (
+    """Get full explanatory note sections for a list of position codes (L3b)."""
+    if not codes:
+        return []
+    result = await session.execute(
         select(ExplanatoryNote)
-        .where(ExplanatoryNote.embedding.isnot(None))
-        .order_by(ExplanatoryNote.embedding.cosine_distance(query_embedding))
-        .limit(limit)
+        .where(ExplanatoryNote.code.in_(codes))
+        .order_by(ExplanatoryNote.code, ExplanatoryNote.section_type)
     )
-    if code_prefix:
-        stmt = stmt.where(ExplanatoryNote.code.startswith(code_prefix))
-    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_explanations_for_position(
+    session: AsyncSession,
+    code: str,
+) -> list[ExplanatoryNote]:
+    """Get explanatory note sections for a single position code (L4)."""
+    result = await session.execute(
+        select(ExplanatoryNote)
+        .where(ExplanatoryNote.code == code)
+        .order_by(ExplanatoryNote.section_type)
+    )
     return list(result.scalars().all())
 
 

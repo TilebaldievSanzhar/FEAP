@@ -1,4 +1,4 @@
-"""Master script: load tree.json and opi_rules.json into PostgreSQL.
+"""Master script: load tree, OPI rules, and explanatory notes into PostgreSQL.
 
 Usage:
     python scripts/seed_db.py
@@ -19,6 +19,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 TREE_PATH = PROJECT_ROOT / "data" / "parsed" / "tree.json"
 OPI_PATH = PROJECT_ROOT / "data" / "parsed" / "opi_rules.json"
+EXPLANATORY_PATH = PROJECT_ROOT / "data" / "parsed" / "explanatory_notes.json"
 
 
 def seed_tree(conn, nodes: list[dict]) -> None:
@@ -76,6 +77,40 @@ def seed_opi(conn, rules: list[dict]) -> None:
     print(f"  Inserted {len(rules)} OPI rules")
 
 
+def seed_explanatory_notes(conn, records: list[dict]) -> None:
+    from sqlalchemy import text
+
+    conn.execute(text("TRUNCATE tnved_explanatory_notes"))
+
+    batch_size = 500
+    for i in range(0, len(records), batch_size):
+        batch = records[i : i + batch_size]
+        conn.execute(
+            text("""
+                INSERT INTO tnved_explanatory_notes
+                    (code, group_code, code_level, section_type, title,
+                     content, content_tokens, source_file)
+                VALUES
+                    (:code, :group_code, :code_level, :section_type, :title,
+                     :content, :content_tokens, :source_file)
+            """),
+            [
+                {
+                    "code": r["code"],
+                    "group_code": r["group_code"],
+                    "code_level": r["code_level"],
+                    "section_type": r["section_type"],
+                    "title": r.get("title", ""),
+                    "content": r["content"],
+                    "content_tokens": r.get("content_tokens"),
+                    "source_file": r.get("source_file", ""),
+                }
+                for r in batch
+            ],
+        )
+        print(f"  Inserted {min(i + batch_size, len(records))}/{len(records)}")
+
+
 def main() -> None:
     from sqlalchemy import create_engine, text
 
@@ -109,6 +144,23 @@ def main() -> None:
         with engine.begin() as conn:
             seed_opi(conn, rules)
         print("OPI done!")
+
+    # Explanatory notes (optional — only if parsed JSON exists)
+    with engine.connect() as conn:
+        expl_count = conn.execute(text("SELECT COUNT(*) FROM tnved_explanatory_notes")).scalar()
+
+    if expl_count and expl_count > 0:
+        print(f"tnved_explanatory_notes already contains {expl_count} rows — skipping.")
+    elif EXPLANATORY_PATH.exists():
+        with open(EXPLANATORY_PATH, encoding="utf-8") as f:
+            records = json.load(f)
+        print(f"Loading {len(records)} explanatory note sections into tnved_explanatory_notes...")
+        with engine.begin() as conn:
+            seed_explanatory_notes(conn, records)
+        print("Explanatory notes done!")
+    else:
+        print(f"Explanatory notes JSON not found at {EXPLANATORY_PATH} — skipping.")
+        print("Run: python scripts/parse_explanatory_pdfs.py first.")
 
     engine.dispose()
 
