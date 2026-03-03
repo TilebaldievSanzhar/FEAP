@@ -37,6 +37,33 @@ class TnvedNodeResponse(BaseModel):
     children_count: int = 0
 
 
+class VatExemptionInfo(BaseModel):
+    """Информация об освобождении от НДС."""
+
+    type: str = Field(description="full | reduced")
+    legal_ref: str = Field(description="Ссылка на НПА")
+    note: str | None = None
+    valid_to: str | None = Field(default=None, description="Дата окончания действия")
+
+
+class VatInfo(BaseModel):
+    """НДС при импорте."""
+
+    rate: str = Field(description="Ставка НДС, e.g. '12%' или '0%'")
+    exemption: VatExemptionInfo | None = None
+
+
+class ExciseInfo(BaseModel):
+    """Информация об акцизе."""
+
+    applicable: bool = Field(description="Является ли товар подакцизным")
+    product_name: str | None = Field(default=None, description="Наименование подакцизного товара")
+    rate: str | None = Field(default=None, description="Ставка акциза, e.g. '300'")
+    rate_unit: str | None = Field(default=None, description="Единица: сом/литр, сом/тонну, сом/1000 шт")
+    legal_ref: str | None = Field(default=None, description="Ссылка на НПА")
+    note: str | None = None
+
+
 class CodeLookupResponse(BaseModel):
     """Справка по 10-значному коду ТН ВЭД."""
 
@@ -44,7 +71,7 @@ class CodeLookupResponse(BaseModel):
     code_formatted: str
     name: str
     duty_rate: str | None = None
-    vat_rate: str | None = None
-    excise: str | None = None
+    vat: VatInfo
+    excise: ExciseInfo
     unit_primary: str | None = None
     unit_secondary: str | None = None

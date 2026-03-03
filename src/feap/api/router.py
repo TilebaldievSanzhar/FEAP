@@ -8,13 +8,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.api.deps import get_db, get_orchestrator
 from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
+from feap.config import settings
 from feap.db.models import TnvedNode
+from feap.db.queries import get_excise_rate, get_vat_exemption
 from feap.schemas.api import (
     AnswerRequest,
     ClassifyRequest,
     ClassifyResponse,
     CodeLookupResponse,
+    ExciseInfo,
     TnvedNodeResponse,
+    VatExemptionInfo,
+    VatInfo,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -126,13 +131,42 @@ async def lookup_code(
     if not node:
         raise HTTPException(404, f"Код {code} не найден в номенклатуре.")
 
+    # Determine VAT rate and exemption
+    exemption = await get_vat_exemption(db, code)
+    if exemption:
+        vat = VatInfo(
+            rate=exemption.rate_override or "0%",
+            exemption=VatExemptionInfo(
+                type=exemption.exemption_type,
+                legal_ref=exemption.legal_ref,
+                note=exemption.note,
+                valid_to=exemption.valid_to.isoformat() if exemption.valid_to else None,
+            ),
+        )
+    else:
+        vat = VatInfo(rate=settings.VAT_RATE_DEFAULT)
+
+    # Determine excise
+    excise_row = await get_excise_rate(db, code)
+    if excise_row:
+        excise = ExciseInfo(
+            applicable=True,
+            product_name=excise_row.product_name,
+            rate=excise_row.rate,
+            rate_unit=excise_row.rate_unit,
+            legal_ref=excise_row.legal_ref,
+            note=excise_row.note,
+        )
+    else:
+        excise = ExciseInfo(applicable=False)
+
     return CodeLookupResponse(
         code=node.code,
         code_formatted=node.code_formatted or code,
         name=node.name,
         duty_rate=node.duty_rate,
-        vat_rate=node.vat_rate,
-        excise=node.excise,
+        vat=vat,
+        excise=excise,
         unit_primary=node.unit_primary,
         unit_secondary=node.unit_secondary,
     )

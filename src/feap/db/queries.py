@@ -5,7 +5,17 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from feap.db.models import ClassificationSession, ExplanatoryNote, OpiRule, TnvedNode, TnvedNote
+import datetime as dt
+
+from feap.db.models import (
+    ClassificationSession,
+    ExciseRate,
+    ExplanatoryNote,
+    OpiRule,
+    TnvedNode,
+    TnvedNote,
+    VatExemption,
+)
 
 
 # ── Tree navigation ──────────────────────────────────────────────────────────
@@ -148,6 +158,66 @@ async def get_explanations_for_position(
         .order_by(ExplanatoryNote.section_type)
     )
     return list(result.scalars().all())
+
+
+# ── VAT exemptions ──────────────────────────────────────────────────────────
+
+async def get_vat_exemption(
+    session: AsyncSession,
+    code: str,
+) -> VatExemption | None:
+    """Find the best matching VAT exemption for a 10-digit code.
+
+    Tries prefixes from longest (exact match) to shortest.
+    Only returns exemptions with valid date range (or no dates set).
+    """
+    today = dt.date.today()
+    # Generate prefixes: '3004201000', '300420100', ..., '30', '3'
+    prefixes = [code[:i] for i in range(len(code), 0, -1)]
+
+    result = await session.execute(
+        select(VatExemption).where(
+            VatExemption.code_pattern.in_(prefixes),
+            (VatExemption.valid_from.is_(None)) | (VatExemption.valid_from <= today),
+            (VatExemption.valid_to.is_(None)) | (VatExemption.valid_to >= today),
+        )
+    )
+    rows = list(result.scalars().all())
+    if not rows:
+        return None
+
+    # Return the most specific match (longest code_pattern)
+    rows.sort(key=lambda r: len(r.code_pattern), reverse=True)
+    return rows[0]
+
+
+# ── Excise rates ────────────────────────────────────────────────────────────
+
+async def get_excise_rate(
+    session: AsyncSession,
+    code: str,
+) -> ExciseRate | None:
+    """Find the best matching excise rate for a 10-digit code.
+
+    Same prefix-match logic as get_vat_exemption: longest matching pattern wins.
+    Returns None if the product is not subject to excise tax.
+    """
+    today = dt.date.today()
+    prefixes = [code[:i] for i in range(len(code), 0, -1)]
+
+    result = await session.execute(
+        select(ExciseRate).where(
+            ExciseRate.code_pattern.in_(prefixes),
+            (ExciseRate.valid_from.is_(None)) | (ExciseRate.valid_from <= today),
+            (ExciseRate.valid_to.is_(None)) | (ExciseRate.valid_to >= today),
+        )
+    )
+    rows = list(result.scalars().all())
+    if not rows:
+        return None
+
+    rows.sort(key=lambda r: len(r.code_pattern), reverse=True)
+    return rows[0]
 
 
 # ── Session persistence ─────────────────────────────────────────────────────

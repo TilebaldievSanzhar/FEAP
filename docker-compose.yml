@@ -53,7 +53,9 @@ services:
         python scripts/parse_excel.py &&
         python scripts/build_tree.py &&
         python scripts/parse_opi.py &&
-        python scripts/seed_db.py
+        python scripts/seed_db.py &&
+        python scripts/seed_vat_exemptions.py &&
+        python scripts/seed_excise_rates.py
       "
     profiles:
       - seed

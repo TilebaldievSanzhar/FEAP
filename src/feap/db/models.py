@@ -64,6 +64,74 @@ class TnvedNode(Base):
         return f"<TnvedNode {self.code} L{self.level} '{self.name[:40]}'>"
 
 
+# ── Освобождения от НДС ──────────────────────────────────────────────────────
+
+class VatExemption(Base):
+    __tablename__ = "vat_exemptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code_pattern: Mapped[str] = mapped_column(
+        String(10), nullable=False,
+        comment="Code or prefix, e.g. '3004' matches all 3004*",
+    )
+    exemption_type: Mapped[str] = mapped_column(
+        String(10), nullable=False,
+        comment="full | reduced",
+    )
+    rate_override: Mapped[str | None] = mapped_column(
+        String(20), comment="e.g. '0%' for full exemption",
+    )
+    legal_ref: Mapped[str] = mapped_column(Text, nullable=False)
+    note: Mapped[str | None] = mapped_column(Text)
+    valid_from: Mapped[dt.date | None] = mapped_column(Date)
+    valid_to: Mapped[dt.date | None] = mapped_column(Date)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_vat_exemption_code_pattern", "code_pattern"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<VatExemption {self.code_pattern} {self.exemption_type}>"
+
+
+# ── Ставки акцизов ──────────────────────────────────────────────────────────
+
+class ExciseRate(Base):
+    __tablename__ = "excise_rates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code_pattern: Mapped[str] = mapped_column(
+        String(14), nullable=False,
+        comment="TNVED code or prefix, e.g. '2203' or '271012'",
+    )
+    product_name: Mapped[str] = mapped_column(Text, nullable=False)
+    rate: Mapped[str] = mapped_column(
+        String(50), nullable=False,
+        comment="Rate amount, e.g. '300', '10000'",
+    )
+    rate_unit: Mapped[str] = mapped_column(
+        String(50), nullable=False,
+        comment="Unit: сом/литр, сом/тонну, сом/1000 шт, сом/кг, сом/шт",
+    )
+    legal_ref: Mapped[str] = mapped_column(Text, nullable=False)
+    note: Mapped[str | None] = mapped_column(Text)
+    valid_from: Mapped[dt.date | None] = mapped_column(Date)
+    valid_to: Mapped[dt.date | None] = mapped_column(Date)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_excise_rate_code_pattern", "code_pattern"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<ExciseRate {self.code_pattern} {self.rate} {self.rate_unit}>"
+
+
 # ── Примечания к разделам / группам ──────────────────────────────────────────
 
 class TnvedNote(Base):

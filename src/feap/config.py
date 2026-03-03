@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     SESSION_TTL_MINUTES: int = 30
     SESSION_MAX_ANSWERS: int = 3
 
+    # --- Tax (Kyrgyzstan) ---
+    VAT_RATE_DEFAULT: str = "12%"
+
     # Sync URL for Alembic / scripts
     @property
     def database_url_sync(self) -> str:
