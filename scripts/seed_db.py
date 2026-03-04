@@ -20,6 +20,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 TREE_PATH = PROJECT_ROOT / "data" / "parsed" / "tree.json"
 OPI_PATH = PROJECT_ROOT / "data" / "parsed" / "opi_rules.json"
 EXPLANATORY_PATH = PROJECT_ROOT / "data" / "parsed" / "explanatory_notes.json"
+UNITS_PATH = PROJECT_ROOT / "data" / "parsed" / "units.json"
 
 
 def seed_tree(conn, nodes: list[dict]) -> None:
@@ -111,6 +112,30 @@ def seed_explanatory_notes(conn, records: list[dict]) -> None:
         print(f"  Inserted {min(i + batch_size, len(records))}/{len(records)}")
 
 
+def seed_units(conn, units: dict[str, str | None]) -> None:
+    from sqlalchemy import text
+
+    # Set unit_primary = 'кг' for all rows
+    conn.execute(text("UPDATE tnved_tree SET unit_primary = 'кг'"))
+
+    # Batch-update unit_secondary by code
+    batch_size = 1000
+    items = [(code, unit) for code, unit in units.items() if unit is not None]
+    for i in range(0, len(items), batch_size):
+        batch = items[i : i + batch_size]
+        conn.execute(
+            text("""
+                UPDATE tnved_tree
+                SET unit_secondary = :unit
+                WHERE code = :code
+            """),
+            [{"code": code, "unit": unit} for code, unit in batch],
+        )
+        print(f"  Updated {min(i + batch_size, len(items))}/{len(items)}")
+
+    print(f"  Set unit_primary='кг' for all rows, unit_secondary for {len(items)} codes")
+
+
 def main() -> None:
     from sqlalchemy import create_engine, text
 
@@ -161,6 +186,18 @@ def main() -> None:
     else:
         print(f"Explanatory notes JSON not found at {EXPLANATORY_PATH} — skipping.")
         print("Run: python scripts/parse_explanatory_pdfs.py first.")
+
+    # Units of measurement (idempotent — always runs if file exists)
+    if UNITS_PATH.exists():
+        with open(UNITS_PATH, encoding="utf-8") as f:
+            units = json.load(f)
+        print(f"Loading units of measurement for {len(units)} codes...")
+        with engine.begin() as conn:
+            seed_units(conn, units)
+        print("Units done!")
+    else:
+        print(f"Units JSON not found at {UNITS_PATH} — skipping.")
+        print("Run: python scripts/parse_units.py first.")
 
     engine.dispose()
 
