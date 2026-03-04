@@ -2,16 +2,25 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
     # --- Database ---
     DATABASE_URL: str = "postgresql+asyncpg://feap:feap@localhost:5432/feap"
 
+    # --- LLM Provider ---
+    LLM_PROVIDER: str = "anthropic"  # "anthropic" | "google"
+
     # --- Anthropic ---
     ANTHROPIC_API_KEY: str = ""
-    LLM_MODEL_LIGHT: str = "claude-haiku-4-5-20251001"
-    LLM_MODEL_MEDIUM: str = "claude-sonnet-4-6"
-    LLM_MODEL_HEAVY: str = "claude-opus-4-6"
+    ANTHROPIC_MODEL_LIGHT: str = "claude-haiku-4-5-20251001"
+    ANTHROPIC_MODEL_MEDIUM: str = "claude-sonnet-4-6"
+    ANTHROPIC_MODEL_HEAVY: str = "claude-opus-4-6"
+
+    # --- Google Gemini ---
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL_LIGHT: str = "gemini-2.5-flash-lite"
+    GEMINI_MODEL_MEDIUM: str = "gemini-2.5-flash"
+    GEMINI_MODEL_HEAVY: str = "gemini-2.5-pro"
 
     # --- Voyage AI ---
     VOYAGE_API_KEY: str = ""
