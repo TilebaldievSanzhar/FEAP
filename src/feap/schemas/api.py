@@ -64,6 +64,57 @@ class ExciseInfo(BaseModel):
     note: str | None = None
 
 
+# ── Non-tariff measures ──────────────────────────────────────────────────────
+
+class NtmMeasureInfo(BaseModel):
+    """Одна мера нетарифного регулирования."""
+
+    measure_type: str = Field(description="Тип меры: Технический регламент, Лицензирование и т.д.")
+    measure_type_kind: int = Field(description="Kind из TWS.BY R12 (1-13)")
+    name: str = Field(description="Название меры")
+    status: str = Field(
+        default="may_apply",
+        description="applies | may_apply | informational",
+    )
+    qualifier: str | None = Field(
+        default=None,
+        description="Квалификатор из НПА — какие именно товары подпадают",
+    )
+    legal_basis: str | None = None
+    note: str | None = None
+    scope: str = Field(default="eaeu", description="eaeu | national")
+    valid_to: str | None = None
+
+
+class NtmSummary(BaseModel):
+    """Сводка по нетарифным мерам для кода ТН ВЭД."""
+
+    measures: list[NtmMeasureInfo] = Field(default_factory=list)
+    total_count: int = 0
+    has_prohibitions: bool = False
+    has_licensing: bool = False
+    has_technical_regulations: bool = False
+    has_sanitary_control: bool = False
+    has_veterinary_control: bool = False
+    has_phytosanitary_control: bool = False
+    has_marking: bool = False
+    data_source: str | None = None
+    data_date: str | None = None
+    note: str | None = Field(
+        default=None,
+        description="Предупреждение о двойном соответствии код+описание",
+    )
+
+
+class NtmResponse(BaseModel):
+    """Ответ эндпоинта GET /ntm/{code}."""
+
+    code: str
+    code_formatted: str | None = None
+    name: str | None = None
+    ntm: NtmSummary
+
+
 class CodeLookupResponse(BaseModel):
     """Справка по 10-значному коду ТН ВЭД."""
 
@@ -75,3 +126,4 @@ class CodeLookupResponse(BaseModel):
     excise: ExciseInfo
     unit_primary: str | None = None
     unit_secondary: str | None = None
+    ntm: NtmSummary | None = None

@@ -35,9 +35,15 @@ class Level4Subposition(BaseCascadeLevel):
         if len(subpositions_data) == 1:
             sp = subpositions_data[0]
             state.subposition = sp["code"]
+            from feap.schemas.subposition import SubpositionCandidate
             result = SubpositionResult(
                 position=position_code,
-                candidates=[],
+                candidates=[SubpositionCandidate(
+                    subposition=sp["code"],
+                    subposition_text=sp["name"],
+                    reasoning="Единственная субпозиция в данной позиции",
+                    confidence=1.0,
+                )],
                 selected_subposition=sp["code"],
                 applied_rules=["Auto-selected (single subposition)"],
                 confidence=1.0,

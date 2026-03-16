@@ -199,6 +199,39 @@ def main() -> None:
         print(f"Units JSON not found at {UNITS_PATH} — skipping.")
         print("Run: python scripts/parse_units.py first.")
 
+    # NTM measure types (reference data, 13 types)
+    with engine.connect() as conn:
+        ntm_count = conn.execute(text("SELECT COUNT(*) FROM ntm_measure_types")).scalar()
+
+    if ntm_count and ntm_count > 0:
+        print(f"ntm_measure_types already contains {ntm_count} rows — skipping.")
+    else:
+        from seed_ntm_types import NTM_MEASURE_TYPES
+
+        print(f"Seeding {len(NTM_MEASURE_TYPES)} NTM measure types...")
+        with engine.begin() as conn:
+            conn.execute(
+                text("""
+                    INSERT INTO ntm_measure_types (kind, name_ru, name_en, category, direction)
+                    VALUES (:kind, :name_ru, :name_en, :category, :direction)
+                """),
+                NTM_MEASURE_TYPES,
+            )
+        print("NTM measure types done!")
+
+    # NTM measures and code bindings (from data/ntm_seed.json)
+    with engine.connect() as conn:
+        ntm_measures_count = conn.execute(text("SELECT COUNT(*) FROM ntm_measures")).scalar()
+
+    if ntm_measures_count and ntm_measures_count > 0:
+        print(f"ntm_measures already contains {ntm_measures_count} rows — skipping.")
+    else:
+        from seed_ntm_data import seed_ntm_data
+
+        print("Seeding NTM measures from data/ntm_seed.json...")
+        seed_ntm_data(force=False)
+        print("NTM measures done!")
+
     engine.dispose()
 
 

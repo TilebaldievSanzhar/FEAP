@@ -193,6 +193,83 @@ class OpiRule(Base):
     priority: Mapped[int | None] = mapped_column(Integer)
 
 
+# ── Нетарифные меры (НТР) ────────────────────────────────────────────────────
+
+class NtmMeasureType(Base):
+    __tablename__ = "ntm_measure_types"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[int] = mapped_column(Integer, nullable=False, unique=True, comment="1-13, TWS.BY R12 Kind")
+    name_ru: Mapped[str] = mapped_column(Text, nullable=False)
+    name_en: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[str] = mapped_column(String(30), nullable=False)
+    direction: Mapped[str] = mapped_column(String(10), nullable=False)
+
+    measures: Mapped[list[NtmMeasure]] = relationship("NtmMeasure", back_populates="measure_type")
+
+    def __repr__(self) -> str:
+        return f"<NtmMeasureType {self.kind} '{self.name_ru}'>"
+
+
+class NtmMeasure(Base):
+    __tablename__ = "ntm_measures"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    measure_type_id: Mapped[int] = mapped_column(ForeignKey("ntm_measure_types.id", ondelete="CASCADE"), nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    legal_basis: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
+    additional_info: Mapped[str | None] = mapped_column(Text)
+    valid_from: Mapped[dt.date] = mapped_column(Date, nullable=False)
+    valid_to: Mapped[dt.date | None] = mapped_column(Date)
+    scope: Mapped[str] = mapped_column(String(10), nullable=False, default="eaeu")
+    country_code: Mapped[str | None] = mapped_column(String(2))
+    note: Mapped[str | None] = mapped_column(Text)
+    data_source: Mapped[str | None] = mapped_column(String(30))
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    measure_type: Mapped[NtmMeasureType] = relationship("NtmMeasureType", back_populates="measures")
+    codes: Mapped[list[NtmMeasureCode]] = relationship("NtmMeasureCode", back_populates="measure")
+
+    __table_args__ = (
+        Index("idx_ntm_measures_type", "measure_type_id"),
+        Index("idx_ntm_measures_valid", "valid_from", "valid_to"),
+        Index("idx_ntm_measures_scope", "scope", "country_code"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<NtmMeasure {self.id} '{self.name[:50]}'>"
+
+
+class NtmMeasureCode(Base):
+    __tablename__ = "ntm_measure_codes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    measure_id: Mapped[int] = mapped_column(ForeignKey("ntm_measures.id", ondelete="CASCADE"), nullable=False)
+    code: Mapped[str] = mapped_column(String(10), nullable=False)
+    code_level: Mapped[int] = mapped_column(Integer, nullable=False)
+    product_description: Mapped[str | None] = mapped_column(Text)
+    applies_to_children: Mapped[bool] = mapped_column(Boolean, default=True)
+    valid_from: Mapped[dt.date | None] = mapped_column(Date)
+    valid_to: Mapped[dt.date | None] = mapped_column(Date)
+    note: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    measure: Mapped[NtmMeasure] = relationship("NtmMeasure", back_populates="codes")
+
+    __table_args__ = (
+        Index("idx_ntm_codes_code", "code"),
+        Index("idx_ntm_codes_measure", "measure_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<NtmMeasureCode measure={self.measure_id} code={self.code}>"
+
+
 # ── Сессии классификации ─────────────────────────────────────────────────────
 
 class ClassificationSession(Base):

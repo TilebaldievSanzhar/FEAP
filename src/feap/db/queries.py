@@ -11,6 +11,9 @@ from feap.db.models import (
     ClassificationSession,
     ExciseRate,
     ExplanatoryNote,
+    NtmMeasure,
+    NtmMeasureCode,
+    NtmMeasureType,
     OpiRule,
     TnvedNode,
     TnvedNote,
@@ -218,6 +221,60 @@ async def get_excise_rate(
 
     rows.sort(key=lambda r: len(r.code_pattern), reverse=True)
     return rows[0]
+
+
+# ── Non-tariff measures (NTM) ──────────────────────────────────────────────
+
+async def get_ntm_measures_for_code(
+    session: AsyncSession,
+    code: str,
+) -> list[tuple[NtmMeasure, NtmMeasureCode, NtmMeasureType]]:
+    """Get all active NTM measures applicable to a 10-digit code.
+
+    Checks exact match + all parent prefixes (8, 6, 4, 2 digits) with
+    applies_to_children=True. Filters by valid date range.
+    """
+    today = dt.date.today()
+
+    # Build prefix list: '8509800000', '85098000', '850980', '8509', '85'
+    prefixes = []
+    for length in (10, 8, 6, 4, 2):
+        if length <= len(code):
+            prefixes.append(code[:length])
+
+    stmt = (
+        select(NtmMeasure, NtmMeasureCode, NtmMeasureType)
+        .join(NtmMeasureCode, NtmMeasure.id == NtmMeasureCode.measure_id)
+        .join(NtmMeasureType, NtmMeasure.measure_type_id == NtmMeasureType.id)
+        .where(
+            # Code match: exact or parent with applies_to_children
+            (
+                (NtmMeasureCode.code == code)
+                | (
+                    NtmMeasureCode.code.in_(prefixes)
+                    & NtmMeasureCode.applies_to_children.is_(True)
+                )
+            ),
+            # Measure validity
+            NtmMeasure.valid_from <= today,
+            (NtmMeasure.valid_to.is_(None)) | (NtmMeasure.valid_to >= today),
+            # Code-level validity
+            (NtmMeasureCode.valid_from.is_(None)) | (NtmMeasureCode.valid_from <= today),
+            (NtmMeasureCode.valid_to.is_(None)) | (NtmMeasureCode.valid_to >= today),
+        )
+        .order_by(NtmMeasureType.kind, NtmMeasure.id)
+    )
+
+    result = await session.execute(stmt)
+    return list(result.all())
+
+
+async def get_ntm_measure_types(session: AsyncSession) -> list[NtmMeasureType]:
+    """Get all NTM measure types."""
+    result = await session.execute(
+        select(NtmMeasureType).order_by(NtmMeasureType.kind)
+    )
+    return list(result.scalars().all())
 
 
 # ── Session persistence ─────────────────────────────────────────────────────

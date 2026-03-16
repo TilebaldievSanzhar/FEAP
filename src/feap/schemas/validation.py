@@ -23,7 +23,6 @@ class ClassificationResult(BaseModel):
     code_description: str
     duty_rate: str | None = None
     vat_rate: str | None = None
-    non_tariff_measures: list[str] = Field(default_factory=list)
     classification_chain: ClassificationChain
     opi_applied: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)

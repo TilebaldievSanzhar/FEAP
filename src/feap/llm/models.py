@@ -12,6 +12,7 @@ LEVEL_TIER: dict[int, str] = {
     3: "heavy",   # Position (2-step process)
     4: "medium",  # Subposition
     5: "light",   # Subsubposition
+    99: "light",  # NTM verification (dual matching)
 }
 
 # Max tokens per level
@@ -22,6 +23,7 @@ LEVEL_MAX_TOKENS: dict[int, int] = {
     3: 4096,
     4: 2048,
     5: 1024,
+    99: 2048,  # NTM verification
 }
 
 

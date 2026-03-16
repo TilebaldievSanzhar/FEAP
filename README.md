@@ -4,18 +4,26 @@
 
 Система последовательно спускается по дереву номенклатуры (раздел → группа → позиция → субпозиция → подсубпозиция), на каждом шаге вызывая LLM с релевантным контекстом: примечаниями, пояснениями и ОПИ. При обнаружении исключений запускается backtracking.
 
+Отдельный модуль **нетарифного регулирования (НТР)** определяет применимые меры (технические регламенты, лицензирование, санитарный контроль и др.) с LLM-верификацией двойного соответствия (код + описание товара).
+
 ## Архитектура
 
 ```
 Пользователь
     │
-    ▼
- FastAPI  ──►  Cascade Orchestrator
-                  │
-        ┌─────────┼─────────────┐
-        ▼         ▼             ▼
-   Anthropic   PostgreSQL    Voyage AI
-    (Claude)   + pgvector   (embeddings)
+    ├──► POST /classify ──► Cascade Orchestrator ──► 10-значный код
+    │                            │
+    │                  ┌─────────┼─────────────┐
+    │                  ▼         ▼             ▼
+    │             Anthropic   PostgreSQL    Voyage AI
+    │              (Claude)   + pgvector   (embeddings)
+    │
+    └──► POST /ntm/verify ──► NTM Verifier ──► меры НТР + статусы
+                                  │
+                            ┌─────┴─────┐
+                            ▼           ▼
+                        PostgreSQL    LLM (light)
+                        (ntm_*)    (двойное соответствие)
 ```
 
 ### Каскад классификации
@@ -33,7 +41,7 @@
 
 - **Python 3.12+** / FastAPI / Uvicorn
 - **PostgreSQL 17** + pgvector (векторный поиск)
-- **Anthropic Claude** — каскадная классификация (Structured Outputs)
+- **Anthropic Claude / Google Gemini** — каскадная классификация (Structured Outputs)
 - **Voyage AI** — эмбеддинги для RAG
 - **SQLAlchemy 2.0** (async) + Alembic (миграции)
 - **Jinja2** — шаблоны промптов
@@ -63,12 +71,16 @@ FEAP/
 │   │   ├── registry.py        # Реестр шаблонов
 │   │   ├── assembler.py       # Сборка system + user
 │   │   └── templates/         # Jinja2-шаблоны
-│   ├── llm/                   # Клиент Anthropic API
+│   ├── llm/                   # Мульти-провайдер LLM (Anthropic / Gemini)
+│   ├── ntm/                   # Нетарифное регулирование
+│   │   ├── schemas.py         # Pydantic-схемы верификации
+│   │   └── verifier.py        # LLM-верификация двойного соответствия
 │   └── rag/                   # RAG (эмбеддинги + поиск)
 ├── scripts/                   # Подготовка данных
 │   ├── parse_excel.py         # Excel → JSON
 │   ├── build_tree.py          # Построение дерева
-│   ├── seed_db.py             # Загрузка в БД
+│   ├── seed_db.py             # Загрузка в БД (дерево, ОПИ, НТР)
+│   ├── seed_ntm_data.py       # Загрузка мер НТР из data/ntm_seed.json
 │   └── ...                    # Парсинг PDF, генерация эмбеддингов
 ├── migrations/                # Alembic-миграции
 ├── tests/                     # Тесты (pytest)
@@ -118,8 +130,10 @@ docker compose run --rm seed
 >
 > **Что делает `seed`:** парсит Excel с 13 279 листовыми кодами → строит иерархию
 > (21 раздел → 96 групп → 1 228 позиций → 5 612 субпозиций → листья) → загружает
-> в `tnved_tree`. Также загружает правила ОПИ 1–6 в `tnved_opi`. Безопасно
-> запускать повторно — пропустит таблицы, в которых уже есть данные.
+> в `tnved_tree`. Также загружает правила ОПИ 1–6 в `tnved_opi`, 13 типов
+> нетарифных мер в `ntm_measure_types` и 36 мер НТР (ТР, лицензии, санитарный
+> контроль и др.) с 157 привязками к кодам в `ntm_measures` / `ntm_measure_codes`.
+> Безопасно запускать повторно — пропустит таблицы, в которых уже есть данные.
 
 Приложение доступно по адресу: **http://localhost:8000**
 
@@ -232,9 +246,32 @@ docker compose run --rm seed python scripts/generate_embeddings.py
 
 Лимит уточнений на сессию: `SESSION_MAX_ANSWERS` (по умолчанию 3). Сессия хранится `SESSION_TTL_MINUTES` минут (по умолчанию 30).
 
+### `GET /api/v1/ntm/{code}`
+
+Нетарифные меры для 10-значного кода (lookup по коду, без LLM-верификации). Возвращает все потенциально применимые меры со статусом `may_apply`.
+
+### `POST /api/v1/ntm/verify`
+
+LLM-верификация двойного соответствия — определяет, какие меры НТР реально применяются к конкретному товару.
+
+```json
+{
+  "code": "8509800000",
+  "product_description": "Электрическая зубная щётка, 3.7V, аккумулятор Li-Ion"
+}
+```
+
+Для каждой меры LLM сопоставляет описание товара с квалификатором из НПА и возвращает один из статусов: `applies` (применяется), `does_not_apply` (не применяется) или `uncertain` (недостаточно данных).
+
+Подробная документация: [`docs/ntm_implementation.md`](docs/ntm_implementation.md)
+
 ### `GET /api/v1/tnved/tree?level=0`
 
 Навигация по дереву ТН ВЭД. Параметры: `level` (уровень) или `parent_code` (потомки узла).
+
+### `GET /api/v1/tnved/lookup/{code}`
+
+Справка по 10-значному коду: тариф, НДС, акциз, нетарифные меры (code-only lookup).
 
 ### `GET /api/v1/tnved/code/{code}`
 
@@ -283,9 +320,10 @@ pytest
 | Переменная          | Описание                        | По умолчанию |
 |---------------------|---------------------------------|--------------|
 | `ANTHROPIC_API_KEY` | API-ключ Anthropic Claude       | — (обязательно) |
-| `LLM_MODEL_LIGHT`  | Модель для простых уровней (L0, L1, L5) | `claude-haiku-4-5-20251001` |
-| `LLM_MODEL_MEDIUM` | Модель для средних уровней (L2, L4)     | `claude-sonnet-4-6` |
-| `LLM_MODEL_HEAVY`  | Модель для сложного уровня (L3 — позиция) | `claude-opus-4-6` |
+| `LLM_PROVIDER`     | Провайдер LLM (`anthropic` или `google`) | `anthropic` |
+| `ANTHROPIC_MODEL_LIGHT`  | Модель для простых уровней (L0, L1, L5, NTM verify) | `claude-haiku-4-5-20251001` |
+| `ANTHROPIC_MODEL_MEDIUM` | Модель для средних уровней (L2, L4)     | `claude-sonnet-4-6` |
+| `ANTHROPIC_MODEL_HEAVY`  | Модель для сложного уровня (L3 — позиция) | `claude-opus-4-6` |
 
 ### Voyage AI (эмбеддинги)
 

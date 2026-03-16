@@ -13,7 +13,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import CascadeState
-from feap.db.queries import get_ancestors, get_leaf_by_code
+from feap.db.queries import get_leaf_by_code
 from feap.schemas.common import DecisionChainEntry
 from feap.schemas.validation import ClassificationChain, ClassificationResult
 
