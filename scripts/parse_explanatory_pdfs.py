@@ -25,9 +25,12 @@ OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "explanatory_notes.json"
 
 # ── Regex patterns ──────────────────────────────────────────────────────────
 
-POSITION_HEADER = re.compile(r"^(\d{2})\.(\d{2})\b")
+# Position header: 4-digit code like "8501" (standalone or followed by non-digit text)
+# Matches: "8501", "8503  Части, предназначенные...", "85.01"
+# Does NOT match subpositions: "8501 10 – двигатели..." (digit after space)
+POSITION_HEADER = re.compile(r"^(\d{2})[\.\s]*(\d{2})(?:\s+\D|\s*$)")
 
-SUBPOSITION_HEADER = re.compile(r"^(\d{4})\.(\d{2})\b")
+SUBPOSITION_HEADER = re.compile(r"^(\d{4})[\.\s]*(\d{2})\b")
 
 # Excludes markers (checked BEFORE includes, because "не включаются" contains "включаются")
 EXCLUDES_MARKERS = re.compile(
@@ -85,6 +88,14 @@ def split_into_positions(text: str, group_code: str) -> list[dict]:
             group_from_header = match.group(1)
             pos_suffix = match.group(2)
             code = f"{group_from_header}{pos_suffix}"
+
+            # Only accept codes from this group (skip page numbers etc)
+            if group_from_header != group_code:
+                if current:
+                    current["_lines"].append(line)
+                elif not found_first_position:
+                    general_lines.append(line)
+                continue
 
             if current:
                 current["content"] = "\n".join(current["_lines"])

@@ -10,6 +10,7 @@ venv/
 .env.example
 *.db
 data/pdfs/
+data/ett_pdfs/
 data/parsed/
 .idea/
 .vscode/

@@ -11,5 +11,5 @@ __pycache__
 .env.example
 nul
 data/pdfs
-data/parsed
+data/ett_pdfs
 benchmark

@@ -77,11 +77,13 @@ FEAP/
 │   │   └── verifier.py        # LLM-верификация двойного соответствия
 │   └── rag/                   # RAG (эмбеддинги + поиск)
 ├── scripts/                   # Подготовка данных
-│   ├── parse_excel.py         # Excel → JSON
-│   ├── build_tree.py          # Построение дерева
+│   ├── download_ett_pdfs.py   # Скачивание 96 PDF номенклатуры с ЕЭК
+│   ├── parse_ett_nomenclature.py # PDF → nomenclature.json (имена + виртуальные узлы)
+│   ├── parse_excel.py         # TWS Excel → leaves.json (ставки)
+│   ├── build_tree.py          # nomenclature.json + leaves.json → tree.json
 │   ├── seed_db.py             # Загрузка в БД (дерево, ОПИ, НТР)
 │   ├── seed_ntm_data.py       # Загрузка мер НТР из data/ntm_seed.json
-│   └── ...                    # Парсинг PDF, генерация эмбеддингов
+│   └── ...                    # Парсинг PDF пояснений, генерация эмбеддингов
 ├── migrations/                # Alembic-миграции
 ├── tests/                     # Тесты (pytest)
 ├── data/                      # Данные (Excel, PDF, JSON)
@@ -128,8 +130,9 @@ docker compose run --rm seed
 > 2. Автоматически применяются Alembic-миграции (`migrate`) — создаются все таблицы
 > 3. Стартует FastAPI-приложение (`app`) — только после успешных миграций
 >
-> **Что делает `seed`:** парсит Excel с 13 279 листовыми кодами → строит иерархию
-> (21 раздел → 96 групп → 1 228 позиций → 5 612 субпозиций → листья) → загружает
+> **Что делает `seed`:** берёт `nomenclature.json` (имена из PDF ЕЭК) и
+> `leaves.json` (ставки из TWS Excel) → строит иерархию (21 раздел → 96 групп →
+> 1 228 позиций → 5 612 субпозиций → 13 279 листьев = 20 236 узлов) → загружает
 > в `tnved_tree`. Также загружает правила ОПИ 1–6 в `tnved_opi`, 13 типов
 > нетарифных мер в `ntm_measure_types` и 36 мер НТР (ТР, лицензии, санитарный
 > контроль и др.) с 157 привязками к кодам в `ntm_measures` / `ntm_measure_codes`.
@@ -151,13 +154,17 @@ docker compose exec db psql -U feap -d feap \
   -c "SELECT level, COUNT(*) FROM tnved_tree GROUP BY level ORDER BY level;"
 ```
 
-### 4. Обновление
+### 4. Обновление номенклатуры
 
 ```bash
 # После изменений кода — пересборка и рестарт (миграции применятся автоматически)
 docker compose up -d --build
 
-# После обновления Excel-файла номенклатуры — принудительная перезагрузка
+# После обновления номенклатуры ЕЭК:
+python scripts/download_ett_pdfs.py        # Скачать обновлённые PDF
+python scripts/parse_ett_nomenclature.py   # Пересобрать nomenclature.json
+# (если изменились ставки — также обновить Excel и запустить parse_excel.py)
+python scripts/build_tree.py               # Пересобрать tree.json
 docker compose exec db psql -U feap -d feap -c "TRUNCATE tnved_tree CASCADE; TRUNCATE tnved_opi;"
 docker compose run --rm seed
 ```
@@ -290,10 +297,12 @@ docker compose up -d db
 # Миграции
 alembic upgrade head
 
-# Загрузка данных
-python scripts/parse_excel.py
-python scripts/build_tree.py
-python scripts/seed_db.py
+# Загрузка данных (разовый процесс)
+python scripts/download_ett_pdfs.py        # Скачать 96 PDF номенклатуры с ЕЭК
+python scripts/parse_ett_nomenclature.py   # PDF → nomenclature.json
+python scripts/parse_excel.py              # TWS Excel → leaves.json (ставки)
+python scripts/build_tree.py               # Собрать tree.json
+python scripts/seed_db.py                  # Загрузить в БД
 
 # Запуск сервера
 uvicorn feap.main:app --reload

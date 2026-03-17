@@ -1,18 +1,19 @@
-"""Build hierarchical tree from flat 10-digit leaf codes.
+"""Build hierarchical tree from nomenclature.json + leaves.json.
 
-Reads data/parsed/leaves.json + data/reference/sections.json.
-Produces data/parsed/tree.json — full tree ready for DB seeding.
+Reads:
+  data/parsed/nomenclature.json — names for all hierarchy levels (from EEC PDFs)
+  data/parsed/leaves.json       — leaf codes + duty rates (from TWS Excel)
+  data/reference/sections.json  — section definitions
+
+Produces:
+  data/parsed/tree.json — full tree ready for DB seeding
 
 Hierarchy levels:
-  0 = Section (I-XXI) — from sections.json
+  0 = Section (I-XXI)
   1 = Group (2 digits: 01-97)
   2 = Position (4 digits)
   3 = Subposition (6 digits)
-  4 = Subsubposition (10 digits = leaf)
-
-Note: 8-digit level is skipped when it equals 6-digit + "00" (no branching).
-Only creates 8-digit intermediate nodes when there are multiple 10-digit children
-under the same 8-digit prefix AND the 8-digit prefix differs from 6-digit+"00XX".
+  4 = Leaf (10 digits)
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 LEAVES_PATH = PROJECT_ROOT / "data" / "parsed" / "leaves.json"
 SECTIONS_PATH = PROJECT_ROOT / "data" / "reference" / "sections.json"
+NOMENCLATURE_PATH = PROJECT_ROOT / "data" / "parsed" / "nomenclature.json"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "tree.json"
 
 
@@ -38,32 +40,20 @@ def load_leaves() -> list[dict]:
         return json.load(f)
 
 
+def load_nomenclature() -> dict:
+    if not NOMENCLATURE_PATH.exists():
+        raise FileNotFoundError(
+            f"{NOMENCLATURE_PATH} not found — run parse_ett_nomenclature.py first"
+        )
+    with open(NOMENCLATURE_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
 def group_to_section(group_num: int, sections: list[dict]) -> dict | None:
     for s in sections:
         if s["groups_from"] <= group_num <= s["groups_to"]:
             return s
     return None
-
-
-def infer_parent_name(leaves_in_scope: list[dict], part_index: int) -> str:
-    """Infer name of a parent node from the name_parts of its children.
-
-    The name_parts in the Excel follow a hierarchy where earlier parts
-    describe higher-level groupings. We take the most common first part
-    among children.
-    """
-    names: dict[str, int] = defaultdict(int)
-    for leaf in leaves_in_scope:
-        parts = leaf["name_parts"]
-        if len(parts) > part_index:
-            name = parts[part_index]
-            # Clean trailing colons and whitespace
-            name = name.rstrip(":").strip()
-            names[name] += 1
-    if not names:
-        return ""
-    # Return the most common name
-    return max(names, key=lambda k: names[k])
 
 
 def clean_date_suffix(name: str) -> str:
@@ -73,8 +63,12 @@ def clean_date_suffix(name: str) -> str:
 def build_tree() -> list[dict]:
     sections = load_sections()
     leaves = load_leaves()
+    nom = load_nomenclature()
+    nom_groups = nom.get("groups", {})
+    nom_positions = nom.get("positions", {})
+    nom_subpositions = nom.get("subpositions", {})
 
-    # Group leaves by their hierarchy codes
+    # Group leaves by hierarchy codes
     by_group: dict[str, list[dict]] = defaultdict(list)
     by_position: dict[str, list[dict]] = defaultdict(list)
     by_subposition: dict[str, list[dict]] = defaultdict(list)
@@ -87,11 +81,10 @@ def build_tree() -> list[dict]:
     nodes: list[dict] = []
     node_id = 0
 
-    # ID tracking for parent references
-    section_ids: dict[str, int] = {}  # roman -> id
-    group_ids: dict[str, int] = {}    # "01" -> id
-    position_ids: dict[str, int] = {} # "0101" -> id
-    subpos_ids: dict[str, int] = {}   # "010121" -> id
+    section_ids: dict[str, int] = {}
+    group_ids: dict[str, int] = {}
+    position_ids: dict[str, int] = {}
+    subpos_ids: dict[str, int] = {}
 
     # Level 0: Sections
     for sec in sections:
@@ -119,10 +112,8 @@ def build_tree() -> list[dict]:
             print(f"WARNING: No section for group {group_code}")
             continue
 
-        group_leaves = by_group[group_code]
-        # Infer group name from the first name_part of its leaves
-        # The first part often contains the group-level description
-        name = infer_parent_name(group_leaves, 0)
+        # Name from nomenclature (EEC PDF)
+        name = nom_groups.get(group_code, {}).get("name", "")
         if not name:
             name = f"Группа {group_code}"
 
@@ -148,10 +139,8 @@ def build_tree() -> list[dict]:
         if group_code not in group_ids:
             continue
 
-        pos_leaves = by_position[pos_code]
-        # Position name is typically at index 0 of name_parts
-        # but for 4-digit positions, it could be the full first segment
-        name = infer_parent_name(pos_leaves, 0)
+        # Name from nomenclature
+        name = nom_positions.get(pos_code, {}).get("name", "")
         if not name:
             name = f"Позиция {pos_code}"
 
@@ -183,12 +172,11 @@ def build_tree() -> list[dict]:
         if pos_code not in position_ids:
             continue
 
-        subpos_leaves = by_subposition[subpos_code]
-        # Subposition name: try to get a meaningful name
-        # Often at name_parts index 1 (after position name)
-        name = infer_parent_name(subpos_leaves, 1)
+        # Name from nomenclature — full_name includes virtual parents
+        sp_data = nom_subpositions.get(subpos_code, {})
+        name = sp_data.get("full_name", "")
         if not name:
-            name = infer_parent_name(subpos_leaves, 0)
+            name = sp_data.get("own_name", "")
         if not name:
             name = f"Субпозиция {subpos_code}"
 
@@ -216,7 +204,6 @@ def build_tree() -> list[dict]:
     for leaf in leaves:
         subpos_code = leaf["subposition_code"]
         if subpos_code not in subpos_ids:
-            # Try to find or create parent
             continue
 
         parent_node = next((n for n in nodes if n["id"] == subpos_ids[subpos_code]), None)

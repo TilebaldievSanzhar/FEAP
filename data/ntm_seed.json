@@ -1,0 +1,455 @@
+{
+  "_comment": "Seed data for NTM measures. Source: EEC decisions, research doc nontariff_regulation_research.md",
+  "_updated": "2026-03-06",
+  "measures": [
+    {
+      "name": "ТР ТС 001/2011 О безопасности железнодорожного подвижного состава",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 15.07.2011 № 710",
+      "valid_from": "2014-08-02",
+      "codes": [
+        {"code": "86", "level": 1, "description": "Железнодорожные локомотивы, вагоны и их части", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 002/2011 О безопасности высокоскоростного железнодорожного транспорта",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 15.07.2011 № 710",
+      "valid_from": "2014-08-02",
+      "codes": [
+        {"code": "86", "level": 1, "description": "Высокоскоростной железнодорожный подвижной состав", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 003/2011 О безопасности инфраструктуры железнодорожного транспорта",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 15.07.2011 № 710",
+      "valid_from": "2014-08-02",
+      "codes": [
+        {"code": "73", "level": 1, "description": "Рельсы и элементы ж/д инфраструктуры", "applies_to_children": true},
+        {"code": "86", "level": 1, "description": "Ж/д инфраструктура", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 004/2011 О безопасности низковольтного оборудования",
+      "kind": 6,
+      "legal_basis": "Решение Коллегии ЕЭК № 91 от 24.04.2013",
+      "valid_from": "2013-04-24",
+      "codes": [
+        {"code": "84", "level": 1, "description": "Электрическое оборудование бытовое и промышленное, работающее от сети 50-1000В переменного тока или 75-1500В постоянного тока", "applies_to_children": true},
+        {"code": "85", "level": 1, "description": "Электрические машины и оборудование, работающее от сети 50-1000В переменного тока или 75-1500В постоянного тока", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 005/2011 О безопасности упаковки",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 16.08.2011 № 769",
+      "valid_from": "2012-07-01",
+      "codes": [
+        {"code": "39", "level": 1, "description": "Упаковка из пластмасс", "applies_to_children": true},
+        {"code": "44", "level": 1, "description": "Упаковка из древесины", "applies_to_children": true},
+        {"code": "48", "level": 1, "description": "Упаковка из бумаги и картона", "applies_to_children": true},
+        {"code": "70", "level": 1, "description": "Упаковка из стекла", "applies_to_children": true},
+        {"code": "73", "level": 1, "description": "Упаковка из черных металлов", "applies_to_children": true},
+        {"code": "76", "level": 1, "description": "Упаковка из алюминия", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 006/2011 О безопасности пиротехнических изделий",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 16.08.2011 № 770",
+      "valid_from": "2012-02-15",
+      "codes": [
+        {"code": "36", "level": 1, "description": "Пиротехнические изделия", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 007/2011 О безопасности продукции, предназначенной для детей и подростков",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 23.09.2011 № 797",
+      "valid_from": "2012-07-01",
+      "codes": [
+        {"code": "32", "level": 1, "description": "Краски, лаки для детских товаров", "applies_to_children": true},
+        {"code": "34", "level": 1, "description": "Моющие средства для детей", "applies_to_children": true},
+        {"code": "39", "level": 1, "description": "Изделия из пластмасс для детей", "applies_to_children": true},
+        {"code": "40", "level": 1, "description": "Изделия из резины для детей", "applies_to_children": true},
+        {"code": "42", "level": 1, "description": "Кожаные изделия для детей (ранцы, сумки)", "applies_to_children": true},
+        {"code": "43", "level": 1, "description": "Меховые изделия для детей", "applies_to_children": true},
+        {"code": "48", "level": 1, "description": "Бумажная продукция для детей (тетради, альбомы)", "applies_to_children": true},
+        {"code": "61", "level": 1, "description": "Одежда трикотажная детская", "applies_to_children": true},
+        {"code": "62", "level": 1, "description": "Одежда текстильная детская", "applies_to_children": true},
+        {"code": "63", "level": 1, "description": "Текстильные изделия для детей (постельное белье)", "applies_to_children": true},
+        {"code": "64", "level": 1, "description": "Обувь детская", "applies_to_children": true},
+        {"code": "65", "level": 1, "description": "Головные уборы детские", "applies_to_children": true},
+        {"code": "87", "level": 1, "description": "Коляски детские", "applies_to_children": true},
+        {"code": "94", "level": 1, "description": "Мебель детская", "applies_to_children": true},
+        {"code": "95", "level": 1, "description": "Товары для детей (кроме игрушек)", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 008/2011 О безопасности игрушек",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 23.09.2011 № 798",
+      "valid_from": "2012-07-01",
+      "codes": [
+        {"code": "95", "level": 1, "description": "Игрушки и игры", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 009/2011 О безопасности парфюмерно-косметической продукции",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 23.09.2011 № 799",
+      "valid_from": "2012-07-01",
+      "codes": [
+        {"code": "33", "level": 1, "description": "Парфюмерно-косметическая продукция", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 010/2011 О безопасности машин и оборудования",
+      "kind": 6,
+      "legal_basis": "Решение Коллегии ЕЭК № 6 от 16.01.2018",
+      "valid_from": "2011-10-18",
+      "codes": [
+        {"code": "84", "level": 1, "description": "Машины и механическое оборудование", "applies_to_children": true},
+        {"code": "85", "level": 1, "description": "Электрические машины и оборудование промышленного назначения", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 011/2011 Безопасность лифтов",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 18.10.2011 № 824",
+      "valid_from": "2013-04-18",
+      "codes": [
+        {"code": "8428", "level": 2, "description": "Лифты, эскалаторы, подъемники", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 012/2011 О безопасности оборудования для работы во взрывоопасных средах",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 18.10.2011 № 825",
+      "valid_from": "2013-02-15",
+      "codes": [
+        {"code": "84", "level": 1, "description": "Оборудование для взрывоопасных сред", "applies_to_children": true},
+        {"code": "85", "level": 1, "description": "Электрооборудование для взрывоопасных сред", "applies_to_children": true},
+        {"code": "90", "level": 1, "description": "Измерительные приборы для взрывоопасных сред", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 013/2011 О требованиях к автомобильному и авиационному бензину, дизельному топливу, мазуту",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 18.10.2011 № 826",
+      "valid_from": "2012-12-31",
+      "codes": [
+        {"code": "2710", "level": 2, "description": "Нефтепродукты: бензин, дизельное топливо, мазут", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 015/2011 О безопасности зерна",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 09.12.2011 № 874",
+      "valid_from": "2013-07-01",
+      "codes": [
+        {"code": "10", "level": 1, "description": "Зерно злаковых культур", "applies_to_children": true},
+        {"code": "11", "level": 1, "description": "Продукция мукомольной промышленности", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 016/2011 О безопасности аппаратов, работающих на газообразном топливе",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 09.12.2011 № 875",
+      "valid_from": "2013-02-15",
+      "codes": [
+        {"code": "7321", "level": 2, "description": "Плиты газовые, горелки, камины", "applies_to_children": true},
+        {"code": "8416", "level": 2, "description": "Горелки газовые промышленные", "applies_to_children": true},
+        {"code": "8419", "level": 2, "description": "Водонагреватели газовые", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 017/2011 О безопасности продукции легкой промышленности",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 09.12.2011 № 876",
+      "valid_from": "2012-07-01",
+      "codes": [
+        {"code": "42", "level": 1, "description": "Кожаные изделия", "applies_to_children": true},
+        {"code": "43", "level": 1, "description": "Меховые изделия", "applies_to_children": true},
+        {"code": "50", "level": 1, "description": "Шелковые ткани", "applies_to_children": true},
+        {"code": "51", "level": 1, "description": "Шерстяные ткани", "applies_to_children": true},
+        {"code": "52", "level": 1, "description": "Хлопчатобумажные ткани", "applies_to_children": true},
+        {"code": "53", "level": 1, "description": "Прочие растительные текстильные волокна", "applies_to_children": true},
+        {"code": "54", "level": 1, "description": "Химические нити", "applies_to_children": true},
+        {"code": "55", "level": 1, "description": "Химические волокна", "applies_to_children": true},
+        {"code": "56", "level": 1, "description": "Войлок, нетканые материалы", "applies_to_children": true},
+        {"code": "57", "level": 1, "description": "Ковры и текстильные напольные покрытия", "applies_to_children": true},
+        {"code": "58", "level": 1, "description": "Специальные ткани", "applies_to_children": true},
+        {"code": "59", "level": 1, "description": "Пропитанные текстильные материалы", "applies_to_children": true},
+        {"code": "60", "level": 1, "description": "Трикотажные полотна", "applies_to_children": true},
+        {"code": "61", "level": 1, "description": "Одежда трикотажная", "applies_to_children": true},
+        {"code": "62", "level": 1, "description": "Одежда текстильная", "applies_to_children": true},
+        {"code": "63", "level": 1, "description": "Прочие текстильные изделия", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 018/2011 О безопасности колесных транспортных средств",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 09.12.2011 № 877",
+      "valid_from": "2015-01-01",
+      "codes": [
+        {"code": "87", "level": 1, "description": "Колесные транспортные средства", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 019/2011 О безопасности средств индивидуальной защиты",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 09.12.2011 № 878",
+      "valid_from": "2012-06-01",
+      "codes": [
+        {"code": "39", "level": 1, "description": "Средства защиты из пластмасс", "applies_to_children": true},
+        {"code": "40", "level": 1, "description": "Средства защиты из резины", "applies_to_children": true},
+        {"code": "65", "level": 1, "description": "Защитные каски и шлемы", "applies_to_children": true},
+        {"code": "90", "level": 1, "description": "Средства защиты органов дыхания и зрения", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 020/2011 Электромагнитная совместимость технических средств",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 09.12.2011 № 879",
+      "valid_from": "2013-02-15",
+      "codes": [
+        {"code": "84", "level": 1, "description": "Технические средства (механическое оборудование с электрокомпонентами)", "applies_to_children": true},
+        {"code": "85", "level": 1, "description": "Электрические и электронные технические средства", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 021/2011 О безопасности пищевой продукции",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 09.12.2011 № 880",
+      "valid_from": "2013-07-01",
+      "codes": [
+        {"code": "02", "level": 1, "description": "Мясо и пищевые мясные субпродукты", "applies_to_children": true},
+        {"code": "03", "level": 1, "description": "Рыба и ракообразные", "applies_to_children": true},
+        {"code": "04", "level": 1, "description": "Молочная продукция, яйца, мед", "applies_to_children": true},
+        {"code": "05", "level": 1, "description": "Продукты животного происхождения", "applies_to_children": true},
+        {"code": "07", "level": 1, "description": "Овощи", "applies_to_children": true},
+        {"code": "08", "level": 1, "description": "Фрукты и орехи", "applies_to_children": true},
+        {"code": "09", "level": 1, "description": "Кофе, чай, пряности", "applies_to_children": true},
+        {"code": "10", "level": 1, "description": "Злаки", "applies_to_children": true},
+        {"code": "11", "level": 1, "description": "Продукция мукомольной промышленности", "applies_to_children": true},
+        {"code": "12", "level": 1, "description": "Масличные семена и плоды", "applies_to_children": true},
+        {"code": "15", "level": 1, "description": "Жиры и масла", "applies_to_children": true},
+        {"code": "16", "level": 1, "description": "Готовые продукты из мяса и рыбы", "applies_to_children": true},
+        {"code": "17", "level": 1, "description": "Сахар и кондитерские изделия", "applies_to_children": true},
+        {"code": "18", "level": 1, "description": "Какао и продукты из него", "applies_to_children": true},
+        {"code": "19", "level": 1, "description": "Готовые продукты из зерна", "applies_to_children": true},
+        {"code": "20", "level": 1, "description": "Продукты переработки овощей и фруктов", "applies_to_children": true},
+        {"code": "21", "level": 1, "description": "Разные пищевые продукты", "applies_to_children": true},
+        {"code": "22", "level": 1, "description": "Напитки, уксус", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 022/2011 Пищевая продукция в части ее маркировки",
+      "kind": 6,
+      "legal_basis": "Решение КТС от 09.12.2011 № 881",
+      "valid_from": "2013-07-01",
+      "codes": [
+        {"code": "02", "level": 1, "description": "Маркировка пищевой продукции", "applies_to_children": true},
+        {"code": "03", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "04", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "07", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "08", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "09", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "10", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "11", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "15", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "16", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "17", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "18", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "19", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "20", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "21", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "22", "level": 1, "description": null, "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 025/2012 О безопасности мебельной продукции",
+      "kind": 6,
+      "legal_basis": "Решение Совета ЕЭК от 15.06.2012 № 32",
+      "valid_from": "2014-07-01",
+      "codes": [
+        {"code": "94", "level": 1, "description": "Мебель", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 033/2013 О безопасности молока и молочной продукции",
+      "kind": 6,
+      "legal_basis": "Решение Совета ЕЭК от 09.10.2013 № 67",
+      "valid_from": "2014-05-01",
+      "codes": [
+        {"code": "04", "level": 1, "description": "Молоко и молочная продукция", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 034/2013 О безопасности мяса и мясной продукции",
+      "kind": 6,
+      "legal_basis": "Решение Совета ЕЭК от 09.10.2013 № 68",
+      "valid_from": "2014-05-01",
+      "codes": [
+        {"code": "02", "level": 1, "description": "Мясо и мясные субпродукты", "applies_to_children": true},
+        {"code": "16", "level": 1, "description": "Готовые мясные продукты", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ТС 035/2014 Технический регламент на табачную продукцию",
+      "kind": 6,
+      "legal_basis": "Решение Совета ЕЭК от 12.11.2014 № 107",
+      "valid_from": "2016-05-15",
+      "codes": [
+        {"code": "24", "level": 1, "description": "Табак и табачная продукция", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "ТР ЕАЭС 040/2016 О безопасности рыбы и рыбной продукции",
+      "kind": 6,
+      "legal_basis": "Решение Совета ЕЭК от 18.10.2016 № 162",
+      "valid_from": "2017-09-01",
+      "codes": [
+        {"code": "03", "level": 1, "description": "Рыба и рыбная продукция", "applies_to_children": true},
+        {"code": "1604", "level": 2, "description": "Готовая рыбная продукция", "applies_to_children": true},
+        {"code": "1605", "level": 2, "description": "Готовые ракообразные и моллюски", "applies_to_children": true}
+      ]
+    },
+    {
+      "_section": "Санитарный контроль (Решение КТС № 299)",
+      "name": "Санитарно-эпидемиологический контроль (Решение КТС № 299)",
+      "kind": 7,
+      "legal_basis": "Решение КТС № 299 от 28.05.2010",
+      "valid_from": "2010-07-01",
+      "codes": [
+        {"code": "02", "level": 1, "description": "Пищевые продукты", "applies_to_children": true},
+        {"code": "03", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "04", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "05", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "07", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "08", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "09", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "10", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "11", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "15", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "16", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "17", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "18", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "19", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "20", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "21", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "22", "level": 1, "description": null, "applies_to_children": true},
+        {"code": "33", "level": 1, "description": "Парфюмерно-косметическая продукция", "applies_to_children": true},
+        {"code": "34", "level": 1, "description": "Моющие средства", "applies_to_children": true},
+        {"code": "95", "level": 1, "description": "Игрушки", "applies_to_children": true}
+      ]
+    },
+    {
+      "_section": "Ветеринарный контроль (Решение КТС № 317)",
+      "name": "Ветеринарный контроль (Решение КТС № 317)",
+      "kind": 8,
+      "legal_basis": "Решение КТС № 317 от 18.06.2010",
+      "valid_from": "2010-07-01",
+      "codes": [
+        {"code": "01", "level": 1, "description": "Живые животные", "applies_to_children": true},
+        {"code": "02", "level": 1, "description": "Мясо и мясные субпродукты", "applies_to_children": true},
+        {"code": "03", "level": 1, "description": "Рыба и ракообразные", "applies_to_children": true},
+        {"code": "04", "level": 1, "description": "Молочная продукция, яйца, мед", "applies_to_children": true},
+        {"code": "05", "level": 1, "description": "Продукты животного происхождения", "applies_to_children": true},
+        {"code": "1501", "level": 2, "description": "Жиры животные", "applies_to_children": true},
+        {"code": "1502", "level": 2, "description": "Жиры животные", "applies_to_children": true},
+        {"code": "16", "level": 1, "description": "Готовые продукты из мяса и рыбы", "applies_to_children": true}
+      ]
+    },
+    {
+      "_section": "Фитосанитарный контроль (Решение КТС № 318)",
+      "name": "Фитосанитарный контроль (Решение КТС № 318)",
+      "kind": 9,
+      "legal_basis": "Решение КТС № 318 от 18.06.2010",
+      "valid_from": "2010-07-01",
+      "codes": [
+        {"code": "06", "level": 1, "description": "Живые растения и черенки", "applies_to_children": true},
+        {"code": "07", "level": 1, "description": "Овощи, корнеплоды", "applies_to_children": true},
+        {"code": "08", "level": 1, "description": "Фрукты и орехи", "applies_to_children": true},
+        {"code": "10", "level": 1, "description": "Злаки", "applies_to_children": true},
+        {"code": "12", "level": 1, "description": "Семена масличных", "applies_to_children": true},
+        {"code": "44", "level": 1, "description": "Древесина и изделия из нее", "applies_to_children": true}
+      ]
+    },
+    {
+      "_section": "Лицензирование (Решение Коллегии ЕЭК № 30)",
+      "name": "Лицензирование: озоноразрушающие вещества",
+      "kind": 4,
+      "legal_basis": "Решение Коллегии ЕЭК № 30 от 21.04.2015, Прил. 2, р. 2.1",
+      "valid_from": "2015-04-21",
+      "codes": [
+        {"code": "2903", "level": 2, "description": "Озоноразрушающие вещества (ОРВ) и их смеси", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "Лицензирование: средства защиты растений (пестициды)",
+      "kind": 4,
+      "legal_basis": "Решение Коллегии ЕЭК № 30 от 21.04.2015, Прил. 2, р. 2.2",
+      "valid_from": "2015-04-21",
+      "codes": [
+        {"code": "3808", "level": 2, "description": "Пестициды и средства защиты растений", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "Лицензирование: наркотики, психотропные вещества, прекурсоры",
+      "kind": 4,
+      "legal_basis": "Решение Коллегии ЕЭК № 30 от 21.04.2015, Прил. 2, р. 2.12",
+      "valid_from": "2015-04-21",
+      "codes": [
+        {"code": "2922", "level": 2, "description": "Аминосоединения с кислородсодержащей функциональной группой", "applies_to_children": true},
+        {"code": "2924", "level": 2, "description": "Соединения с карбоксамидной группой", "applies_to_children": true},
+        {"code": "2933", "level": 2, "description": "Гетероциклические соединения с атомами азота", "applies_to_children": true},
+        {"code": "2934", "level": 2, "description": "Нуклеиновые кислоты и их соли", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "Лицензирование: лекарственные средства",
+      "kind": 4,
+      "legal_basis": "Решение Коллегии ЕЭК № 30 от 21.04.2015, Прил. 2, р. 2.14",
+      "valid_from": "2015-04-21",
+      "codes": [
+        {"code": "30", "level": 1, "description": "Фармацевтическая продукция", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "Лицензирование: радиоэлектронные средства и ВЧ-устройства",
+      "kind": 4,
+      "legal_basis": "Решение Коллегии ЕЭК № 30 от 21.04.2015, Прил. 2, р. 2.16",
+      "valid_from": "2015-04-21",
+      "codes": [
+        {"code": "8517", "level": 2, "description": "Аппаратура для передачи/приема данных (радиоэлектронные средства)", "applies_to_children": true},
+        {"code": "8525", "level": 2, "description": "Аппаратура передающая", "applies_to_children": true},
+        {"code": "8526", "level": 2, "description": "Радиолокационная аппаратура", "applies_to_children": true},
+        {"code": "8527", "level": 2, "description": "Радиоприемники", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "Лицензирование: шифровальные (криптографические) средства",
+      "kind": 4,
+      "legal_basis": "Решение Коллегии ЕЭК № 30 от 21.04.2015, Прил. 2, р. 2.19",
+      "valid_from": "2015-04-21",
+      "codes": [
+        {"code": "8471", "level": 2, "description": "Вычислительные машины с криптографическими функциями", "applies_to_children": true},
+        {"code": "8517", "level": 2, "description": "Телекоммуникационное оборудование с шифрованием", "applies_to_children": true},
+        {"code": "8523", "level": 2, "description": "Носители с криптографическим ПО", "applies_to_children": true},
+        {"code": "8543", "level": 2, "description": "Электрические машины с функцией шифрования", "applies_to_children": true}
+      ]
+    },
+    {
+      "name": "Лицензирование: оружие служебное и гражданское",
+      "kind": 4,
+      "legal_basis": "Решение Коллегии ЕЭК № 30 от 21.04.2015, Прил. 2, р. 2.22",
+      "valid_from": "2015-04-21",
+      "codes": [
+        {"code": "93", "level": 1, "description": "Оружие и боеприпасы", "applies_to_children": true}
+      ]
+    }
+  ]
+}
