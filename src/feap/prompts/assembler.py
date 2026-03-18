@@ -154,6 +154,7 @@ class PromptAssembler:
         chain: list[dict],
         subposition_code: str,
         codes: list[dict],
+        explanations: list[dict] | None = None,
         precedents: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 5: Subsubposition (final 10-digit code)."""
@@ -164,6 +165,8 @@ class PromptAssembler:
             render("context/decision_chain.jinja2", chain=chain),
             render("context/tree_nodes.jinja2", title=f"КОДЫ СУБПОЗИЦИИ {subposition_code}", nodes=codes),
         ]
+        if explanations:
+            parts.append(render("context/explanatory.jinja2", explanations=explanations))
         if precedents:
             parts.append(render("context/precedents.jinja2", precedents=precedents))
 

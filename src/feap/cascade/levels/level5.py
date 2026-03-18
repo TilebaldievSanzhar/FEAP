@@ -5,7 +5,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
-from feap.db.queries import get_children, get_node_by_code
+from feap.db.queries import get_children, get_explanations_for_position, get_node_by_code
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
 from feap.schemas.common import DecisionChainEntry
@@ -51,11 +51,20 @@ class Level5Subsubposition(BaseCascadeLevel):
             ))
             return result
 
+        # Load explanatory notes for the position (same as L4)
+        position_code = state.position
+        explanations_rows = await get_explanations_for_position(db, position_code) if position_code else []
+        explanations = [
+            {"code": e.code, "section_type": e.section_type, "title": e.title, "content": e.content}
+            for e in explanations_rows
+        ]
+
         system, user = PromptAssembler.level5(
             card=state.product_card,
             chain=[e.model_dump() for e in state.chain],
             subposition_code=subposition_code,
             codes=codes_data,
+            explanations=explanations,
         )
 
         result = await classify(
