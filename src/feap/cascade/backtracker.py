@@ -37,7 +37,35 @@ def apply_backtrack(state: CascadeState, trigger: BacktrackTrigger, attempt: int
     # (LLM often sets wrong target_level)
     target_level = _infer_target_level(trigger)
 
-    # Escalation: if the same level was already backtracked,
+    # Proactive escalation for L2 → L1:
+    # If backtrack targets L2 (group) and the excluded group code doesn't
+    # belong to the current section, the problem is the SECTION choice —
+    # escalate to L1 immediately instead of retrying groups.
+    if target_level == 2 and state.section:
+        excluded_group = _normalize_excluded_code(trigger.excluded_code)
+        # Escalate to L1 if:
+        # (a) There are already exclusions at L2 (we've been going in circles), OR
+        # (b) LLM references a group that was never chosen at L2 (e.g., "group 09
+        #     not found" — meaning the group belongs to a different section entirely)
+        existing_exclusions_l2 = state.get_excluded(2)
+        chosen_groups = {e.code for e in state.chain if e.level == 2}
+        if existing_exclusions_l2 or (excluded_group and excluded_group not in chosen_groups):
+            parent_code = state.section
+            if parent_code and parent_code not in state.get_excluded(1):
+                logger.info(
+                    "Proactive escalation L2→L1: section '%s' likely wrong "
+                    "(excluded_group='%s', existing_exclusions=%s), "
+                    "escalating to L1",
+                    parent_code, excluded_group, existing_exclusions_l2,
+                )
+                target_level = 1
+                trigger = BacktrackTrigger(
+                    target_level=1,
+                    excluded_code=parent_code,
+                    reason=f"Section escalation: {trigger.reason}",
+                )
+
+    # General escalation: if the same level was already backtracked,
     # escalate one level up (e.g., group→section).
     # Check this BEFORE the limit so escalation gets a chance to resolve.
     existing_exclusions = state.get_excluded(target_level)
