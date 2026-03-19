@@ -100,6 +100,16 @@ class Level4Subposition(BaseCascadeLevel):
                 )
                 return result
 
+        # Validate that the selected subposition exists among available options
+        valid_codes = {s.code for s in subpositions}
+        if result.selected_subposition not in valid_codes:
+            # Try to find closest match by 4-digit prefix
+            prefix4 = result.selected_subposition[:4] if result.selected_subposition else ""
+            candidates = [s for s in subpositions if s.code.startswith(prefix4)]
+            if candidates:
+                result.selected_subposition = candidates[-1].code
+                result.confidence = min(result.confidence, 0.4)
+
         state.subposition = result.selected_subposition
 
         sp_name = ""
