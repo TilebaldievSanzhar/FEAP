@@ -20,6 +20,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 TREE_PATH = PROJECT_ROOT / "data" / "parsed" / "tree.json"
 OPI_PATH = PROJECT_ROOT / "data" / "parsed" / "opi_rules.json"
 EXPLANATORY_PATH = PROJECT_ROOT / "data" / "parsed" / "explanatory_notes.json"
+NOTES_PATH = PROJECT_ROOT / "data" / "parsed" / "notes.json"
 UNITS_PATH = PROJECT_ROOT / "data" / "parsed" / "units.json"
 
 
@@ -76,6 +77,36 @@ def seed_opi(conn, rules: list[dict]) -> None:
         rules,
     )
     print(f"  Inserted {len(rules)} OPI rules")
+
+
+def seed_notes(conn, notes: list[dict]) -> None:
+    from sqlalchemy import text
+
+    conn.execute(text("TRUNCATE tnved_notes"))
+
+    batch_size = 500
+    for i in range(0, len(notes), batch_size):
+        batch = notes[i : i + batch_size]
+        conn.execute(
+            text("""
+                INSERT INTO tnved_notes
+                    (scope_type, scope_code, note_number, note_type, note_text, references_to)
+                VALUES
+                    (:scope_type, :scope_code, :note_number, :note_type, :note_text, :references_to)
+            """),
+            [
+                {
+                    "scope_type": n["scope_type"],
+                    "scope_code": n["scope_code"],
+                    "note_number": n.get("note_number"),
+                    "note_type": n["note_type"],
+                    "note_text": n["note_text"],
+                    "references_to": n.get("references_to"),
+                }
+                for n in batch
+            ],
+        )
+        print(f"  Inserted {min(i + batch_size, len(notes))}/{len(notes)}")
 
 
 def seed_explanatory_notes(conn, records: list[dict]) -> None:
@@ -169,6 +200,23 @@ def main() -> None:
         with engine.begin() as conn:
             seed_opi(conn, rules)
         print("OPI done!")
+
+    # Section/group notes (примечания)
+    with engine.connect() as conn:
+        notes_count = conn.execute(text("SELECT COUNT(*) FROM tnved_notes")).scalar()
+
+    if notes_count and notes_count > 0:
+        print(f"tnved_notes already contains {notes_count} rows — skipping.")
+    elif NOTES_PATH.exists():
+        with open(NOTES_PATH, encoding="utf-8") as f:
+            notes_data = json.load(f)
+        print(f"Loading {len(notes_data)} notes into tnved_notes...")
+        with engine.begin() as conn:
+            seed_notes(conn, notes_data)
+        print("Notes done!")
+    else:
+        print(f"Notes JSON not found at {NOTES_PATH} — skipping.")
+        print("Run: python scripts/parse_notes_pdf.py first.")
 
     # Explanatory notes (optional — only if parsed JSON exists)
     with engine.connect() as conn:
