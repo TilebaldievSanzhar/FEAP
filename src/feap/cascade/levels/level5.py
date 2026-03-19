@@ -27,7 +27,7 @@ class Level5Subsubposition(BaseCascadeLevel):
 
         leaves = await get_children(db, sp_node.id)
         codes_data = [
-            {"code": c.code, "name": c.name}
+            {"code": c.code, "name": c.name_full or c.name}
             for c in leaves
         ]
 
@@ -90,6 +90,22 @@ class Level5Subsubposition(BaseCascadeLevel):
                     f"{', '.join(result.missing_parameters)}"
                 )
                 return result
+
+        # Validate that the selected code actually exists among available leaves
+        valid_codes = {c.code for c in leaves}
+        if result.selected_code_10 not in valid_codes:
+            # Try to find closest match by prefix (LLM may hallucinate last digits)
+            prefix8 = result.selected_code_10[:8] if result.selected_code_10 else ""
+            candidates = [c for c in leaves if c.code.startswith(prefix8)]
+            if not candidates:
+                # Fall back to any leaf with matching 6-digit prefix
+                prefix6 = result.selected_code_10[:6] if result.selected_code_10 else ""
+                candidates = [c for c in leaves if c.code.startswith(prefix6)]
+            if candidates:
+                # Pick the first match (usually "прочие" at the end)
+                result.selected_code_10 = candidates[-1].code
+                result.selected_code_8 = result.selected_code_10[:8]
+                result.confidence = min(result.confidence, 0.4)
 
         state.code_10 = result.selected_code_10
         if not result.final_code:
