@@ -74,15 +74,22 @@ class Level5Subsubposition(BaseCascadeLevel):
             output_model=SubsubpositionResult,
         )
 
-        # If LLM signals missing parameters, propagate to state and stop
-        # Do NOT write code_10 or add decision — the orchestrator will raise _NeedsInput
+        # Fallback: if LLM signals missing parameters but still picked a code,
+        # accept the code with reduced confidence instead of stopping the cascade.
+        # Only stop if LLM couldn't pick any code at all.
         if result.missing_parameters:
-            state.missing_parameters = result.missing_parameters
-            state.clarifying_question = (
-                f"Для выбора точного кода необходимо уточнить: "
-                f"{', '.join(result.missing_parameters)}"
-            )
-            return result
+            if result.selected_code_10 and result.selected_code_10.strip():
+                # LLM picked a best-guess code — accept it, cap confidence
+                result.confidence = min(result.confidence, 0.5)
+                result.missing_parameters = []  # clear so orchestrator won't stop
+            else:
+                # LLM truly couldn't decide — propagate needs_input
+                state.missing_parameters = result.missing_parameters
+                state.clarifying_question = (
+                    f"Для выбора точного кода необходимо уточнить: "
+                    f"{', '.join(result.missing_parameters)}"
+                )
+                return result
 
         state.code_10 = result.selected_code_10
         if not result.final_code:

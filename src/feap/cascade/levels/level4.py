@@ -85,14 +85,20 @@ class Level4Subposition(BaseCascadeLevel):
             output_model=SubpositionResult,
         )
 
-        # If LLM signals missing parameters, propagate to state and stop
+        # Fallback: if LLM signals missing parameters but still picked a subposition,
+        # accept the subposition with reduced confidence instead of stopping.
         if result.missing_parameters:
-            state.missing_parameters = result.missing_parameters
-            state.clarifying_question = (
-                f"Для определения субпозиции необходимо уточнить: "
-                f"{', '.join(result.missing_parameters)}"
-            )
-            return result
+            if result.selected_subposition and result.selected_subposition.strip():
+                # LLM picked a best-guess subposition — accept it, cap confidence
+                result.confidence = min(result.confidence, 0.5)
+                result.missing_parameters = []
+            else:
+                state.missing_parameters = result.missing_parameters
+                state.clarifying_question = (
+                    f"Для определения субпозиции необходимо уточнить: "
+                    f"{', '.join(result.missing_parameters)}"
+                )
+                return result
 
         state.subposition = result.selected_subposition
 
