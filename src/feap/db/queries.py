@@ -106,6 +106,20 @@ async def get_all_section_notes(session: AsyncSession) -> list[TnvedNote]:
     return list(result.scalars().all())
 
 
+async def get_section_notes_for_codes(
+    session: AsyncSession, section_codes: list[str]
+) -> list[TnvedNote]:
+    """Get section notes only for specific sections (by Roman numeral)."""
+    if not section_codes:
+        return []
+    result = await session.execute(
+        select(TnvedNote)
+        .where(TnvedNote.scope_type == "section", TnvedNote.scope_code.in_(section_codes))
+        .order_by(TnvedNote.id)
+    )
+    return list(result.scalars().all())
+
+
 async def get_group_notes_for_section(
     session: AsyncSession, section_roman: str
 ) -> list[TnvedNote]:

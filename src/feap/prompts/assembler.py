@@ -18,18 +18,34 @@ class PromptAssembler:
         return system, user
 
     @staticmethod
+    def level1_shortlist(
+        card: dict,
+        sections: list[dict],
+    ) -> tuple[str, str]:
+        """Level 1a: Shortlist 2-3 candidate sections (no notes)."""
+        system = render("system/level1_shortlist.jinja2")
+
+        parts = [
+            render("context/product_card.jinja2", card=_to_obj(card)),
+            render("context/tree_nodes.jinja2", title="РАЗДЕЛЫ ТН ВЭД", nodes=sections),
+        ]
+
+        user = "\n\n".join(parts)
+        return system, user
+
+    @staticmethod
     def level1(
         card: dict,
         sections: list[dict],
         section_notes: list[dict],
         opi_rules: list[dict],
     ) -> tuple[str, str]:
-        """Level 1: Section classification."""
+        """Level 1b: Verify candidates with section notes."""
         system = render("system/level1_section.jinja2")
 
         parts = [
             render("context/product_card.jinja2", card=_to_obj(card)),
-            render("context/tree_nodes.jinja2", title="РАЗДЕЛЫ ТН ВЭД", nodes=sections),
+            render("context/tree_nodes.jinja2", title="КАНДИДАТЫ (РАЗДЕЛЫ)", nodes=sections),
         ]
         if section_notes:
             parts.append(render("context/notes.jinja2", notes=section_notes))

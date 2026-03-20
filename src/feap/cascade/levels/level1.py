@@ -1,15 +1,26 @@
-"""Level 1: Section classification (I-XXI)."""
+"""Level 1: Section classification (I-XXI).
+
+Two-step process (analogous to L3a/L3b):
+  Step 1a — Shortlist: pick 2-3 candidate sections using ONLY section names.
+  Step 1b — Verify: load notes for candidates only, check exclusions, pick final section.
+
+This avoids sending all 52 section notes (~14K tokens) on every request.
+"""
 
 from __future__ import annotations
+
+import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
-from feap.db.queries import get_all_section_notes, get_opi_rules, get_sections
+from feap.db.queries import get_opi_rules, get_sections, get_section_notes_for_codes
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
 from feap.schemas.common import DecisionChainEntry
-from feap.schemas.section import SectionResult
+from feap.schemas.section import SectionResult, SectionShortlistResult
+
+logger = logging.getLogger(__name__)
 
 
 class Level1Section(BaseCascadeLevel):
@@ -20,9 +31,6 @@ class Level1Section(BaseCascadeLevel):
 
     async def run(self, state: CascadeState, db: AsyncSession) -> SectionResult:
         sections = await get_sections(db)
-        section_notes = await get_all_section_notes(db)
-        opi_rules = await get_opi_rules(db, level=1)
-
         excluded = state.get_excluded(1)
 
         sections_data = [
@@ -30,6 +38,37 @@ class Level1Section(BaseCascadeLevel):
             for s in sections
             if s.code not in excluded
         ]
+
+        # ── Step 1a: Shortlist 2-3 candidates (no notes, cheap) ──
+        sys_short, user_short = PromptAssembler.level1_shortlist(
+            card=state.product_card,
+            sections=sections_data,
+        )
+
+        shortlist = await classify(
+            level=1,
+            system_prompt=sys_short,
+            user_message=user_short,
+            output_model=SectionShortlistResult,
+        )
+
+        candidate_codes = [
+            c for c in shortlist.shortlisted if c not in excluded
+        ]
+        if not candidate_codes:
+            candidate_codes = [s["code"] for s in sections_data[:3]]
+
+        logger.info(
+            "L1 shortlist: %s (from %d sections)",
+            candidate_codes, len(sections_data),
+        )
+
+        # ── Step 1b: Verify with notes for candidates only ──
+        candidate_sections = [
+            s for s in sections_data if s["code"] in candidate_codes
+        ]
+
+        section_notes = await get_section_notes_for_codes(db, candidate_codes)
         notes_data = [
             {
                 "scope_type": n.scope_type,
@@ -40,6 +79,8 @@ class Level1Section(BaseCascadeLevel):
             }
             for n in section_notes
         ]
+
+        opi_rules = await get_opi_rules(db, level=1)
         rules_data = [
             {
                 "rule_number": r.rule_number,
@@ -51,7 +92,7 @@ class Level1Section(BaseCascadeLevel):
 
         system, user = PromptAssembler.level1(
             card=state.product_card,
-            sections=sections_data,
+            sections=candidate_sections,
             section_notes=notes_data,
             opi_rules=rules_data,
         )

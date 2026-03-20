@@ -7,6 +7,16 @@ from pydantic import BaseModel, Field
 from feap.schemas.common import BacktrackTrigger
 
 
+class SectionShortlistResult(BaseModel):
+    """Step 1a: shortlist of 2-3 candidate sections (without notes)."""
+
+    shortlisted: list[str] = Field(
+        min_length=1, max_length=3,
+        description="List of Roman numerals (I-XXI)",
+    )
+    reasoning: str
+
+
 class SectionCandidate(BaseModel):
     section: str = Field(description="Roman numeral (I-XXI)")
     section_name: str
@@ -18,7 +28,7 @@ class SectionCandidate(BaseModel):
 
 
 class SectionResult(BaseModel):
-    """Output of Level 1 — section classification."""
+    """Step 1b: final section selection with notes verification."""
 
     candidates: list[SectionCandidate] = Field(min_length=1, max_length=3)
     selected_section: str = Field(description="Roman numeral of selected section")
