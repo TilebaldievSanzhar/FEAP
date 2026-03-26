@@ -8,7 +8,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from feap.config import settings
-from feap.llm.models import get_max_tokens, get_model
+from feap.llm.models import get_max_tokens, get_model, get_thinking_budget
 from feap.llm.provider import LLMProvider
 
 T = TypeVar("T", bound=BaseModel)
@@ -76,15 +76,20 @@ class GeminiProvider(LLMProvider):
         schema = output_model.model_json_schema()
         schema = _prepare_schema(schema)
 
+        thinking_budget = get_thinking_budget(level)
+        config = types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=0.0,
+            max_output_tokens=max_tokens,
+            response_mime_type="application/json",
+            response_json_schema=schema,
+            thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget),
+        )
+
         response = await client.aio.models.generate_content(
             model=model,
             contents=user_message,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                max_output_tokens=max_tokens,
-                response_mime_type="application/json",
-                response_json_schema=schema,
-            ),
+            config=config,
         )
 
         # Try .parsed first (available when response_schema is a Pydantic class)

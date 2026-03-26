@@ -27,6 +27,20 @@ class Settings(BaseSettings):
     VOYAGE_MODEL: str = "voyage-3"
     VOYAGE_EMBEDDING_DIM: int = 1024
 
+    # --- Gemini thinking ---
+    GEMINI_THINKING_BUDGET: int = -1  # -1 = use per-level defaults, >=0 = global override
+
+    # --- Per-level model overrides (optional) ---
+    # Format: "provider/model", e.g. "anthropic/claude-haiku-4-5-20251001"
+    # If not set, falls back to LLM_PROVIDER + tier-based model selection.
+    LEVEL0_MODEL: str = ""
+    LEVEL1_MODEL: str = ""
+    LEVEL2_MODEL: str = ""
+    LEVEL3_MODEL: str = ""
+    LEVEL4_MODEL: str = ""
+    LEVEL5_MODEL: str = ""
+    LEVEL99_MODEL: str = ""  # NTM verification
+
     # --- Cascade tuning ---
     CASCADE_MAX_BACKTRACK: int = 3
     SESSION_TTL_MINUTES: int = 30

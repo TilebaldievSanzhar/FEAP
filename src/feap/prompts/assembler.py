@@ -151,8 +151,8 @@ class PromptAssembler:
 
         parts = [
             render("context/product_card.jinja2", card=_to_obj(card)),
-            render("context/decision_chain.jinja2", chain=chain),
-            render("context/tree_nodes.jinja2", title=f"СУБПОЗИЦИИ ПОЗИЦИИ {position_code}", nodes=subpositions),
+            render("context/decision_chain_compact.jinja2", chain=chain),
+            render("context/tree_nodes_l4.jinja2", position_code=position_code, nodes=subpositions),
         ]
         if explanations:
             parts.append(render("context/explanatory.jinja2", explanations=explanations))
@@ -179,7 +179,7 @@ class PromptAssembler:
         parts = [
             render("context/product_card.jinja2", card=_to_obj(card)),
             render("context/decision_chain.jinja2", chain=chain),
-            render("context/tree_nodes.jinja2", title=f"КОДЫ СУБПОЗИЦИИ {subposition_code}", nodes=codes),
+            render("context/tree_nodes_l5.jinja2", subposition_code=subposition_code, nodes=codes),
         ]
         if explanations:
             parts.append(render("context/explanatory.jinja2", explanations=explanations))

@@ -5,10 +5,49 @@ from __future__ import annotations
 from pydantic import BaseModel, Field, field_validator
 
 
+class SubsubpositionCandidate(BaseModel):
+    code_10: str = Field(description="10-digit code")
+    code_text: str = Field(default="", description="Name/text of the code")
+    match_type: str = Field(
+        default="",
+        description="'direct' (товар прямо назван), "
+        "'by_parameter' (попадает по числовому порогу), "
+        "'residual' (остаточная категория 'прочие')",
+    )
+    reasoning: str = Field(default="")
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+
+
 class SubsubpositionResult(BaseModel):
     """Output of Level 5 — final 10-digit code."""
 
     subposition: str = Field(description="6-digit parent subposition")
+    # --- SGR: анализ перед выбором кода ---
+    parent_context: str = Field(
+        default="",
+        description="Шаг 0: Что означает текущая субпозиция? "
+        "Какого типа товары здесь классифицируются? Товар соответствует этой категории?",
+    )
+    relevant_parameters: str = Field(
+        default="",
+        description="Шаг 1: ПРОЦИТИРУЙ из карточки товара параметры, влияющие на выбор кода. "
+        "Если параметр отсутствует — 'НЕ УКАЗАНО'.",
+    )
+    code_differentiation: str = Field(
+        default="",
+        description="Шаг 2: Чем КОНКРЕТНО различаются коды? Перечисли: "
+        "код A = '...', код B = '...', различие = '...'.",
+    )
+    threshold_comparison: str = Field(
+        default="",
+        description="Шаг 3: Сопоставление: 'параметр = X, порог кода = Y, X > Y → код Z'.",
+    )
+    # --- Кандидаты (ПЕРЕД решением — модель анализирует варианты) ---
+    candidates: list[SubsubpositionCandidate] = Field(
+        default_factory=list,
+        description="Кандидаты с reasoning и match_type для каждого",
+    )
+    # --- Решение (ПОСЛЕ анализа кандидатов) ---
     selected_code_8: str = Field(description="8-digit code")
     selected_code_10: str = Field(description="10-digit code")
     reasoning: str = Field(default="", description="Step-by-step reasoning for the selected code")

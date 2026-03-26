@@ -10,6 +10,11 @@ from feap.schemas.common import BacktrackTrigger
 class PositionCandidate(BaseModel):
     position: str = Field(description="4-digit position code")
     position_text: str
+    # --- SGR: анализ ДО confidence ---
+    text_match_score: str = Field(
+        default="",
+        description="Степень соответствия текста позиции товару: exact/partial/weak",
+    )
     reasoning: str
     opi_applied: str = Field(description="Which OPI rule was decisive")
     confidence: float = Field(ge=0.0, le=1.0)
@@ -19,6 +24,16 @@ class ShortlistResult(BaseModel):
     """Step 3a: shortlist of 2-5 candidate positions."""
 
     group: str
+    # --- SGR: анализ перед shortlist ---
+    physical_nature_analysis: str = Field(
+        default="",
+        description="Шаг 1: Физическая природа товара — материал, форма, степень обработки",
+    )
+    key_differentiators: str = Field(
+        default="",
+        description="Шаг 2: По каким критериям различаются позиции в этой группе",
+    )
+    # --- Решение ---
     shortlisted: list[str] = Field(
         min_length=1, max_length=5, description="List of 4-digit position codes"
     )
@@ -30,6 +45,20 @@ class PositionResult(BaseModel):
 
     section: str
     group: str
+    # --- SGR: пошаговый анализ ОПИ ---
+    step1_product_nature: str = Field(
+        default="",
+        description="Шаг 1: Физическая природа товара (материал, форма, обработка)",
+    )
+    step2_opi1_text_analysis: str = Field(
+        default="",
+        description="Шаг 2: ОПИ 1 — какие тексты позиций наиболее точно описывают товар",
+    )
+    step3_ambiguity_resolution: str = Field(
+        default="",
+        description="Шаг 3: Если неоднозначно — применение ОПИ 2/3. Если однозначно — 'Однозначно по ОПИ 1'",
+    )
+    # --- Решение (ПОСЛЕ анализа) ---
     candidates: list[PositionCandidate] = Field(min_length=1, max_length=5)
     selected_position: str
     applied_rules: list[str] = Field(default_factory=list)

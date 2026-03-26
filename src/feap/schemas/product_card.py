@@ -16,6 +16,16 @@ class ProductCard(BaseModel):
     """Enriched product description — output of Level 0."""
 
     original_description: str
+    # --- SGR: анализ перед заполнением карточки ---
+    product_identification: str = Field(
+        default="",
+        description="Шаг 1: Что это за товар? Тип, категория, базовое назначение",
+    )
+    classification_relevant_features: str = Field(
+        default="",
+        description="Шаг 2: Какие характеристики важны для таможенной классификации",
+    )
+    # --- Основные поля карточки ---
     normalized_description: str = Field(
         description="Normalized, cleaned-up description in Russian"
     )

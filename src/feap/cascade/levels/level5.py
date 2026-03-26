@@ -36,8 +36,16 @@ class Level5Subsubposition(BaseCascadeLevel):
             leaf = codes_data[0]
             state.code_10 = leaf["code"]
             formatted = _format_code(leaf["code"])
+            from feap.schemas.subsubposition import SubsubpositionCandidate
             result = SubsubpositionResult(
                 subposition=subposition_code,
+                candidates=[SubsubpositionCandidate(
+                    code_10=leaf["code"],
+                    code_text=leaf["name"],
+                    match_type="direct",
+                    reasoning="Единственный код в субпозиции",
+                    confidence=1.0,
+                )],
                 selected_code_8=leaf["code"][:8],
                 selected_code_10=leaf["code"],
                 reasoning="Единственный код в субпозиции",

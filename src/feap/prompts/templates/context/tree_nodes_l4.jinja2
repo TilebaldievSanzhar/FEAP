@@ -1,0 +1,21 @@
+## СУБПОЗИЦИИ ПОЗИЦИИ {{ position_code }}
+
+{% set ns = namespace(current_branch='') %}
+{% for node in nodes %}
+{% if ' 🠺 ' in node.name %}
+{% set parts = node.name.split(' 🠺 ') %}
+{% set branch = parts[0] %}
+{% if branch != ns.current_branch %}
+{% set ns.current_branch = branch %}
+{% if 'част' in branch|lower or 'принадлежност' in branch|lower %}
+ВЕТКА: {{ branch|upper }} (только для отдельных компонентов, НЕ целых устройств!)
+{% else %}
+ВЕТКА: {{ branch }}
+{% endif %}
+{% endif %}
+  - **{{ node.code }}** — {{ parts[-1] }}
+{% else %}
+{% set ns.current_branch = '' %}
+- **{{ node.code }}** — {{ node.name }}
+{% endif %}
+{% endfor %}
