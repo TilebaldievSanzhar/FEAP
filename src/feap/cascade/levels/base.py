@@ -19,6 +19,7 @@ class CascadeState:
         self.product_card: dict | None = None
         self.chain: list[DecisionChainEntry] = []
         self.excluded: dict[int, list[str]] = {}  # level -> excluded codes
+        self.excluded_reasons: dict[int, list[dict]] = {}  # level -> [{code, reason}]
 
         # Results per level
         self.section: str | None = None
@@ -38,11 +39,18 @@ class CascadeState:
     def add_decision(self, entry: DecisionChainEntry) -> None:
         self.chain.append(entry)
 
-    def add_exclusion(self, level: int, code: str) -> None:
+    def add_exclusion(self, level: int, code: str, reason: str = "") -> None:
         self.excluded.setdefault(level, []).append(code)
+        if reason:
+            self.excluded_reasons.setdefault(level, []).append(
+                {"code": code, "reason": reason}
+            )
 
     def get_excluded(self, level: int) -> list[str]:
         return self.excluded.get(level, [])
+
+    def get_excluded_reasons(self, level: int) -> list[dict]:
+        return self.excluded_reasons.get(level, [])
 
     def to_dict(self) -> dict:
         """Serialize state to a JSON-compatible dict for DB storage."""
@@ -51,6 +59,7 @@ class CascadeState:
             "product_card": self.product_card,
             "chain": [e.model_dump() for e in self.chain],
             "excluded": {str(k): v for k, v in self.excluded.items()},
+            "excluded_reasons": {str(k): v for k, v in self.excluded_reasons.items()},
             "section": self.section,
             "group": self.group,
             "position": self.position,
@@ -72,6 +81,9 @@ class CascadeState:
         ]
         state.excluded = {
             int(k): v for k, v in data.get("excluded", {}).items()
+        }
+        state.excluded_reasons = {
+            int(k): v for k, v in data.get("excluded_reasons", {}).items()
         }
         state.section = data.get("section")
         state.group = data.get("group")

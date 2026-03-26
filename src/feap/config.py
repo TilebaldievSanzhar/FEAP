@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     LEVEL99_MODEL: str = ""  # NTM verification
 
     # --- Cascade tuning ---
-    CASCADE_MAX_BACKTRACK: int = 3
+    CASCADE_MAX_BACKTRACK: int = 5
     SESSION_TTL_MINUTES: int = 30
     SESSION_MAX_ANSWERS: int = 3
 

@@ -43,6 +43,13 @@ class SubpositionResult(BaseModel):
         "субпозиции ПРЯМО описывает товар. Если best_candidate_code = 'прочие' — "
         "объясни, почему НИ ОДНА конкретная субпозиция не подходит.",
     )
+    # --- SGR Step 4: Проверка уровня дефисов ---
+    dash_level_check: str = Field(
+        default="",
+        description="Проверь: best_candidate_code — ОДНОДЕФИСНАЯ или ДВУХДЕФИСНАЯ субпозиция? "
+        "Если есть однодефисная с ТАКИМ ЖЕ текстом — выбери ЕЁ (ОПИ 6). "
+        "Формат: 'код X = однодефисная/двухдефисная, выбор верный/нет'.",
+    )
     # --- Решение (подтверждение или изменение) ---
     candidates: list[SubpositionCandidate] = Field(min_length=1, max_length=5)
     selected_subposition: str

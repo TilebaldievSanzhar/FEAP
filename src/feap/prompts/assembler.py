@@ -21,6 +21,7 @@ class PromptAssembler:
     def level1_shortlist(
         card: dict,
         sections: list[dict],
+        excluded_reasons: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 1a: Shortlist 2-3 candidate sections (no notes)."""
         system = render("system/level1_shortlist.jinja2")
@@ -29,6 +30,8 @@ class PromptAssembler:
             render("context/product_card.jinja2", card=_to_obj(card)),
             render("context/tree_nodes.jinja2", title="РАЗДЕЛЫ ТН ВЭД", nodes=sections),
         ]
+        if excluded_reasons:
+            parts.append(render("context/excluded.jinja2", excluded=excluded_reasons))
 
         user = "\n\n".join(parts)
         return system, user
@@ -39,6 +42,7 @@ class PromptAssembler:
         sections: list[dict],
         section_notes: list[dict],
         opi_rules: list[dict],
+        excluded_reasons: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 1b: Verify candidates with section notes."""
         system = render("system/level1_section.jinja2")
@@ -47,6 +51,8 @@ class PromptAssembler:
             render("context/product_card.jinja2", card=_to_obj(card)),
             render("context/tree_nodes.jinja2", title="КАНДИДАТЫ (РАЗДЕЛЫ)", nodes=sections),
         ]
+        if excluded_reasons:
+            parts.append(render("context/excluded.jinja2", excluded=excluded_reasons))
         if section_notes:
             parts.append(render("context/notes.jinja2", notes=section_notes))
         if opi_rules:
@@ -64,6 +70,7 @@ class PromptAssembler:
         section_notes: list[dict],
         group_notes: list[dict],
         opi_rules: list[dict],
+        excluded_reasons: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 2: Group classification."""
         system = render("system/level2_group.jinja2", section=section)
@@ -73,6 +80,8 @@ class PromptAssembler:
             render("context/decision_chain.jinja2", chain=chain),
             render("context/tree_nodes.jinja2", title=f"ГРУППЫ РАЗДЕЛА {section}", nodes=groups),
         ]
+        if excluded_reasons:
+            parts.append(render("context/excluded.jinja2", excluded=excluded_reasons))
         if section_notes:
             parts.append(render("context/notes.jinja2", notes=section_notes))
         if group_notes:
@@ -165,6 +174,28 @@ class PromptAssembler:
         return system, user
 
     @staticmethod
+    def level5_branch(
+        card: dict,
+        chain: list[dict],
+        subposition_code: str,
+        branches: list[dict],
+        explanations: list[dict] | None = None,
+    ) -> tuple[str, str]:
+        """Level 5a: Branch (8-digit) selection."""
+        system = render("system/level5_branch.jinja2", subposition_code=subposition_code)
+
+        parts = [
+            render("context/product_card.jinja2", card=_to_obj(card)),
+            render("context/decision_chain_compact.jinja2", chain=chain),
+            render("context/tree_branches_l5.jinja2", subposition_code=subposition_code, branches=branches),
+        ]
+        if explanations:
+            parts.append(render("context/explanatory.jinja2", explanations=explanations))
+
+        user = "\n\n".join(parts)
+        return system, user
+
+    @staticmethod
     def level5(
         card: dict,
         chain: list[dict],
@@ -173,7 +204,7 @@ class PromptAssembler:
         explanations: list[dict] | None = None,
         precedents: list[dict] | None = None,
     ) -> tuple[str, str]:
-        """Level 5: Subsubposition (final 10-digit code)."""
+        """Level 5b: Final 10-digit code selection (within branch)."""
         system = render("system/level5_subsubposition.jinja2", subposition_code=subposition_code)
 
         parts = [

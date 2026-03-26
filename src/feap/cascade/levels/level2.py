@@ -26,6 +26,7 @@ class Level2Group(BaseCascadeLevel):
     async def run(self, state: CascadeState, db: AsyncSession) -> GroupResult:
         section = state.section
         excluded = state.get_excluded(2)
+        excluded_reasons = state.get_excluded_reasons(2) or None
 
         groups = await get_groups_by_section(db, section)
         section_notes_rows = await get_notes(db, "section", section)
@@ -61,6 +62,7 @@ class Level2Group(BaseCascadeLevel):
             section_notes=section_notes,
             group_notes=group_notes,
             opi_rules=rules_data,
+            excluded_reasons=excluded_reasons,
         )
 
         result = await classify(

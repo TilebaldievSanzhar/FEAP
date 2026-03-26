@@ -98,7 +98,7 @@ def apply_backtrack(state: CascadeState, trigger: BacktrackTrigger, attempt: int
 
     # Record exclusion (use normalized code to match DB codes)
     normalized_code = _normalize_excluded_code(trigger.excluded_code)
-    state.add_exclusion(target_level, normalized_code)
+    state.add_exclusion(target_level, normalized_code, reason=trigger.reason)
 
     # Trim decision chain to target level (remove everything from target_level onward)
     state.chain = [e for e in state.chain if e.level < target_level]

@@ -38,6 +38,18 @@ LEVEL_THINKING_BUDGET: dict[int, int] = {
     99: 0,     # NTM verification
 }
 
+# Per-level temperature. SGR levels (L4/L5) use 0.0 for determinism.
+# Upper levels (L0-L3) use None → Gemini API default (not constrained).
+LEVEL_TEMPERATURE: dict[int, float | None] = {
+    0: 0.0,    # L0 enrichment — deterministic
+    1: 0.0,    # L1 section — deterministic + backtrack context prevents loops
+    2: 0.0,    # L2 group — deterministic
+    3: 0.0,    # L3 position — deterministic
+    4: 0.0,    # L4 subposition — SGR determinism
+    5: 0.0,    # L5 final code — SGR determinism
+    99: 0.0,   # NTM verification
+}
+
 # Per-level override env var mapping
 _LEVEL_MODEL_SETTINGS: dict[int, str] = {
     0: "LEVEL0_MODEL",
@@ -89,6 +101,11 @@ def get_model(level: int) -> str:
 
 def get_max_tokens(level: int) -> int:
     return LEVEL_MAX_TOKENS.get(level, 2048)
+
+
+def get_temperature(level: int) -> float | None:
+    """Return temperature for a given level. None means use API default."""
+    return LEVEL_TEMPERATURE.get(level)
 
 
 def get_thinking_budget(level: int) -> int:

@@ -32,6 +32,7 @@ class Level1Section(BaseCascadeLevel):
     async def run(self, state: CascadeState, db: AsyncSession) -> SectionResult:
         sections = await get_sections(db)
         excluded = state.get_excluded(1)
+        excluded_reasons = state.get_excluded_reasons(1) or None
 
         sections_data = [
             {"code": s.code, "name": s.name}
@@ -43,6 +44,7 @@ class Level1Section(BaseCascadeLevel):
         sys_short, user_short = PromptAssembler.level1_shortlist(
             card=state.product_card,
             sections=sections_data,
+            excluded_reasons=excluded_reasons,
         )
 
         shortlist = await classify(
@@ -95,6 +97,7 @@ class Level1Section(BaseCascadeLevel):
             sections=candidate_sections,
             section_notes=notes_data,
             opi_rules=rules_data,
+            excluded_reasons=excluded_reasons,
         )
 
         result = await classify(
