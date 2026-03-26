@@ -112,23 +112,21 @@ class Level5Subsubposition(BaseCascadeLevel):
             prefix8 = c["code"][:8]
             branches_map.setdefault(prefix8, []).append(c)
 
-        # Build branch display data
+        # Build branch display data — show full name for each 8-digit group
         branches_display = []
         for code_8, branch_codes in sorted(branches_map.items()):
-            # Get branch name from first code's name
-            first_name = branch_codes[0]["name"]
-            # Extract branch (parent) part if 🠺 separator present
-            if " 🠺 " in first_name:
-                parts = first_name.split(" 🠺 ")
-                branch_name = parts[0] if len(parts) > 1 else ""
-                text = parts[-1]
+            # Combine leaf names to give full picture of the branch
+            if len(branch_codes) == 1:
+                text = branch_codes[0]["name"]
             else:
-                branch_name = ""
-                text = first_name
+                # Show first leaf name + count
+                text = branch_codes[0]["name"]
+
+            # Clean up: replace 🠺 with readable arrow
+            text = text.replace(" 🠺 ", " > ")
 
             branches_display.append({
                 "code_8": code_8,
-                "branch_name": branch_name,
                 "text": text,
                 "leaf_count": len(branch_codes),
             })

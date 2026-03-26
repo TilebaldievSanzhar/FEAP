@@ -1,0 +1,8 @@
+## ВЕТКИ СУБПОЗИЦИИ {{ subposition_code }} (8-значные коды)
+
+Каждый 8-значный код — отдельная ветка классификации. Выбери ОДНУ.
+
+{% for branch in branches %}
+- **{{ branch.code_8 }}** — {{ branch.text }}{% if branch.leaf_count > 1 %} ({{ branch.leaf_count }} подкодов внутри){% endif %}
+
+{% endfor %}
