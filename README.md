@@ -15,8 +15,10 @@
     │                            │
     │                  ┌─────────┼─────────────┐
     │                  ▼         ▼             ▼
-    │             Anthropic   PostgreSQL    Voyage AI
-    │              (Claude)   + pgvector   (embeddings)
+    │             OpenRouter  PostgreSQL    Voyage AI
+    │           (Claude,     + pgvector   (embeddings)
+    │            Gemini,
+    │            Llama...)
     │
     └──► POST /ntm/verify ──► NTM Verifier ──► меры НТР + статусы
                                   │
@@ -28,20 +30,20 @@
 
 ### Каскад классификации
 
-| Уровень | Что определяет         | Контекст                     | Модель |
-|---------|------------------------|------------------------------|--------|
-| 0       | Обогащение описания    | —                            | Haiku  |
-| 1       | Раздел (I–XXI)         | Дерево, примечания, ОПИ 1    | Haiku  |
-| 2       | Группа (2 цифры)       | Группы раздела, примечания   | Haiku/Sonnet |
-| 3       | Позиция (4 цифры)      | Позиции, пояснения (RAG), ОПИ 1–5 | Sonnet/Opus |
-| 4       | Субпозиция (6 цифр)    | Субпозиции, пояснения, ОПИ 6 | Sonnet |
-| 5       | Подсубпозиция (8/10)   | Технические параметры        | Haiku  |
+| Уровень | Что определяет         | Контекст                     | Тир модели |
+|---------|------------------------|------------------------------|------------|
+| 0       | Обогащение описания    | —                            | light  |
+| 1       | Раздел (I–XXI)         | Дерево, примечания, ОПИ 1    | light  |
+| 2       | Группа (2 цифры)       | Группы раздела, примечания   | medium |
+| 3       | Позиция (4 цифры)      | Позиции, пояснения (RAG), ОПИ 1–5 | heavy |
+| 4       | Субпозиция (6 цифр)    | Субпозиции, пояснения, ОПИ 6 | medium |
+| 5       | Подсубпозиция (8/10)   | Технические параметры        | light  |
 
 ## Стек технологий
 
 - **Python 3.12+** / FastAPI / Uvicorn
 - **PostgreSQL 17** + pgvector (векторный поиск)
-- **Anthropic Claude / Google Gemini** — каскадная классификация (Structured Outputs)
+- **OpenRouter** — единый LLM-шлюз (Anthropic Claude, Google Gemini, Llama, Mistral и др.)
 - **Voyage AI** — эмбеддинги для RAG
 - **SQLAlchemy 2.0** (async) + Alembic (миграции)
 - **Jinja2** — шаблоны промптов
@@ -71,7 +73,7 @@ FEAP/
 │   │   ├── registry.py        # Реестр шаблонов
 │   │   ├── assembler.py       # Сборка system + user
 │   │   └── templates/         # Jinja2-шаблоны
-│   ├── llm/                   # Мульти-провайдер LLM (Anthropic / Gemini)
+│   ├── llm/                   # LLM через OpenRouter (OpenAI-совместимый API)
 │   ├── ntm/                   # Нетарифное регулирование
 │   │   ├── schemas.py         # Pydantic-схемы верификации
 │   │   └── verifier.py        # LLM-верификация двойного соответствия
@@ -97,7 +99,7 @@ FEAP/
 ### Предварительные требования
 
 - Docker и Docker Compose
-- API-ключ Anthropic (`ANTHROPIC_API_KEY`)
+- API-ключ OpenRouter (`OPENROUTER_API_KEY`) — получить на [openrouter.ai](https://openrouter.ai)
 - (Опционально) API-ключ Voyage AI (`VOYAGE_API_KEY`) — для RAG
 
 ### 1. Клонирование и настройка
@@ -107,11 +109,11 @@ git clone <repo-url> && cd FEAP
 cp .env.example .env
 ```
 
-Отредактируйте `.env` — задайте `POSTGRES_PASSWORD` и `ANTHROPIC_API_KEY`:
+Отредактируйте `.env` — задайте `POSTGRES_PASSWORD` и `OPENROUTER_API_KEY`:
 
 ```env
 POSTGRES_PASSWORD=your_secure_password
-ANTHROPIC_API_KEY=sk-ant-your-key-here
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
 VOYAGE_API_KEY=pa-your-key-here   # опционально, для RAG
 ```
 
@@ -324,15 +326,15 @@ pytest
 | `APP_PORT`          | Внешний порт приложения         | `8000`       |
 | `DATABASE_URL`      | URL подключения (для локальной разработки) | `postgresql+asyncpg://feap:feap@localhost:5432/feap` |
 
-### Anthropic (LLM)
+### OpenRouter (LLM)
 
 | Переменная          | Описание                        | По умолчанию |
 |---------------------|---------------------------------|--------------|
-| `ANTHROPIC_API_KEY` | API-ключ Anthropic Claude       | — (обязательно) |
-| `LLM_PROVIDER`     | Провайдер LLM (`anthropic` или `google`) | `anthropic` |
-| `ANTHROPIC_MODEL_LIGHT`  | Модель для простых уровней (L0, L1, L5, NTM verify) | `claude-haiku-4-5-20251001` |
-| `ANTHROPIC_MODEL_MEDIUM` | Модель для средних уровней (L2, L4)     | `claude-sonnet-4-6` |
-| `ANTHROPIC_MODEL_HEAVY`  | Модель для сложного уровня (L3 — позиция) | `claude-opus-4-6` |
+| `OPENROUTER_API_KEY` | API-ключ OpenRouter            | — (обязательно) |
+| `MODEL_LIGHT`       | Модель для простых уровней (L0, L1, L5, NTM verify) | `anthropic/claude-haiku-4-5-20251001` |
+| `MODEL_MEDIUM`      | Модель для средних уровней (L2, L4) | `anthropic/claude-sonnet-4-6` |
+| `MODEL_HEAVY`       | Модель для сложного уровня (L3 — позиция) | `anthropic/claude-opus-4-6` |
+| `LEVEL{N}_MODEL`    | Переопределение модели для уровня N (0–5, 99) | — |
 
 ### Voyage AI (эмбеддинги)
 

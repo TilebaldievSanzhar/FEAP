@@ -7,32 +7,20 @@ class Settings(BaseSettings):
     # --- Database ---
     DATABASE_URL: str = "postgresql+asyncpg://feap:feap@localhost:5432/feap"
 
-    # --- LLM Provider ---
-    LLM_PROVIDER: str = "anthropic"  # "anthropic" | "google"
-
-    # --- Anthropic ---
-    ANTHROPIC_API_KEY: str = ""
-    ANTHROPIC_MODEL_LIGHT: str = "claude-haiku-4-5-20251001"
-    ANTHROPIC_MODEL_MEDIUM: str = "claude-sonnet-4-6"
-    ANTHROPIC_MODEL_HEAVY: str = "claude-opus-4-6"
-
-    # --- Google Gemini ---
-    GEMINI_API_KEY: str = ""
-    GEMINI_MODEL_LIGHT: str = "gemini-2.5-flash-lite"
-    GEMINI_MODEL_MEDIUM: str = "gemini-2.5-flash"
-    GEMINI_MODEL_HEAVY: str = "gemini-2.5-pro"
+    # --- OpenRouter ---
+    OPENROUTER_API_KEY: str = ""
+    MODEL_LIGHT: str = "anthropic/claude-haiku-4-5-20251001"
+    MODEL_MEDIUM: str = "anthropic/claude-sonnet-4-6"
+    MODEL_HEAVY: str = "anthropic/claude-opus-4-6"
 
     # --- Voyage AI ---
     VOYAGE_API_KEY: str = ""
     VOYAGE_MODEL: str = "voyage-3"
     VOYAGE_EMBEDDING_DIM: int = 1024
 
-    # --- Gemini thinking ---
-    GEMINI_THINKING_BUDGET: int = -1  # -1 = use per-level defaults, >=0 = global override
-
     # --- Per-level model overrides (optional) ---
-    # Format: "provider/model", e.g. "anthropic/claude-haiku-4-5-20251001"
-    # If not set, falls back to LLM_PROVIDER + tier-based model selection.
+    # Full OpenRouter model ID, e.g. "google/gemini-2.5-pro"
+    # If not set, falls back to tier-based model selection.
     LEVEL0_MODEL: str = ""
     LEVEL1_MODEL: str = ""
     LEVEL2_MODEL: str = ""

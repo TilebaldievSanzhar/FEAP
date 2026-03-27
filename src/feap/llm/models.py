@@ -1,4 +1,4 @@
-"""Model selection per cascade level — supports multiple providers and per-level overrides."""
+"""Model selection per cascade level — tier-based with per-level overrides."""
 
 from __future__ import annotations
 
@@ -26,28 +26,15 @@ LEVEL_MAX_TOKENS: dict[int, int] = {
     99: 2048,  # NTM verification
 }
 
-# Thinking budget per level (Gemini only, tokens for internal reasoning).
-# With SGR, schema fields guide reasoning explicitly, so less native thinking needed.
-LEVEL_THINKING_BUDGET: dict[int, int] = {
-    0: 0,      # L0 enrichment — simple, SGR sufficient
-    1: 256,    # L1 section — light analysis
-    2: 256,    # L2 group — light analysis
-    3: 512,    # L3 position — hardest level, SGR + some thinking
-    4: 256,    # L4 subposition — thresholds, SGR helps
-    5: 0,      # L5 final code — SGR sufficient
-    99: 0,     # NTM verification
-}
-
-# Per-level temperature. SGR levels (L4/L5) use 0.0 for determinism.
-# Upper levels (L0-L3) use None → Gemini API default (not constrained).
+# Per-level temperature. 0.0 for determinism across all levels.
 LEVEL_TEMPERATURE: dict[int, float | None] = {
-    0: 0.0,    # L0 enrichment — deterministic
-    1: 0.0,    # L1 section — deterministic + backtrack context prevents loops
-    2: 0.0,    # L2 group — deterministic
-    3: 0.0,    # L3 position — deterministic
-    4: 0.0,    # L4 subposition — SGR determinism
-    5: 0.0,    # L5 final code — SGR determinism
-    99: 0.0,   # NTM verification
+    0: 0.0,
+    1: 0.0,
+    2: 0.0,
+    3: 0.0,
+    4: 0.0,
+    5: 0.0,
+    99: 0.0,
 }
 
 # Per-level override env var mapping
@@ -61,42 +48,30 @@ _LEVEL_MODEL_SETTINGS: dict[int, str] = {
     99: "LEVEL99_MODEL",
 }
 
+_TIER_TO_SETTING = {
+    "light": "MODEL_LIGHT",
+    "medium": "MODEL_MEDIUM",
+    "heavy": "MODEL_HEAVY",
+}
 
-def resolve_model(level: int) -> tuple[str, str]:
-    """Return (provider, model) for a given cascade level.
 
-    Checks LEVEL{N}_MODEL first (format: "provider/model").
-    Falls back to LLM_PROVIDER + tier-based model selection.
+def resolve_model(level: int) -> str:
+    """Return the OpenRouter model ID for a given cascade level.
+
+    Checks LEVEL{N}_MODEL first (e.g. "google/gemini-2.5-pro").
+    Falls back to tier-based selection (MODEL_LIGHT / MODEL_MEDIUM / MODEL_HEAVY).
     """
     override = getattr(settings, _LEVEL_MODEL_SETTINGS.get(level, ""), "")
-    if override and "/" in override:
-        provider, model = override.split("/", 1)
-        return provider, model
+    if override:
+        return override
 
-    # Fallback to tier-based selection
-    provider = settings.LLM_PROVIDER
     tier = LEVEL_TIER.get(level, "medium")
-
-    if provider == "google":
-        model = {
-            "light": settings.GEMINI_MODEL_LIGHT,
-            "medium": settings.GEMINI_MODEL_MEDIUM,
-            "heavy": settings.GEMINI_MODEL_HEAVY,
-        }[tier]
-    else:
-        model = {
-            "light": settings.ANTHROPIC_MODEL_LIGHT,
-            "medium": settings.ANTHROPIC_MODEL_MEDIUM,
-            "heavy": settings.ANTHROPIC_MODEL_HEAVY,
-        }[tier]
-
-    return provider, model
+    return getattr(settings, _TIER_TO_SETTING[tier])
 
 
 def get_model(level: int) -> str:
-    """Return the model name for a given cascade level (legacy compat)."""
-    _, model = resolve_model(level)
-    return model
+    """Return the model name for a given cascade level."""
+    return resolve_model(level)
 
 
 def get_max_tokens(level: int) -> int:
@@ -106,14 +81,3 @@ def get_max_tokens(level: int) -> int:
 def get_temperature(level: int) -> float | None:
     """Return temperature for a given level. None means use API default."""
     return LEVEL_TEMPERATURE.get(level)
-
-
-def get_thinking_budget(level: int) -> int:
-    """Return thinking budget for a given level.
-
-    If GEMINI_THINKING_BUDGET >= 0 in settings, use it as global override.
-    Otherwise use per-level defaults from LEVEL_THINKING_BUDGET.
-    """
-    if settings.GEMINI_THINKING_BUDGET >= 0:
-        return settings.GEMINI_THINKING_BUDGET
-    return LEVEL_THINKING_BUDGET.get(level, 256)

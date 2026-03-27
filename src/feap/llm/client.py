@@ -1,7 +1,6 @@
-"""LLM client facade — routes each call to the correct provider (Anthropic or Gemini).
+"""LLM client facade — routes all calls through OpenRouter.
 
-Supports mixed-provider cascades: e.g. L4 on Anthropic, rest on Gemini.
-Provider is resolved per-call via LEVEL{N}_MODEL env vars or LLM_PROVIDER fallback.
+All cascade levels import `classify` from this module.
 """
 
 from __future__ import annotations
@@ -15,19 +14,16 @@ from feap.llm.provider import LLMProvider
 
 T = TypeVar("T", bound=BaseModel)
 
-_providers: dict[str, LLMProvider] = {}
+_provider: LLMProvider | None = None
 
 
-def get_provider(provider_name: str) -> LLMProvider:
-    """Return the LLM provider instance (lazy singleton per provider)."""
-    if provider_name not in _providers:
-        if provider_name == "google":
-            from feap.llm.gemini_provider import GeminiProvider
-            _providers[provider_name] = GeminiProvider()
-        else:
-            from feap.llm.anthropic_provider import AnthropicProvider
-            _providers[provider_name] = AnthropicProvider()
-    return _providers[provider_name]
+def get_provider() -> LLMProvider:
+    """Return the OpenRouter provider instance (lazy singleton)."""
+    global _provider
+    if _provider is None:
+        from feap.llm.openrouter_provider import OpenRouterProvider
+        _provider = OpenRouterProvider()
+    return _provider
 
 
 async def classify(
@@ -39,11 +35,11 @@ async def classify(
     model_override: str | None = None,
 ) -> T:
     """Backward-compatible entry point — all cascade levels import this."""
-    provider_name, model = resolve_model(level)
-    return await get_provider(provider_name).classify(
+    model = model_override or resolve_model(level)
+    return await get_provider().classify(
         level=level,
         system_prompt=system_prompt,
         user_message=user_message,
         output_model=output_model,
-        model_override=model_override or model,
+        model_override=model,
     )

@@ -11,7 +11,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class LLMProvider(ABC):
-    """Base class for LLM providers (Anthropic, Google Gemini, etc.)."""
+    """Base class for LLM providers."""
 
     @abstractmethod
     async def classify(
