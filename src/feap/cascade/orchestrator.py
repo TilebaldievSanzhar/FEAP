@@ -7,7 +7,7 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from feap.cascade.backtracker import BacktrackLimitExceeded, apply_backtrack
+from feap.cascade.backtracker import BacktrackLimitExceeded, apply_backtrack, _infer_target_level
 from feap.cascade.levels.base import CascadeState
 from feap.cascade.levels.level0 import Level0Enrichment
 from feap.cascade.levels.level1 import Level1Section
@@ -31,6 +31,26 @@ LEVELS = [
     Level4Subposition(),
     Level5Subsubposition(),
 ]
+
+
+def _infer_target_level_quick(trigger) -> int:
+    """Quick target level inference without full backtrack logic."""
+    return _infer_target_level(trigger)
+
+
+def _parent_state_exists(state: CascadeState, target_level: int) -> bool:
+    """Check that parent state is set for the target level to restart from."""
+    if target_level <= 1:
+        return True  # L1 has no parent dependency
+    if target_level == 2:
+        return state.section is not None
+    if target_level == 3:
+        return state.group is not None
+    if target_level == 4:
+        return state.position is not None
+    if target_level == 5:
+        return state.subposition is not None
+    return True
 
 
 class CascadeOrchestrator:
@@ -176,14 +196,30 @@ class CascadeOrchestrator:
             # Check for backtrack trigger
             trigger = getattr(result, "backtrack_trigger", None)
             if trigger is not None:
-                backtrack_count += 1
-                target = apply_backtrack(state, trigger, backtrack_count)
-                # Find the level index to restart from
-                current_level_idx = next(
-                    i for i, lv in enumerate(LEVELS) if lv.level >= target
-                )
-                logger.info("Backtracking to level %d (attempt %d)", target, backtrack_count)
-                continue
+                target = _infer_target_level_quick(trigger)
+                # Ignore nonsensical triggers: target must be < current level,
+                # and the parent state for that level must exist.
+                if target >= level.level:
+                    logger.warning(
+                        "Ignoring backtrack trigger from level %d with target %d "
+                        "(target must be < current level). excluded_code='%s'",
+                        level.level, target, trigger.excluded_code,
+                    )
+                elif not _parent_state_exists(state, target):
+                    logger.warning(
+                        "Ignoring backtrack trigger targeting level %d: "
+                        "parent state not set (section=%s, group=%s, position=%s)",
+                        target, state.section, state.group, state.position,
+                    )
+                else:
+                    backtrack_count += 1
+                    target = apply_backtrack(state, trigger, backtrack_count)
+                    # Find the level index to restart from
+                    current_level_idx = next(
+                        i for i, lv in enumerate(LEVELS) if lv.level >= target
+                    )
+                    logger.info("Backtracking to level %d (attempt %d)", target, backtrack_count)
+                    continue
 
             # Generalized needs_input check — works for any level
             if state.missing_parameters:
