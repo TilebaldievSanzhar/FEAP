@@ -23,7 +23,7 @@ class PositionCandidate(BaseModel):
 class ShortlistResult(BaseModel):
     """Step 3a: shortlist of 2-5 candidate positions."""
 
-    group: str
+    group: str = ""
     # --- SGR: анализ перед shortlist ---
     physical_nature_analysis: str = Field(
         default="",
@@ -43,8 +43,8 @@ class ShortlistResult(BaseModel):
 class PositionResult(BaseModel):
     """Output of Level 3 — position classification (step 3b deep analysis)."""
 
-    section: str
-    group: str
+    section: str = ""
+    group: str = ""
     # --- SGR: пошаговый анализ ОПИ ---
     step1_product_nature: str = Field(
         default="",

@@ -23,7 +23,7 @@ class GroupCandidate(BaseModel):
 class GroupResult(BaseModel):
     """Output of Level 2 — group classification."""
 
-    section: str
+    section: str = ""
     # --- SGR: контекстный анализ ---
     product_in_section_context: str = Field(
         default="",

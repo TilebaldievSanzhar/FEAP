@@ -22,7 +22,7 @@ LEVEL_MAX_TOKENS: dict[int, int] = {
     2: 4096,
     3: 8192,
     4: 4096,
-    5: 2048,
+    5: 4096,
     99: 2048,  # NTM verification
 }
 

@@ -152,6 +152,71 @@ result = OutputModel.model_validate(data)
 - Не thinking-модель — `reasoning: {effort: "none"}` не нужен, но безвреден
 - Latency: высокая (~100-140с на полный каскад), что делает бенчмаркинг дорогим по времени
 
+### StepFun Step 3.5 Flash (`stepfun/step-3.5-flash`)
+
+- `json_schema` + `strict: true` + `require_parameters` — **404**: ни один провайдер не поддерживает
+- `json_schema` + `strict: true` без `require_parameters` — **400**: провайдер отклоняет
+- `json_object` — **405**: SiliconFlow не поддерживает `response_format` вообще
+- **Plain text** + schema в промпте — **работает** (24/24 тест, 3 прогона × 8 схем)
+
+#### Особенности Step 3.5 Flash
+
+1. **Mandatory reasoning**: модель всегда генерирует reasoning-токены. Параметр `reasoning: {effort: "none"}` **отклоняется** с ошибкой `400 Bad Request: "Reasoning is mandatory for this endpoint"`.
+
+2. **Reasoning overhead**: reasoning-токены **входят** в `completion_tokens` бюджет. Модель генерирует ~2,000–24,000 reasoning-токенов на вызов. При `max_tokens=4096` reasoning может исчерпать весь бюджет → `finish_reason=length` с обрезанным content (иногда <20 символов). **Требуется `max_tokens >= 16384`**.
+
+3. **Один провайдер на OpenRouter**: SiliconFlow (slug: `siliconflow/fp8`). Не поддерживает ни `json_schema`, ни `json_object` response_format.
+
+4. **Архитектура**: 196B MoE (11B active), 256K context window.
+
+5. **Стоимость**: $0.10/M input, $0.30/M output (reasoning-токены по output-цене). Фактическая стоимость каскада ~$0.005–0.025 в зависимости от reasoning overhead.
+
+#### Рабочий подход для Step 3.5 Flash
+
+Используется plain text + schema в промпте (без `response_format`):
+
+```python
+# 1. Подготовить schema как текст
+schema = _prepare_schema(OutputModel.model_json_schema())
+schema_str = json.dumps(schema, indent=2, ensure_ascii=False)
+
+# 2. Вставить schema в system prompt
+system_prompt = f"""{original_system_prompt}
+
+Верни JSON-объект, соответствующий следующей JSON Schema.
+ВАЖНО: Верни ПЛОСКИЙ объект с полями из 'properties', НЕ оборачивай в {{"properties": {{...}}}}.
+Верни ТОЛЬКО JSON, без пояснений и без markdown.
+
+JSON Schema:
+{schema_str}"""
+
+# 3. НЕ использовать response_format (405 от SiliconFlow)
+# 4. НЕ отправлять reasoning: {effort: "none"} (mandatory reasoning!)
+# 5. max_tokens >= 16384 (reasoning overhead)
+response = await client.chat.completions.create(
+    model="stepfun/step-3.5-flash",
+    messages=[
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_message},
+    ],
+    extra_body={
+        "provider": {"sort": "price"},
+        # НЕТ require_parameters — provider не поддерживает structured output params
+        # НЕТ "reasoning": {"effort": "none"} — mandatory reasoning!
+    },
+    temperature=0.0,
+    max_tokens=16384,
+)
+
+# 6. Извлечь JSON из текстового ответа
+content = response.choices[0].message.content
+content = _extract_json(content)  # убирает markdown fences, находит JSON в тексте
+data = json.loads(content)
+result = OutputModel.model_validate(data)
+```
+
+**Результат тестирования:** 8/8 schema каскада, 3 прогона = 24/24 (100%). Avg latency: ~14-33с/вызов, ~110-330с/каскад. Reasoning tokens: ~2K-24K/вызов (highly variable).
+
 ## Сводная таблица моделей
 
 | Модель | Стратегия | Reasoning | Markdown fences | Latency/вызов |
@@ -161,6 +226,7 @@ result = OutputModel.model_validate(data)
 | Qwen 3-235B | `json_schema` strict | не нужен | нет | ~12-18с |
 | Qwen 3.5-27B | `json_object` + prompt + `/no_think` | отключаем | нет | ~3-11с |
 | MiniMax M2.7 | `json_object` + prompt | **mandatory** | **да** (`\`\`\`json`) | ~16-35с |
+| StepFun Step 3.5 Flash | **plain text** + prompt | **mandatory** | возможны | ~14-33с |
 
 ## Общие рекомендации
 
@@ -179,7 +245,7 @@ extra_body = {
 # Для моделей, где reasoning отключаем (DeepSeek, Qwen и др.)
 extra_body["reasoning"] = {"effort": "none"}
 
-# Для MiniMax — НЕ отправлять этот параметр (mandatory reasoning)
+# Для MiniMax и StepFun — НЕ отправлять этот параметр (mandatory reasoning)
 ```
 Для Qwen 3.5 дополнительно: `/no_think` в конце user message.
 
@@ -198,10 +264,13 @@ extra_body["reasoning"] = {"effort": "none"}
 | Anthropic, OpenAI, DeepSeek, Qwen3-235B | `json_schema` strict | Grammar-constrained decoding |
 | MiniMax M2.* | `json_object` + prompt | Schema в system prompt, markdown fence stripping |
 | Qwen 3.5-* | `json_object` + prompt | Schema в system prompt + `/no_think` |
+| StepFun Step-* | **plain text** + prompt | Без response_format, JSON extraction из текста |
 
-Конфигурация определяется двумя списками префиксов в `openrouter_provider.py`:
-- `_PROMPT_SCHEMA_MODEL_PREFIXES` — модели, требующие prompt-based стратегию
+Конфигурация определяется списками префиксов в `openrouter_provider.py`:
+- `_PROMPT_SCHEMA_MODEL_PREFIXES` — модели, требующие `json_object` + prompt стратегию
+- `_PLAIN_TEXT_SCHEMA_MODEL_PREFIXES` — модели без поддержки response_format (plain text)
 - `_MANDATORY_REASONING_PREFIXES` — модели, которым нельзя отправлять `reasoning: {effort: "none"}`
+- `_HIGH_MAX_TOKENS_PREFIXES` — модели с reasoning overhead (min 16384 max_tokens)
 
 ### Защита от repetition loops
 
@@ -234,3 +303,4 @@ extra_body["reasoning"] = {"effort": "none"}
 | qwen/qwen3-235b-a22b-2507 | $0.071 | $0.10 | json_schema strict | Через провайдеров | 2026-03 |
 | minimax/minimax-m2.7 | $0.30 | $1.20 | json_object + prompt | Schema в промпте + fence strip | 2026-03 |
 | minimax/minimax-m2.7-highspeed | $0.60 | $2.40 | (не на OpenRouter) | Прямой API MiniMax | 2026-03 |
+| stepfun/step-3.5-flash | $0.10 | $0.30 | plain text + prompt | Без response_format, mandatory reasoning | 2026-03 |

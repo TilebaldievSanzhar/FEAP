@@ -14,6 +14,14 @@ from feap.schemas.common import DecisionChainEntry
 class CascadeState:
     """Mutable state passed through the cascade."""
 
+    # Fields whose values should have spaces/dots stripped (HS code normalization)
+    _CODE_FIELDS = frozenset({"section", "group", "position", "subposition", "code_10"})
+
+    def __setattr__(self, name: str, value: object) -> None:
+        if name in self._CODE_FIELDS and isinstance(value, str):
+            value = value.replace(" ", "").replace(".", "")
+        super().__setattr__(name, value)
+
     def __init__(self, product_description: str):
         self.product_description: str = product_description
         self.product_card: dict | None = None

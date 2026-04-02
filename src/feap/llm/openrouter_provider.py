@@ -1,8 +1,9 @@
 """OpenRouter provider — structured output via JSON Schema (OpenAI-compatible API).
 
-Supports two structured output strategies:
+Supports three structured output strategies:
 1. json_schema strict — grammar-constrained decoding (Anthropic, OpenAI, DeepSeek, etc.)
 2. json_object + schema in prompt — for models without strict support (MiniMax, etc.)
+3. plain text + schema in prompt — for models with no response_format support (StepFun, etc.)
 
 See docs/structured_output_providers.md for details.
 """
@@ -32,13 +33,31 @@ logger = logging.getLogger(__name__)
 # the prompt-based strategy is used.
 _PROMPT_SCHEMA_MODEL_PREFIXES: tuple[str, ...] = (
     "minimax/minimax-m2",
+    "google/gemini-3.1-flash-lite",
+)
+
+# Models that require plain text + schema-in-prompt strategy.
+# These models don't support ANY response_format (neither json_schema nor json_object).
+# Uses no response_format at all — schema in prompt + JSON extraction from text.
+_PLAIN_TEXT_SCHEMA_MODEL_PREFIXES: tuple[str, ...] = (
+    "stepfun/step-",
 )
 
 # Models with mandatory reasoning (thinking) that cannot be disabled.
 # For these models, we must NOT send reasoning: {effort: "none"}.
 _MANDATORY_REASONING_PREFIXES: tuple[str, ...] = (
     "minimax/minimax-m2",
+    "stepfun/step-",
 )
+
+# Models that need higher max_tokens due to mandatory reasoning overhead.
+# Reasoning tokens count toward completion_tokens budget.
+_HIGH_MAX_TOKENS_PREFIXES: tuple[str, ...] = (
+    "stepfun/step-",
+)
+
+# Minimum max_tokens for models with mandatory reasoning overhead.
+_HIGH_MAX_TOKENS_MIN = 16384
 
 # Max retries for truncated responses (repetition loops).
 _MAX_RETRIES = 3
@@ -56,7 +75,7 @@ _PROMPT_SCHEMA_INSTRUCTION = (
 )
 
 # Regex to strip ```json ... ``` markdown fences from model output.
-_JSON_FENCE_RE = re.compile(r"^```(?:json)?\s*\n(.*?)```\s*$", re.DOTALL)
+_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*\n(.*?)```", re.DOTALL)
 
 
 def _inline_refs(node: Any, defs: dict[str, Any]) -> Any:
@@ -97,22 +116,48 @@ def _prepare_schema(schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def _extract_json(text: str) -> str:
-    """Extract JSON from possibly markdown-fenced response."""
+    """Extract JSON from possibly markdown-fenced or mixed-content response.
+
+    Handles cases where model returns markdown text with embedded JSON fences,
+    or plain text with a JSON object somewhere inside.
+    """
     text = text.strip()
-    m = _JSON_FENCE_RE.match(text)
+    # 1. Try to find ```json ... ``` fence anywhere in text
+    m = _JSON_FENCE_RE.search(text)
     if m:
         return m.group(1).strip()
+    # 2. If text starts with '{', assume it's JSON
+    if text.startswith("{"):
+        return text
+    # 3. Fallback: find first '{' and last '}' to extract embedded JSON object
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        return text[first_brace:last_brace + 1]
     return text
 
 
 def _uses_prompt_schema(model: str) -> bool:
-    """Check if model requires prompt-based schema strategy."""
+    """Check if model requires json_object + prompt-based schema strategy."""
     return any(model.startswith(prefix) for prefix in _PROMPT_SCHEMA_MODEL_PREFIXES)
+
+
+def _uses_plain_text_schema(model: str) -> bool:
+    """Check if model requires plain text + prompt-based schema strategy.
+
+    These models don't support any response_format parameter.
+    """
+    return any(model.startswith(prefix) for prefix in _PLAIN_TEXT_SCHEMA_MODEL_PREFIXES)
 
 
 def _has_mandatory_reasoning(model: str) -> bool:
     """Check if model has mandatory reasoning that cannot be disabled."""
     return any(model.startswith(prefix) for prefix in _MANDATORY_REASONING_PREFIXES)
+
+
+def _needs_high_max_tokens(model: str) -> bool:
+    """Check if model needs higher max_tokens due to reasoning overhead."""
+    return any(model.startswith(prefix) for prefix in _HIGH_MAX_TOKENS_PREFIXES)
 
 
 class OpenRouterProvider(LLMProvider):
@@ -161,6 +206,23 @@ class OpenRouterProvider(LLMProvider):
 
         schema = output_model.model_json_schema()
         schema = _prepare_schema(schema)
+
+        # Bump max_tokens for models with mandatory reasoning overhead
+        if _needs_high_max_tokens(model):
+            max_tokens = max(max_tokens, _HIGH_MAX_TOKENS_MIN)
+
+        if _uses_plain_text_schema(model):
+            return await self._classify_plain_text_schema(
+                client=client,
+                model=model,
+                level=level,
+                system_prompt=system_prompt,
+                user_message=user_message,
+                output_model=output_model,
+                schema=schema,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
 
         if _uses_prompt_schema(model):
             return await self._classify_prompt_schema(
@@ -284,13 +346,17 @@ class OpenRouterProvider(LLMProvider):
             content = response.choices[0].message.content
 
             if not content:
+                # Check reasoning field for models with mandatory thinking
+                reasoning = getattr(response.choices[0].message, "reasoning", None)
                 last_error = RuntimeError(
                     f"OpenRouter returned empty response for level {level}, "
                     f"model={model}, finish_reason={finish_reason}"
                 )
                 logger.warning(
-                    "Empty response from %s (level %d, attempt %d/%d)",
+                    "Empty response from %s (level %d, attempt %d/%d, "
+                    "finish_reason=%s, has_reasoning=%s)",
                     model, level, attempt, _MAX_RETRIES,
+                    finish_reason, bool(reasoning),
                 )
                 continue
 
@@ -306,6 +372,7 @@ class OpenRouterProvider(LLMProvider):
                 continue
 
             # Strip markdown fences if present (some models wrap JSON in ```json ... ```)
+            raw_content = content
             content = _extract_json(content)
 
             try:
@@ -313,18 +380,167 @@ class OpenRouterProvider(LLMProvider):
             except json.JSONDecodeError as exc:
                 last_error = exc
                 logger.warning(
-                    "Invalid JSON from %s (level %d, attempt %d/%d): %s",
+                    "Invalid JSON from %s (level %d, attempt %d/%d): %s | "
+                    "raw_content_len=%d, extracted_len=%d, first_100=%r",
                     model, level, attempt, _MAX_RETRIES, exc,
+                    len(raw_content), len(content), raw_content[:100],
                 )
                 continue
 
             # Handle model wrapping response in {"properties": {...}}
-            if "properties" in data and len(data) <= 2:
+            if isinstance(data, dict) and "properties" in data and len(data) <= 2:
                 inner = data.get("properties", {})
                 if isinstance(inner, dict) and inner:
                     data = inner
 
-            return output_model.model_validate(data)
+            # Handle model returning a list instead of an object
+            if isinstance(data, list):
+                logger.warning(
+                    "Model returned list instead of object for level %d, "
+                    "attempting to use first element",
+                    level,
+                )
+                if data and isinstance(data[0], dict):
+                    data = data[0]
+                else:
+                    last_error = RuntimeError(
+                        f"Model returned empty list for level {level}"
+                    )
+                    continue
+
+            try:
+                return output_model.model_validate(data)
+            except Exception as exc:
+                last_error = exc
+                logger.warning(
+                    "Pydantic validation failed for %s (level %d, attempt %d/%d): %s",
+                    model, level, attempt, _MAX_RETRIES, str(exc)[:200],
+                )
+                continue
+
+        raise last_error or RuntimeError(
+            f"All {_MAX_RETRIES} attempts failed for level {level}, model={model}"
+        )
+
+    async def _classify_plain_text_schema(
+        self,
+        *,
+        client: Any,
+        model: str,
+        level: int,
+        system_prompt: str,
+        user_message: str,
+        output_model: type[T],
+        schema: dict[str, Any],
+        max_tokens: int,
+        temperature: float | None,
+    ) -> T:
+        """Strategy 3: plain text + schema in prompt — no response_format at all.
+
+        For models where providers don't support any response_format parameter
+        (e.g. StepFun Step 3.5 Flash on SiliconFlow).
+        Retries with temperature bump on truncation or parse failure.
+        """
+        schema_str = json.dumps(schema, indent=2, ensure_ascii=False)
+        augmented_system = (
+            f"{system_prompt}\n\n"
+            f"{_PROMPT_SCHEMA_INSTRUCTION}\n"
+            "Верни ТОЛЬКО JSON, без пояснений и без markdown.\n\n"
+            f"JSON Schema:\n{schema_str}"
+        )
+
+        last_error: Exception | None = None
+
+        for attempt in range(1, _MAX_RETRIES + 1):
+            temp = temperature if attempt == 1 else _RETRY_TEMPERATURE
+
+            kwargs: dict[str, Any] = {
+                "model": model,
+                "max_tokens": max_tokens,
+                "messages": [
+                    {"role": "system", "content": augmented_system},
+                    {"role": "user", "content": user_message},
+                ],
+                # No response_format — provider doesn't support it
+            }
+            if temp is not None:
+                kwargs["temperature"] = temp
+
+            kwargs["extra_body"] = self._build_extra_body(model, require_params=False)
+
+            response = await client.chat.completions.create(**kwargs)
+            finish_reason = response.choices[0].finish_reason
+            content = response.choices[0].message.content
+
+            if not content:
+                last_error = RuntimeError(
+                    f"OpenRouter returned empty response for level {level}, "
+                    f"model={model}, finish_reason={finish_reason}"
+                )
+                logger.warning(
+                    "Empty response from %s (level %d, attempt %d/%d, "
+                    "finish_reason=%s)",
+                    model, level, attempt, _MAX_RETRIES, finish_reason,
+                )
+                continue
+
+            if finish_reason == "length":
+                last_error = RuntimeError(
+                    f"Response truncated (finish_reason=length, {len(content)} chars) "
+                    f"for level {level}, model={model} — likely reasoning overflow"
+                )
+                logger.warning(
+                    "Truncated response from %s (level %d, attempt %d/%d, %d chars)",
+                    model, level, attempt, _MAX_RETRIES, len(content),
+                )
+                continue
+
+            # Extract JSON from potentially mixed text+JSON response
+            raw_content = content
+            content = _extract_json(content)
+
+            try:
+                data = json.loads(content)
+            except json.JSONDecodeError as exc:
+                last_error = exc
+                logger.warning(
+                    "Invalid JSON from %s (level %d, attempt %d/%d): %s | "
+                    "raw_content_len=%d, extracted_len=%d, first_100=%r",
+                    model, level, attempt, _MAX_RETRIES, exc,
+                    len(raw_content), len(content), raw_content[:100],
+                )
+                continue
+
+            # Handle model wrapping response in {"properties": {...}}
+            if isinstance(data, dict) and "properties" in data and len(data) <= 2:
+                inner = data.get("properties", {})
+                if isinstance(inner, dict) and inner:
+                    data = inner
+
+            # Handle model returning a list instead of an object
+            if isinstance(data, list):
+                logger.warning(
+                    "Model returned list instead of object for level %d, "
+                    "attempting to use first element",
+                    level,
+                )
+                if data and isinstance(data[0], dict):
+                    data = data[0]
+                else:
+                    last_error = RuntimeError(
+                        f"Model returned empty list for level {level}"
+                    )
+                    continue
+
+            try:
+                return output_model.model_validate(data)
+            except Exception as exc:
+                last_error = exc
+                logger.warning(
+                    "Pydantic validation failed for %s (level %d, attempt %d/%d): %s",
+                    model, level, attempt, _MAX_RETRIES, str(exc)[:200],
+                )
+                continue
 
         raise last_error or RuntimeError(
             f"All {_MAX_RETRIES} attempts failed for level {level}, model={model}"

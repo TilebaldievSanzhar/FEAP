@@ -21,7 +21,7 @@ class BranchCandidate(BaseModel):
 class SubsubpositionShortlistResult(BaseModel):
     """Output of Level 5a — 8-digit branch selection."""
 
-    subposition: str = Field(description="6-digit parent subposition")
+    subposition: str = Field(default="", description="6-digit parent subposition")
     relevant_parameters: str = Field(
         default="",
         description="ПРОЦИТИРУЙ из карточки товара параметры, влияющие на выбор ветки. "
@@ -53,7 +53,7 @@ class SubsubpositionCandidate(BaseModel):
 class SubsubpositionResult(BaseModel):
     """Output of Level 5 — final 10-digit code."""
 
-    subposition: str = Field(description="6-digit parent subposition")
+    subposition: str = Field(default="", description="6-digit parent subposition")
     # --- SGR: анализ перед выбором кода ---
     parent_context: str = Field(
         default="",
