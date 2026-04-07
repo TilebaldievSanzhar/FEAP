@@ -1,4 +1,9 @@
-"""Level 5: Subsubposition (8/10-digit) classification schema."""
+"""Level 5: Subsubposition (8/10-digit) classification schema.
+
+SGR fields guide reasoning before the decision:
+  L5a — relevant_parameters + code_differentiation → select 8-digit branch
+  L5b — relevant_parameters + code_differentiation + threshold_comparison → select 10-digit code
+"""
 
 from __future__ import annotations
 
@@ -10,10 +15,6 @@ class BranchCandidate(BaseModel):
 
     code_8: str = Field(description="8-значный код ветки")
     branch_text: str = Field(default="", description="Текст/название ветки")
-    match_type: str = Field(
-        default="",
-        description="'direct' / 'by_parameter' / 'residual'",
-    )
     reasoning: str = Field(default="")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
@@ -22,16 +23,19 @@ class SubsubpositionShortlistResult(BaseModel):
     """Output of Level 5a — 8-digit branch selection."""
 
     subposition: str = Field(default="", description="6-digit parent subposition")
+
+    # --- SGR: guided reasoning ---
     relevant_parameters: str = Field(
         default="",
-        description="ПРОЦИТИРУЙ из карточки товара параметры, влияющие на выбор ветки. "
-        "Если параметр отсутствует — 'НЕ УКАЗАНО'.",
+        description="Какие параметры товара влияют на выбор ветки? "
+        "Перечисли из карточки. Если параметр не указан — «НЕ УКАЗАНО».",
     )
-    branch_differentiation: str = Field(
+    code_differentiation: str = Field(
         default="",
-        description="Чем КОНКРЕТНО различаются ветки? Для каждой: "
-        "'ветка A = ...', 'ветка B = ...', различие = '...'.",
+        description="Чем КОНКРЕТНО различаются ветки? "
+        "Для каждой: «ветка A = ..., ветка B = ..., различие = ...».",
     )
+
     candidates: list[BranchCandidate] = Field(min_length=1, max_length=5)
     selected_code_8: str = Field(description="Выбранный 8-значный код")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -40,12 +44,6 @@ class SubsubpositionShortlistResult(BaseModel):
 class SubsubpositionCandidate(BaseModel):
     code_10: str = Field(description="10-digit code")
     code_text: str = Field(default="", description="Name/text of the code")
-    match_type: str = Field(
-        default="",
-        description="'direct' (товар прямо назван), "
-        "'by_parameter' (попадает по числовому порогу), "
-        "'residual' (остаточная категория 'прочие')",
-    )
     reasoning: str = Field(default="")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
@@ -54,32 +52,30 @@ class SubsubpositionResult(BaseModel):
     """Output of Level 5 — final 10-digit code."""
 
     subposition: str = Field(default="", description="6-digit parent subposition")
-    # --- SGR: анализ перед выбором кода ---
-    parent_context: str = Field(
-        default="",
-        description="Шаг 0: Что означает текущая субпозиция? "
-        "Какого типа товары здесь классифицируются? Товар соответствует этой категории?",
-    )
+
+    # --- SGR: guided reasoning ---
     relevant_parameters: str = Field(
         default="",
-        description="Шаг 1: ПРОЦИТИРУЙ из карточки товара параметры, влияющие на выбор кода. "
-        "Если параметр отсутствует — 'НЕ УКАЗАНО'.",
+        description="Какие параметры товара влияют на выбор кода? "
+        "Перечисли из карточки. Если параметр не указан — «НЕ УКАЗАНО».",
     )
     code_differentiation: str = Field(
         default="",
-        description="Шаг 2: Чем КОНКРЕТНО различаются коды? Перечисли: "
-        "код A = '...', код B = '...', различие = '...'.",
+        description="Чем КОНКРЕТНО различаются коды? "
+        "Для каждой пары: «код A = ..., код B = ..., различие = ...».",
     )
     threshold_comparison: str = Field(
         default="",
-        description="Шаг 3: Сопоставление: 'параметр = X, порог кода = Y, X > Y → код Z'.",
+        description="Если в текстах кодов есть числовые пороги — сопоставь: "
+        "«параметр = X, порог = Y, X > Y → код Z». "
+        "Если порогов нет — «порогов нет, выбор по тексту».",
     )
-    # --- Кандидаты (ПЕРЕД решением — модель анализирует варианты) ---
+
+    # --- Candidates + decision ---
     candidates: list[SubsubpositionCandidate] = Field(
         default_factory=list,
-        description="Кандидаты с reasoning и match_type для каждого",
+        description="Кандидаты с обоснованием",
     )
-    # --- Решение (ПОСЛЕ анализа кандидатов) ---
     selected_code_8: str = Field(description="8-digit code")
     selected_code_10: str = Field(description="10-digit code")
     reasoning: str = Field(default="", description="Step-by-step reasoning for the selected code")

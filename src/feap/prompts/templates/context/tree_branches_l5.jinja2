@@ -1,8 +1,10 @@
 ## ВЕТКИ СУБПОЗИЦИИ {{ subposition_code }} (8-значные коды)
 
-Каждый 8-значный код — отдельная ветка классификации. Выбери ОДНУ.
+Навигируй: определи критерий на каждой развилке → найди значение для товара → выбери ветку.
 
 {% for branch in branches %}
-- **{{ branch.code_8 }}** — {{ branch.text }}{% if branch.leaf_count > 1 %} ({{ branch.leaf_count }} подкодов внутри){% endif %}
+**{{ branch.code_8 }}** — {{ branch.branch_name }}{% if branch.leaf_count > 1 %} ({{ branch.leaf_count }} подкодов){% endif %}
 
+{% if branch.leaves is defined %}{% for leaf in branch.leaves %}  • {{ leaf.code }} — {{ leaf.text }}
+{% endfor %}{% endif %}
 {% endfor %}

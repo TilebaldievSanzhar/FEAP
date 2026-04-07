@@ -44,8 +44,9 @@ class Level5Subsubposition(BaseCascadeLevel):
             raise ValueError(f"Subposition node not found: {subposition_code}")
 
         leaves = await get_children(db, sp_node.id)
+        local_names = _compute_local_names(leaves)
         codes_data = [
-            {"code": c.code, "name": c.name_full or c.name}
+            {"code": c.code, "name": local_names.get(c.code, c.name_full or c.name)}
             for c in leaves
         ]
 
@@ -66,19 +67,22 @@ class Level5Subsubposition(BaseCascadeLevel):
         # Decide: two-step or single-step
         if len(codes_data) > SINGLE_STEP_THRESHOLD:
             # ── Step 5a: Branch selection (8-digit) ──
-            selected_code_8 = await self._step_branch(
+            shortlist = await self._step_branch(
                 state, db, subposition_code, codes_data, chain, explanations, leaves,
             )
-            # Filter codes to selected branch
-            branch_codes = [c for c in codes_data if c["code"].startswith(selected_code_8)]
+            # Multi-branch: use top-2 branches to prevent "invisible code" errors
+            selected_branches = _get_top_branches(shortlist, max_branches=2)
+            branch_codes = [c for c in codes_data if any(c["code"].startswith(b) for b in selected_branches)]
             if not branch_codes:
-                # Fallback: if branch selection hallucinated, use all codes
-                logger.warning("L5a selected code_8 '%s' not found, falling back to all codes", selected_code_8)
+                logger.warning("L5a selected branches %s not found, falling back to all codes", selected_branches)
                 branch_codes = codes_data
             else:
-                logger.info("L5a selected branch %s (%d codes of %d total)", selected_code_8, len(branch_codes), len(codes_data))
+                logger.info(
+                    "L5a selected branches %s (%d codes of %d total)",
+                    selected_branches, len(branch_codes), len(codes_data),
+                )
 
-            # If branch has only one leaf, auto-select
+            # Auto-select only if single code across ALL selected branches
             if len(branch_codes) == 1:
                 return self._auto_select(state, branch_codes[0], subposition_code)
 
@@ -104,30 +108,38 @@ class Level5Subsubposition(BaseCascadeLevel):
         chain: list[dict],
         explanations: list[dict],
         leaves,
-    ) -> str:
-        """Step 5a: Select 8-digit branch."""
+    ) -> SubsubpositionShortlistResult:
+        """Step 5a: Select 8-digit branch. Returns full shortlist for multi-branch."""
         # Build branch data: group codes by 8-digit prefix
         branches_map: dict[str, list[dict]] = {}
         for c in codes_data:
             prefix8 = c["code"][:8]
             branches_map.setdefault(prefix8, []).append(c)
 
-        # Build branch display data — show full name for each 8-digit group
+        # Build branch display data — show ALL leaf names per branch
         branches_display = []
         for code_8, branch_codes in sorted(branches_map.items()):
-            # Combine leaf names to give full picture of the branch
-            if len(branch_codes) == 1:
-                text = branch_codes[0]["name"]
-            else:
-                # Show first leaf name + count
-                text = branch_codes[0]["name"]
+            # Extract branch name (common prefix) and leaf-specific texts
+            leaf_items = []
+            branch_name = ""
+            for bc in branch_codes:
+                name = bc["name"].replace(" 🠺 ", " > ")
+                parts = name.split(" > ")
+                if len(parts) > 1:
+                    branch_name = branch_name or parts[0]
+                    # Keep full sub-path (all intermediate levels)
+                    leaf_items.append({"code": bc["code"], "text": " > ".join(parts[1:])})
+                else:
+                    leaf_items.append({"code": bc["code"], "text": name})
 
-            # Clean up: replace 🠺 with readable arrow
-            text = text.replace(" 🠺 ", " > ")
+            # Build summary text
+            if not branch_name:
+                branch_name = leaf_items[0]["text"] if leaf_items else ""
 
             branches_display.append({
                 "code_8": code_8,
-                "text": text,
+                "branch_name": branch_name,
+                "leaves": leaf_items,
                 "leaf_count": len(branch_codes),
             })
 
@@ -147,7 +159,7 @@ class Level5Subsubposition(BaseCascadeLevel):
         )
 
         logger.info("L5a branch shortlist: selected %s (conf=%.2f)", shortlist.selected_code_8, shortlist.confidence)
-        return shortlist.selected_code_8
+        return shortlist
 
     async def _step_leaf(
         self,
@@ -182,7 +194,6 @@ class Level5Subsubposition(BaseCascadeLevel):
             candidates=[SubsubpositionCandidate(
                 code_10=leaf["code"],
                 code_text=leaf["name"],
-                match_type="direct",
                 reasoning="Единственный код в субпозиции/ветке",
                 confidence=1.0,
             )],
@@ -251,6 +262,67 @@ class Level5Subsubposition(BaseCascadeLevel):
         ))
 
         return result
+
+
+def _compute_local_names(leaves) -> dict[str, str]:
+    """Strip the common 🠺 prefix from name_full, keeping only local hierarchy.
+
+    10-digit codes store the full path in name_full:
+      "Молоко... 🠺 в порошке... 🠺 без сахара 🠺 упаковка ≤ 2.5 кг"
+    All siblings under the same subposition share the upper parts (position,
+    subposition).  This function removes those shared parts so the model
+    sees only the distinguishing local hierarchy:
+      "без сахара 🠺 упаковка ≤ 2.5 кг"
+    """
+    SEP = " 🠺 "
+
+    name_fulls: dict[str, str] = {}
+    for c in leaves:
+        nf = c.name_full or c.name or ""
+        name_fulls[c.code] = nf
+
+    # Split every name_full into parts; track only those that contain SEP
+    parts_list = [nf.split(SEP) for nf in name_fulls.values() if SEP in nf]
+
+    if not parts_list:
+        # No hierarchy at all — return as-is
+        return name_fulls
+
+    # Find the longest common prefix (by number of 🠺 parts)
+    # that is shared by ALL leaves having 🠺.  Keep at least 1 part.
+    common_depth = 0
+    min_len = min(len(p) for p in parts_list)
+    for i in range(min_len - 1):
+        if all(p[i] == parts_list[0][i] for p in parts_list):
+            common_depth = i + 1
+        else:
+            break
+
+    result: dict[str, str] = {}
+    for code, nf in name_fulls.items():
+        if SEP in nf:
+            parts = nf.split(SEP)
+            local = parts[common_depth:]
+            result[code] = SEP.join(local) if local else parts[-1]
+        else:
+            result[code] = nf
+
+    return result
+
+
+def _get_top_branches(
+    shortlist: SubsubpositionShortlistResult,
+    max_branches: int = 2,
+) -> list[str]:
+    """Extract top-N distinct branches from L5a shortlist result."""
+    branches: list[str] = [shortlist.selected_code_8]
+    # Add runner-up candidates sorted by confidence
+    for cand in sorted(shortlist.candidates, key=lambda c: c.confidence, reverse=True):
+        if cand.code_8 not in branches:
+            branches.append(cand.code_8)
+        if len(branches) >= max_branches:
+            break
+    return branches
 
 
 def _format_code(code: str) -> str:
