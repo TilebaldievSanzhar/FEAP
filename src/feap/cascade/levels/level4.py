@@ -5,7 +5,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
-from feap.db.queries import get_children, get_explanations_for_position, get_node_by_code, get_opi_rules
+from feap.db.queries import get_children, get_explanations_for_position, get_node_by_code, get_notes, get_opi_rules
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
 from feap.schemas.common import DecisionChainEntry
@@ -55,6 +55,15 @@ class Level4Subposition(BaseCascadeLevel):
             ))
             return result
 
+        # Group notes (including доп. and субп. notes)
+        group_code = state.group
+        group_notes_rows = await get_notes(db, "group", group_code)
+        group_notes = [
+            {"scope_type": n.scope_type, "scope_code": n.scope_code,
+             "note_number": n.note_number, "note_type": n.note_type, "note_text": n.note_text}
+            for n in group_notes_rows
+        ]
+
         # Direct loading: explanatory notes for position
         explanations_rows = await get_explanations_for_position(db, position_code)
         explanations = [
@@ -76,6 +85,7 @@ class Level4Subposition(BaseCascadeLevel):
             subpositions=subpositions_data,
             explanations=explanations,
             opi_rules=rules_data,
+            group_notes=group_notes,
         )
 
         result = await classify(

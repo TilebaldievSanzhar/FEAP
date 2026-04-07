@@ -154,6 +154,7 @@ class PromptAssembler:
         explanations: list[dict],
         opi_rules: list[dict],
         precedents: list[dict] | None = None,
+        group_notes: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 4: Subposition classification."""
         system = render("system/level4_subposition.jinja2", position_code=position_code)
@@ -167,6 +168,8 @@ class PromptAssembler:
             parts.append(render("context/explanatory.jinja2", explanations=explanations))
         if opi_rules:
             parts.append(render("context/opi_rules.jinja2", rules=opi_rules))
+        if group_notes:
+            parts.append(render("context/notes.jinja2", notes=group_notes))
         if precedents:
             parts.append(render("context/precedents.jinja2", precedents=precedents))
 
@@ -180,6 +183,7 @@ class PromptAssembler:
         subposition_code: str,
         branches: list[dict],
         explanations: list[dict] | None = None,
+        group_notes: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 5a: Branch (8-digit) selection."""
         system = render("system/level5_branch.jinja2", subposition_code=subposition_code)
@@ -191,6 +195,8 @@ class PromptAssembler:
         ]
         if explanations:
             parts.append(render("context/explanatory.jinja2", explanations=explanations))
+        if group_notes:
+            parts.append(render("context/notes.jinja2", notes=group_notes))
 
         user = "\n\n".join(parts)
         return system, user
@@ -203,6 +209,7 @@ class PromptAssembler:
         codes: list[dict],
         explanations: list[dict] | None = None,
         precedents: list[dict] | None = None,
+        group_notes: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 5b: Final 10-digit code selection (within branch)."""
         system = render("system/level5_subsubposition.jinja2", subposition_code=subposition_code)
@@ -214,6 +221,8 @@ class PromptAssembler:
         ]
         if explanations:
             parts.append(render("context/explanatory.jinja2", explanations=explanations))
+        if group_notes:
+            parts.append(render("context/notes.jinja2", notes=group_notes))
         if precedents:
             parts.append(render("context/precedents.jinja2", precedents=precedents))
 

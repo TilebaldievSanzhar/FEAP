@@ -14,7 +14,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
-from feap.db.queries import get_children, get_explanations_for_position, get_node_by_code
+from feap.db.queries import get_children, get_explanations_for_position, get_node_by_code, get_notes
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
 from feap.schemas.common import DecisionChainEntry
@@ -62,6 +62,15 @@ class Level5Subsubposition(BaseCascadeLevel):
             for e in explanations_rows
         ]
 
+        # Group notes (including доп. and субп. notes)
+        group_code = state.group
+        group_notes_rows = await get_notes(db, "group", group_code) if group_code else []
+        group_notes = [
+            {"scope_type": n.scope_type, "scope_code": n.scope_code,
+             "note_number": n.note_number, "note_type": n.note_type, "note_text": n.note_text}
+            for n in group_notes_rows
+        ]
+
         chain = [e.model_dump() for e in state.chain]
 
         # Decide: two-step or single-step
@@ -69,6 +78,7 @@ class Level5Subsubposition(BaseCascadeLevel):
             # ── Step 5a: Branch selection (8-digit) ──
             shortlist = await self._step_branch(
                 state, db, subposition_code, codes_data, chain, explanations, leaves,
+                group_notes=group_notes,
             )
             # Multi-branch: use top-2 branches to prevent "invisible code" errors
             selected_branches = _get_top_branches(shortlist, max_branches=2)
@@ -89,11 +99,13 @@ class Level5Subsubposition(BaseCascadeLevel):
             # ── Step 5b: Leaf selection within branch ──
             result = await self._step_leaf(
                 state, subposition_code, branch_codes, chain, explanations,
+                group_notes=group_notes,
             )
         else:
             # Single step for simple cases
             result = await self._step_leaf(
                 state, subposition_code, codes_data, chain, explanations,
+                group_notes=group_notes,
             )
 
         # Post-process result
@@ -108,6 +120,7 @@ class Level5Subsubposition(BaseCascadeLevel):
         chain: list[dict],
         explanations: list[dict],
         leaves,
+        group_notes: list[dict] | None = None,
     ) -> SubsubpositionShortlistResult:
         """Step 5a: Select 8-digit branch. Returns full shortlist for multi-branch."""
         # Build branch data: group codes by 8-digit prefix
@@ -149,6 +162,7 @@ class Level5Subsubposition(BaseCascadeLevel):
             subposition_code=subposition_code,
             branches=branches_display,
             explanations=explanations,
+            group_notes=group_notes,
         )
 
         shortlist = await classify(
@@ -168,6 +182,7 @@ class Level5Subsubposition(BaseCascadeLevel):
         codes_data: list[dict],
         chain: list[dict],
         explanations: list[dict],
+        group_notes: list[dict] | None = None,
     ) -> SubsubpositionResult:
         """Step 5b: Select final 10-digit code from (filtered) codes."""
         system, user = PromptAssembler.level5(
@@ -176,6 +191,7 @@ class Level5Subsubposition(BaseCascadeLevel):
             subposition_code=subposition_code,
             codes=codes_data,
             explanations=explanations,
+            group_notes=group_notes,
         )
 
         return await classify(
