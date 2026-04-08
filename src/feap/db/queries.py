@@ -120,6 +120,112 @@ async def get_section_notes_for_codes(
     return list(result.scalars().all())
 
 
+async def get_subposition_notes(
+    session: AsyncSession,
+    group_code: str,
+) -> list[TnvedNote]:
+    """Get only subposition-level and additional notes for a group.
+
+    Returns notes with note_number starting with 'субп.' or 'доп.',
+    plus any definition-type notes. These are the notes most relevant
+    for L4/L5 classification (subposition and sub-subposition levels),
+    filtering out the general group notes that add noise.
+    """
+    result = await session.execute(
+        select(TnvedNote)
+        .where(
+            TnvedNote.scope_type == "group",
+            TnvedNote.scope_code == group_code,
+            (
+                TnvedNote.note_number.like("субп.%")
+                | TnvedNote.note_number.like("доп.%")
+                | (TnvedNote.note_type == "definition")
+            ),
+        )
+        .order_by(TnvedNote.id)
+    )
+    return list(result.scalars().all())
+
+
+async def get_section_definition_notes(
+    session: AsyncSession,
+    section_code: str,
+) -> list[TnvedNote]:
+    """Get definition-type notes for a section.
+
+    Returns only notes with note_type='definition' — pure term definitions
+    that apply across the section (e.g., Section XI Note 7 defines 'готовые').
+    Inclusive notes are excluded to avoid noise (they often contain
+    position-specific rules that are irrelevant for L4/L5).
+
+    Cross-group definitions (e.g., Group 51 'wool' definition) are loaded
+    separately by get_cross_group_definitions().
+    """
+    result = await session.execute(
+        select(TnvedNote)
+        .where(
+            TnvedNote.scope_type == "section",
+            TnvedNote.scope_code == section_code,
+            TnvedNote.note_type == "definition",
+        )
+        .order_by(TnvedNote.id)
+    )
+    return list(result.scalars().all())
+
+
+async def get_cross_group_definitions(
+    session: AsyncSession,
+    group_code: str,
+) -> list[TnvedNote]:
+    """Get terminology definitions from related groups that apply globally.
+
+    Some groups define terms for the entire Nomenclature (e.g., Group 51
+    Note 1: 'wool means sheep/lamb wool'). When classifying in a related
+    group (e.g., 61-63 for clothing), these definitions are essential.
+
+    Returns definition notes from source groups where the note text
+    contains 'Номенклатур' (indicating global scope).
+    """
+    # Mapping: target group -> source groups with global definitions
+    CROSS_GROUP_MAP: dict[str, list[str]] = {
+        # Textiles: groups 50-63 need definitions from group 51 (wool/hair)
+        # and group 54 (man-made fibres)
+        **{str(g): ["51", "54"] for g in range(50, 64)},
+        # Rubber: groups 40-41 share definitions
+        "41": ["40", "41"],
+        "42": ["41", "43"],
+        "43": ["43"],
+        # Plastics: group 39 definitions apply to 39-40
+        "40": ["39"],
+        # Metals: group 72 definitions relevant for 72-83
+        **{str(g): ["72"] for g in range(73, 84)},
+    }
+
+    source_groups = CROSS_GROUP_MAP.get(group_code, [])
+    if not source_groups:
+        return []
+
+    # Exclude own group (those notes are loaded separately)
+    source_groups = [g for g in source_groups if g != group_code]
+    if not source_groups:
+        return []
+
+    result = await session.execute(
+        select(TnvedNote)
+        .where(
+            TnvedNote.scope_type == "group",
+            TnvedNote.scope_code.in_(source_groups),
+            (
+                (TnvedNote.note_type == "definition")
+                | TnvedNote.note_number.like("1")
+            ),
+            TnvedNote.note_text.like("%Номенклатур%"),
+        )
+        .order_by(TnvedNote.scope_code, TnvedNote.id)
+    )
+    return list(result.scalars().all())
+
+
 async def get_group_notes_for_section(
     session: AsyncSession, section_roman: str
 ) -> list[TnvedNote]:

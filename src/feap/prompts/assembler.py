@@ -155,6 +155,8 @@ class PromptAssembler:
         opi_rules: list[dict],
         precedents: list[dict] | None = None,
         group_notes: list[dict] | None = None,
+        section_notes: list[dict] | None = None,
+        cross_group_notes: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 4: Subposition classification."""
         system = render("system/level4_subposition.jinja2", position_code=position_code)
@@ -168,8 +170,10 @@ class PromptAssembler:
             parts.append(render("context/explanatory.jinja2", explanations=explanations))
         if opi_rules:
             parts.append(render("context/opi_rules.jinja2", rules=opi_rules))
-        if group_notes:
-            parts.append(render("context/notes.jinja2", notes=group_notes))
+        # Definitions first (section → cross-group → subposition notes)
+        all_notes = _merge_definition_notes(section_notes, cross_group_notes, group_notes)
+        if all_notes:
+            parts.append(render("context/notes.jinja2", notes=all_notes))
         if precedents:
             parts.append(render("context/precedents.jinja2", precedents=precedents))
 
@@ -184,6 +188,8 @@ class PromptAssembler:
         branches: list[dict],
         explanations: list[dict] | None = None,
         group_notes: list[dict] | None = None,
+        section_notes: list[dict] | None = None,
+        cross_group_notes: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 5a: Branch (8-digit) selection."""
         system = render("system/level5_branch.jinja2", subposition_code=subposition_code)
@@ -195,8 +201,9 @@ class PromptAssembler:
         ]
         if explanations:
             parts.append(render("context/explanatory.jinja2", explanations=explanations))
-        if group_notes:
-            parts.append(render("context/notes.jinja2", notes=group_notes))
+        all_notes = _merge_definition_notes(section_notes, cross_group_notes, group_notes)
+        if all_notes:
+            parts.append(render("context/notes.jinja2", notes=all_notes))
 
         user = "\n\n".join(parts)
         return system, user
@@ -210,6 +217,8 @@ class PromptAssembler:
         explanations: list[dict] | None = None,
         precedents: list[dict] | None = None,
         group_notes: list[dict] | None = None,
+        section_notes: list[dict] | None = None,
+        cross_group_notes: list[dict] | None = None,
     ) -> tuple[str, str]:
         """Level 5b: Final 10-digit code selection (within branch)."""
         system = render("system/level5_subsubposition.jinja2", subposition_code=subposition_code)
@@ -221,13 +230,36 @@ class PromptAssembler:
         ]
         if explanations:
             parts.append(render("context/explanatory.jinja2", explanations=explanations))
-        if group_notes:
-            parts.append(render("context/notes.jinja2", notes=group_notes))
+        all_notes = _merge_definition_notes(section_notes, cross_group_notes, group_notes)
+        if all_notes:
+            parts.append(render("context/notes.jinja2", notes=all_notes))
         if precedents:
             parts.append(render("context/precedents.jinja2", precedents=precedents))
 
         user = "\n\n".join(parts)
         return system, user
+
+
+def _merge_definition_notes(
+    section_notes: list[dict] | None,
+    cross_group_notes: list[dict] | None,
+    group_notes: list[dict] | None,
+) -> list[dict]:
+    """Merge notes in priority order: section definitions → cross-group → subposition.
+
+    Deduplicates by (scope_type, scope_code, note_number) to avoid repeats.
+    """
+    result: list[dict] = []
+    seen: set[tuple] = set()
+    for notes_list in (section_notes, cross_group_notes, group_notes):
+        if not notes_list:
+            continue
+        for n in notes_list:
+            key = (n.get("scope_type"), n.get("scope_code"), n.get("note_number"))
+            if key not in seen:
+                seen.add(key)
+                result.append(n)
+    return result
 
 
 class _DictObj:

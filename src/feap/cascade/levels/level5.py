@@ -14,7 +14,14 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
-from feap.db.queries import get_children, get_explanations_for_position, get_node_by_code, get_notes
+from feap.db.queries import (
+    get_children,
+    get_cross_group_definitions,
+    get_explanations_for_position,
+    get_node_by_code,
+    get_section_definition_notes,
+    get_subposition_notes,
+)
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
 from feap.schemas.common import DecisionChainEntry
@@ -62,14 +69,35 @@ class Level5Subsubposition(BaseCascadeLevel):
             for e in explanations_rows
         ]
 
-        # Group notes (including доп. and субп. notes)
+        # Targeted notes: subposition-level + definitions only (not all group notes)
         group_code = state.group
-        group_notes_rows = await get_notes(db, "group", group_code) if group_code else []
+        subp_notes_rows = await get_subposition_notes(db, group_code) if group_code else []
         group_notes = [
             {"scope_type": n.scope_type, "scope_code": n.scope_code,
              "note_number": n.note_number, "note_type": n.note_type, "note_text": n.note_text}
-            for n in group_notes_rows
+            for n in subp_notes_rows
         ]
+
+        # Section-level definitions
+        section_code = sp_node.section_roman
+        section_def_notes: list[dict] = []
+        if section_code:
+            section_rows = await get_section_definition_notes(db, section_code)
+            section_def_notes = [
+                {"scope_type": n.scope_type, "scope_code": n.scope_code,
+                 "note_number": n.note_number, "note_type": n.note_type, "note_text": n.note_text}
+                for n in section_rows
+            ]
+
+        # Cross-group definitions
+        cross_def_notes: list[dict] = []
+        if group_code:
+            cross_def_rows = await get_cross_group_definitions(db, group_code)
+            cross_def_notes = [
+                {"scope_type": n.scope_type, "scope_code": n.scope_code,
+                 "note_number": n.note_number, "note_type": n.note_type, "note_text": n.note_text}
+                for n in cross_def_rows
+            ]
 
         chain = [e.model_dump() for e in state.chain]
 
@@ -79,6 +107,8 @@ class Level5Subsubposition(BaseCascadeLevel):
             shortlist = await self._step_branch(
                 state, db, subposition_code, codes_data, chain, explanations, leaves,
                 group_notes=group_notes,
+                section_notes=section_def_notes,
+                cross_group_notes=cross_def_notes,
             )
             # Multi-branch: use top-2 branches to prevent "invisible code" errors
             selected_branches = _get_top_branches(shortlist, max_branches=2)
@@ -100,12 +130,16 @@ class Level5Subsubposition(BaseCascadeLevel):
             result = await self._step_leaf(
                 state, subposition_code, branch_codes, chain, explanations,
                 group_notes=group_notes,
+                section_notes=section_def_notes,
+                cross_group_notes=cross_def_notes,
             )
         else:
             # Single step for simple cases
             result = await self._step_leaf(
                 state, subposition_code, codes_data, chain, explanations,
                 group_notes=group_notes,
+                section_notes=section_def_notes,
+                cross_group_notes=cross_def_notes,
             )
 
         # Post-process result
@@ -121,6 +155,8 @@ class Level5Subsubposition(BaseCascadeLevel):
         explanations: list[dict],
         leaves,
         group_notes: list[dict] | None = None,
+        section_notes: list[dict] | None = None,
+        cross_group_notes: list[dict] | None = None,
     ) -> SubsubpositionShortlistResult:
         """Step 5a: Select 8-digit branch. Returns full shortlist for multi-branch."""
         # Build branch data: group codes by 8-digit prefix
@@ -163,6 +199,8 @@ class Level5Subsubposition(BaseCascadeLevel):
             branches=branches_display,
             explanations=explanations,
             group_notes=group_notes,
+            section_notes=section_notes,
+            cross_group_notes=cross_group_notes,
         )
 
         shortlist = await classify(
@@ -183,6 +221,8 @@ class Level5Subsubposition(BaseCascadeLevel):
         chain: list[dict],
         explanations: list[dict],
         group_notes: list[dict] | None = None,
+        section_notes: list[dict] | None = None,
+        cross_group_notes: list[dict] | None = None,
     ) -> SubsubpositionResult:
         """Step 5b: Select final 10-digit code from (filtered) codes."""
         system, user = PromptAssembler.level5(
@@ -192,6 +232,8 @@ class Level5Subsubposition(BaseCascadeLevel):
             codes=codes_data,
             explanations=explanations,
             group_notes=group_notes,
+            section_notes=section_notes,
+            cross_group_notes=cross_group_notes,
         )
 
         return await classify(
