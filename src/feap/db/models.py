@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import datetime as dt
+import uuid
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Date,
     DateTime,
@@ -11,9 +13,10 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -283,4 +286,129 @@ class ClassificationSession(Base):
     )
     updated_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+# ── Async jobs (batch classification, OCR-derived) ────────────────────────────
+
+class ClassificationJob(Base):
+    __tablename__ = "classification_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    job_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    params: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+
+    total_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    completed_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    failed_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    needs_input_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    cancelled_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    parent_ocr_job_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    error: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    started_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    items: Mapped[list[ClassificationJobItem]] = relationship(
+        "ClassificationJobItem", back_populates="job", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("idx_jobs_status", "status"),
+        Index("idx_jobs_expires", "expires_at"),
+        Index("idx_jobs_parent_ocr", "parent_ocr_job_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<ClassificationJob {self.id} {self.job_type} {self.status}>"
+
+
+class ClassificationJobItem(Base):
+    __tablename__ = "classification_job_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    job_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("classification_jobs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    product_description: Mapped[str] = mapped_column(Text, nullable=False)
+    product_card: Mapped[dict | None] = mapped_column(JSONB)
+    additional_info: Mapped[dict | None] = mapped_column(JSONB)
+    source_ref: Mapped[dict | None] = mapped_column(JSONB)
+
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    classification_session_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("classification_sessions.session_id", ondelete="SET NULL"),
+    )
+
+    result: Mapped[dict | None] = mapped_column(JSONB)
+    partial: Mapped[dict | None] = mapped_column(JSONB)
+    error: Mapped[str | None] = mapped_column(Text)
+
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    started_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    job: Mapped[ClassificationJob] = relationship("ClassificationJob", back_populates="items")
+
+    __table_args__ = (
+        UniqueConstraint("job_id", "position", name="uq_job_item_position"),
+        Index("idx_job_items_job", "job_id"),
+        Index("idx_job_items_status", "status"),
+        Index("idx_job_items_session", "classification_session_id"),
+        Index("idx_job_items_running_updated", "status", "updated_at"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<ClassificationJobItem {self.id} job={self.job_id} pos={self.position} {self.status}>"
+
+
+class ClassificationJobEvent(Base):
+    __tablename__ = "classification_job_events"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    job_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("classification_jobs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    item_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("classification_job_items.id", ondelete="CASCADE"),
+    )
+    event_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_events_job_created", "job_id", "created_at"),
     )

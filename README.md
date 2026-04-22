@@ -25,17 +25,36 @@ LLM-верификацией двойного соответствия (код +
 Пользователь
     │
     ├──► POST /classify ──► Cascade Orchestrator ──► 10-значный код + цепочка
-    │                            │  (+ сессия для needs_input)
+    │      (1 товар)            │  (+ сессия для needs_input)
     │                  ┌─────────┼─────────────┐
     │                  ▼         ▼             ▼
     │             OpenRouter  PostgreSQL   (Voyage AI —
     │           (любой LLM    + pgvector    зарезервировано
     │            через один   tnved_*       под прецеденты)
-    │            HTTP-шлюз)   ntm_*
-    │                         vat_*, excise_*
-    │                         classification_sessions
+    │            HTTP-шлюз,   ntm_*
+    │            +семафор и   vat_*, excise_*
+    │            RPM-лимит)   classification_sessions
+    │                         classification_jobs / _items / _events
     │
-    ├──► POST /classify/{session_id}/answer  ── продолжение по уточнениям
+    ├──► POST /classify/{session_id}/answer  ── продолжение по уточнениям (1 товар)
+    │
+    ├──► POST /classify/batch ──► sync (≤5 шт.) или async job
+    │                                       │
+    │                                       ▼
+    │                               ┌──────────────┐
+    │                               │    Redis     │ ◄── pub/sub: feap:job:{id}
+    │                               │ (arq queue)  │
+    │                               └──────┬───────┘
+    │                          ┌───────────┼───────────┐
+    │                          ▼           ▼           ▼
+    │                     arq worker  arq worker  arq worker
+    │                    (CascadeOrchestrator на тех же моделях)
+    │
+    ├──► GET  /jobs/{id}           ── статус + прогресс
+    ├──► GET  /jobs/{id}/items     ── элементы батча (фильтр по status)
+    ├──► POST /jobs/{id}/answers   ── ответы на needs_input для нескольких items
+    ├──► GET  /jobs/{id}/events    ── SSE: live прогресс (либо polling-fallback)
+    ├──► DELETE /jobs/{id}         ── отмена
     │
     ├──► GET  /tnved/lookup/{code} ── ЕТТ + НДС + акциз + НТР (без LLM)
     │
@@ -73,12 +92,37 @@ LLM-верификацией двойного соответствия (код +
 - **Целостность цепочки** проверяется пост-фактум валидатором
   (section → group → position → subposition → code_10).
 
+### Параллелизм и фоновые задачи
+
+Помимо одиночного `POST /classify` (sync), доступен батч-эндпоинт
+`POST /classify/batch` для обработки списка товаров:
+- `mode=sync` (≤ `BATCH_SYNC_MAX`, default 5) — параллельно через `asyncio.gather`,
+  ответ синхронно;
+- `mode=async` — создаётся `Job` в Postgres, фоновый **arq**-воркер обрабатывает
+  каждый item отдельной таской с идемпотентным захватом, агрегаты пересчитываются
+  атомарно после каждого item;
+- `mode=auto` — sync для маленьких батчей, async для больших.
+
+Конкурентность к LLM ограничивается **на уровне ресурса**:
+`asyncio.Semaphore(LLM_MAX_CONCURRENT)` per-process + опциональный
+RPM-cap (`local` или Redis-backed sliding window). Лимиты сидят
+**внутри** `OpenRouterProvider`, поэтому работают одинаково для sync `/classify`
+и для арq-воркеров.
+
+`needs_input` корректно работает per-item: упавшие/зависшие позиции не блокируют
+остальные. SSE-эндпоинт `GET /jobs/{id}/events` стримит прогресс через Redis
+pub/sub (с polling-fallback, если Redis недоступен).
+
+Полное ТЗ — [`docs/async_architecture.md`](docs/async_architecture.md).
+
 ## Стек технологий
 
 - **Python 3.12+** / FastAPI / Uvicorn
 - **PostgreSQL 17 + pgvector** (поле `embedding` зарезервировано под
   будущие прецеденты; для текущего каскада векторный поиск не используется
   — пояснения грузятся напрямую по коду)
+- **Redis 7** + **arq** — очередь фоновых задач для batch-классификации,
+  pub/sub для SSE-прогресса, опциональный распределённый rate-limiter
 - **OpenRouter** — единый OpenAI-совместимый шлюз ко всем LLM
   (Anthropic Claude, Google Gemini, MiniMax, Qwen, StepFun и др.).
   Для разных моделей провайдер выбирает одну из **трёх стратегий
@@ -98,7 +142,8 @@ FEAP/
 │   ├── config.py                      # Settings из .env (Pydantic Settings)
 │   ├── api/
 │   │   ├── router.py                  # /classify, /tnved/*, /ntm/*
-│   │   └── deps.py                    # DI: get_db, get_orchestrator
+│   │   ├── jobs_router.py             # /classify/batch, /jobs/* (async + SSE)
+│   │   └── deps.py                    # DI: get_db, get_orchestrator, get_job_backend
 │   ├── cascade/
 │   │   ├── orchestrator.py            # Запуск уровней, needs_input, resume
 │   │   ├── backtracker.py             # Откат с эскалацией L2→L1
@@ -114,7 +159,7 @@ FEAP/
 │   │       └── level5.py              # 5a branch → 5b leaf (multi-branch)
 │   ├── db/
 │   │   ├── engine.py                  # async_session
-│   │   ├── models.py                  # ORM-модели (tnved_*, ntm_*, vat_*, excise_*, sessions)
+│   │   ├── models.py                  # ORM-модели (tnved_*, ntm_*, vat_*, excise_*, sessions, classification_jobs/_items/_events)
 │   │   └── queries.py                 # Все запросы каскада + НТР + сессии
 │   ├── schemas/
 │   │   ├── api.py                     # ClassifyRequest/Response, NtmSummary, ...
@@ -137,8 +182,17 @@ FEAP/
 │   ├── llm/
 │   │   ├── client.py                  # classify() — фасад, используется уровнями
 │   │   ├── provider.py                # Абстрактный LLMProvider
-│   │   ├── openrouter_provider.py     # 3 стратегии structured output + retry
+│   │   ├── openrouter_provider.py     # 3 стратегии structured output + retry, semaphore + RPM-cap
+│   │   ├── rate_limit.py              # Local / Redis sliding-window rate limiter
 │   │   └── models.py                  # resolve_model(level), tier-based + override
+│   ├── jobs/
+│   │   ├── schemas.py                 # ClassifyBatchRequest, JobResponse, BatchAsync/Sync, ...
+│   │   ├── repository.py              # CRUD + атомарная агрегация item-статусов в job
+│   │   ├── enqueue.py                 # ArqBackend / InProcessBackend (JOBS_BACKEND)
+│   │   ├── tasks.py                   # arq-таски: run_classify_batch, run_classify_item, run_resume_item
+│   │   ├── worker.py                  # WorkerSettings (arq CLI entrypoint), cron-задачи
+│   │   ├── events.py                  # Redis pub/sub helpers для SSE
+│   │   └── sync_runner.py             # Inline-исполнитель для mode=sync
 │   ├── ntm/
 │   │   ├── schemas.py                 # NtmVerifyRequest/Response, верификации
 │   │   └── verifier.py                # LLM-верификация двойного соответствия
@@ -152,8 +206,8 @@ FEAP/
 │   ├── seed/                          #   4. Загрузка в БД
 │   └── rag/                           #   (опц.) Генерация эмбеддингов
 ├── migrations/                         # Alembic
-│   └── versions/                      #   001..006 (initial → NTM → drop verification_context)
-├── tests/                              # pytest
+│   └── versions/                      #   001..008 (initial → NTM → drop verification_context → classification_jobs)
+├── tests/                              # pytest (включая tests/jobs/ — state machine, rate limiter, schemas)
 ├── data/
 │   ├── TWS_TNVED_2026-02-17.xlsx      # Excel со ставками от tws.by
 │   ├── ntm_seed.json                  # Меры НТР (36 мер, 157 привязок к кодам)
@@ -164,8 +218,9 @@ FEAP/
 │   └── parsed/                        # Промежуточные JSON: tree, leaves,
 │                                      # nomenclature, notes, explanatory, opi, units
 ├── docs/                               # Архитектурные заметки и эксперименты
-├── docker-compose.yml                  # db + migrate + app + seed
-├── Dockerfile                          # python:3.12-slim
+│   └── async_architecture.md          # ТЗ на job-систему (arq + Redis + SSE)
+├── docker-compose.yml                  # db + redis + migrate + app + worker + seed
+├── Dockerfile                          # python:3.12-slim (общий образ для app и worker)
 └── pyproject.toml                      # build-backend = setuptools.build_meta
 ```
 
@@ -203,8 +258,11 @@ docker compose run --rm seed
 
 > **Что происходит при `docker compose up -d`:**
 > 1. Стартует PostgreSQL (`db`) — ждёт healthcheck
-> 2. Прогоняются Alembic-миграции (`migrate`) — все таблицы
-> 3. Стартует FastAPI-приложение (`app`)
+> 2. Стартует Redis (`redis`) — очередь арq + pub/sub для SSE
+> 3. Прогоняются Alembic-миграции (`migrate`) — все таблицы
+> 4. Стартует FastAPI-приложение (`app`)
+> 5. Стартует **arq worker** (`worker`, по умолчанию `WORKER_REPLICAS=2`) —
+>    обрабатывает batch-классификации в фоне
 >
 > **Что делает `seed`:**
 > 1. `parse/excel.py` — Excel → `data/parsed/leaves.json` (13 279 листьев)
@@ -322,6 +380,105 @@ python scripts/rag/generate_embeddings.py      # Voyage AI → embedding-кол�
 Лимиты: `SESSION_MAX_ANSWERS` (по умолчанию 3) итераций уточнений на сессию,
 `SESSION_TTL_MINUTES` (по умолчанию 30) — TTL сессии.
 
+### `POST /classify/batch`
+
+Массовая классификация N товаров. Тело запроса:
+
+```json
+{
+  "items": [
+    {"description": "Электрическая зубная щётка Oral-B", "additional_info": {}},
+    {"description": "Кофемолка ручная керамическая",     "additional_info": {}}
+  ],
+  "mode": "auto"
+}
+```
+
+Поле `mode`:
+
+| `mode`  | Поведение                                                                  |
+|---------|----------------------------------------------------------------------------|
+| `sync`  | Параллельно через `asyncio.gather`, ответ в теле. Лимит — `BATCH_SYNC_MAX` |
+| `async` | Создаётся `Job`, обработка в фоновом arq-воркере. Возвращается `job_id`    |
+| `auto`  | `sync` если N ≤ `BATCH_SYNC_MAX`, иначе `async`                            |
+
+Жёсткий лимит размера батча — `BATCH_ASYNC_MAX_ITEMS` (default 200).
+Превышение → `413 Payload Too Large`.
+
+**Sync-ответ (200 OK):**
+
+```json
+{
+  "results": [
+    {"position": 0, "status": "completed",   "result": {...}, "session_id": null},
+    {"position": 1, "status": "needs_input", "session_id": "...", "partial": {...}}
+  ]
+}
+```
+
+**Async-ответ (200 OK с `job_id`):**
+
+```json
+{
+  "job_id": "a1b2c3d4-...",
+  "status": "pending",
+  "total_items": 30,
+  "poll_url":   "/api/v1/jobs/a1b2c3d4-...",
+  "items_url":  "/api/v1/jobs/a1b2c3d4-.../items",
+  "events_url": "/api/v1/jobs/a1b2c3d4-.../events"
+}
+```
+
+### `GET /jobs/{job_id}`
+
+Метаданные job'а + агрегированный прогресс
+(`total/pending/running/completed/failed/needs_input/cancelled`).
+
+Финальные статусы: `completed`, `needs_input` (≥1 item ждёт ответа),
+`partial` (часть упала, часть успешна), `failed`, `cancelled`.
+
+### `GET /jobs/{job_id}/items?status=needs_input&limit=100&offset=0`
+
+Список item'ов с фильтром по статусу и пагинацией. Каждый item содержит
+`result` (если `completed`), `partial` + `session_id` (если `needs_input`),
+или `error` (если `failed`).
+
+### `POST /jobs/{job_id}/items/{item_id}/answer`
+
+Ответ на уточнения для одного item'а:
+
+```json
+{ "answers": {"мощность": "1.5 кВт"} }
+```
+
+Inline-resume: вызывает `orchestrator.resume(session_id, answers)`,
+обновляет item, пересчитывает агрегаты job'а, отдаёт результат.
+
+### `POST /jobs/{job_id}/answers`
+
+Батч-ответ для нескольких зависших позиций сразу (UI-friendly):
+
+```json
+{
+  "answers": [
+    {"item_id": "...", "answers": {"мощность": "1.5 кВт"}},
+    {"item_id": "...", "answers": {"материал": "хлопок 100%"}}
+  ]
+}
+```
+
+### `GET /jobs/{job_id}/events`
+
+**Server-Sent Events** stream — live прогресс job'а через Redis pub/sub.
+События: `snapshot` (начальный), `item_done`, `item_needs_input`,
+`item_failed`, `progress`, `finished`, `ping` (heartbeat каждые
+`SSE_HEARTBEAT_S`). При недоступности Redis — автоматический polling-fallback.
+
+### `DELETE /jobs/{job_id}`
+
+Отмена job'а: помечает все pending-items как `cancelled`, job переходит
+в `cancelled`. Уже `running` items штатно дорабатывают (cooperative shutdown).
+
 ### `GET /tnved/tree?level=0` или `?parent_code=...`
 
 Навигация по дереву. По умолчанию возвращает 21 раздел.
@@ -370,7 +527,7 @@ python -m venv venv
 source venv/bin/activate    # Windows (Git Bash): source venv/Scripts/activate
 pip install -e ".[dev]"
 
-docker compose up -d db     # PostgreSQL отдельно
+docker compose up -d db redis   # PostgreSQL и Redis отдельно
 alembic upgrade head
 
 # Полный data-pipeline (один раз):
@@ -384,8 +541,16 @@ python scripts/seed/db.py
 python scripts/seed/vat_exemptions.py
 python scripts/seed/excise_rates.py
 
-# Сервер
+# Сервер (single-product /classify работает сразу)
 uvicorn feap.main:app --reload
+
+# Worker для batch-классификации — отдельным процессом:
+arq feap.jobs.worker.WorkerSettings
+
+# Если не хочется поднимать Redis для smoke-тестов /classify/batch:
+JOBS_BACKEND=inprocess uvicorn feap.main:app --reload
+# В этом режиме батчи выполняются как asyncio-таски в самом FastAPI-процессе.
+# Для production — только JOBS_BACKEND=arq.
 
 # Тесты
 pytest
@@ -459,9 +624,41 @@ download/  →  parse/  →  build/  →  seed/
 | `SESSION_MAX_ANSWERS`   | Макс. количество итераций уточнений                | `3`          |
 | `VAT_RATE_DEFAULT`      | Ставка НДС КР по умолчанию (если нет освобождения) | `12%`        |
 
+### Redis / job-система
+
+| Переменная                  | Описание                                                          | По умолчанию           |
+|-----------------------------|-------------------------------------------------------------------|------------------------|
+| `REDIS_URL`                 | DSN Redis для арq и pub/sub                                       | `redis://redis:6379/0` |
+| `JOBS_BACKEND`              | `arq` (production) или `inprocess` (local dev без Redis)          | `arq`                  |
+| `WORKER_REPLICAS`           | Кол-во worker-контейнеров (compose scale)                         | `2`                    |
+| `WORKER_MAX_JOBS`           | Макс. одновременных тасков в одном воркере                        | `16`                   |
+| `WORKER_JOB_TIMEOUT_S`      | Hard-timeout одного арq-таска                                     | `3600`                 |
+| `WORKER_MAX_TRIES`          | Макс. попыток упавшего таска                                      | `1`                    |
+| `WORKER_HEALTH_CHECK_S`     | Интервал арq health-check                                         | `30`                   |
+
+### Конкурентность и лимиты LLM
+
+| Переменная                  | Описание                                                          | По умолчанию |
+|-----------------------------|-------------------------------------------------------------------|--------------|
+| `LLM_MAX_CONCURRENT`        | Per-process semaphore на одновременные LLM-вызовы                 | `8`          |
+| `LLM_RATE_LIMIT_PER_MIN`    | RPM-бюджет на ключ OpenRouter (`0` = без лимита)                  | `0`          |
+| `LLM_RATE_LIMITER_BACKEND`  | `local` (per-process) / `redis` (распределённый)                  | `local`      |
+
+### Batch / TTL
+
+| Переменная                  | Описание                                                          | По умолчанию |
+|-----------------------------|-------------------------------------------------------------------|--------------|
+| `BATCH_SYNC_MAX`            | Макс. items в `mode=sync` (без очереди)                           | `5`          |
+| `BATCH_ASYNC_MAX_ITEMS`     | Жёсткий лимит размера batch (защита от DoS) — иначе `413`         | `200`        |
+| `JOB_RESULT_TTL_HOURS`      | TTL хранения завершённых job'ов в Postgres                        | `72`         |
+| `JOB_EVENTS_RETENTION_HOURS`| TTL таблицы событий                                               | `24`         |
+| `STUCK_ITEMS_RESET_AFTER_S` | После какой «тишины» `running` item возвращается в `pending`      | `900`        |
+| `SSE_HEARTBEAT_S`           | Интервал heartbeat в SSE                                          | `15`         |
+
 ## Дополнительная документация
 
 - `CLAUDE.md` — детальная архитектура каскада и контекст для LLM-агентов
+- `docs/async_architecture.md` — ТЗ по job-системе (arq + Redis + SSE)
 - `docs/ntm_implementation.md` — модуль НТР
 - `docs/ett_pdf_migration.md`, `docs/naming_problem.md` — pipeline дерева
 - `docs/v27_context_engineering.md` — оптимизация контекста L4/L5

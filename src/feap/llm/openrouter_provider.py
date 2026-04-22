@@ -10,6 +10,7 @@ See docs/structured_output_providers.md for details.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -20,6 +21,7 @@ from pydantic import BaseModel
 from feap.config import settings
 from feap.llm.models import get_max_tokens, get_model, get_temperature
 from feap.llm.provider import LLMProvider
+from feap.llm.rate_limit import RateLimiter, build_rate_limiter
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -161,10 +163,25 @@ def _needs_high_max_tokens(model: str) -> bool:
 
 
 class OpenRouterProvider(LLMProvider):
-    """OpenRouter API — routes to any model via OpenAI-compatible interface."""
+    """OpenRouter API — routes to any model via OpenAI-compatible interface.
+
+    Concurrency control:
+    - Per-process semaphore caps simultaneous in-flight calls
+      (settings.LLM_MAX_CONCURRENT). Applied to every call regardless of
+      caller (sync /classify endpoint or arq worker).
+    - Optional rate limiter (RPM cap, local or Redis-backed) layered on top
+      via settings.LLM_RATE_LIMIT_PER_MIN / LLM_RATE_LIMITER_BACKEND.
+
+    Wrapping the limiters inside the provider — rather than at the worker
+    layer — guarantees that *all* paths into OpenRouter respect the same
+    budget, including the synchronous single-product endpoint.
+    """
 
     def __init__(self) -> None:
         self._client: Any = None
+        self._semaphore: asyncio.Semaphore | None = None
+        self._rate_limiter: RateLimiter | None = None
+        self._redis_client: Any = None  # set by configure_distributed_limit() if needed
 
     def _get_client(self) -> Any:
         if self._client is None:
@@ -175,6 +192,38 @@ class OpenRouterProvider(LLMProvider):
                 api_key=settings.OPENROUTER_API_KEY,
             )
         return self._client
+
+    def _get_semaphore(self) -> asyncio.Semaphore:
+        # Lazy-init so the semaphore binds to the running event loop,
+        # not the one active at module import time.
+        if self._semaphore is None:
+            self._semaphore = asyncio.Semaphore(settings.LLM_MAX_CONCURRENT)
+        return self._semaphore
+
+    def _get_rate_limiter(self) -> RateLimiter:
+        if self._rate_limiter is None:
+            self._rate_limiter = build_rate_limiter(
+                limit_per_min=settings.LLM_RATE_LIMIT_PER_MIN,
+                backend=settings.LLM_RATE_LIMITER_BACKEND,
+                redis=self._redis_client,
+            )
+        return self._rate_limiter
+
+    def configure_distributed_limit(self, redis_client: Any) -> None:
+        """Attach a Redis client so the rate limiter is shared across workers.
+
+        Called from the arq worker startup hook when LLM_RATE_LIMITER_BACKEND='redis'.
+        Resets any previously-built limiter so subsequent calls pick up the new client.
+        """
+        self._redis_client = redis_client
+        self._rate_limiter = None
+
+    async def _call_api(self, client: Any, **kwargs: Any) -> Any:
+        """Single chokepoint for OpenRouter requests — applies semaphore + RPM cap."""
+        sem = self._get_semaphore()
+        limiter = self._get_rate_limiter()
+        async with sem, limiter:
+            return await client.chat.completions.create(**kwargs)
 
     def _build_extra_body(self, model: str, require_params: bool = True) -> dict[str, Any]:
         """Build extra_body with provider routing and optional reasoning control."""
@@ -284,7 +333,7 @@ class OpenRouterProvider(LLMProvider):
 
         kwargs["extra_body"] = self._build_extra_body(model)
 
-        response = await client.chat.completions.create(**kwargs)
+        response = await self._call_api(client, **kwargs)
 
         content = response.choices[0].message.content
         if not content:
@@ -341,7 +390,7 @@ class OpenRouterProvider(LLMProvider):
 
             kwargs["extra_body"] = self._build_extra_body(model)
 
-            response = await client.chat.completions.create(**kwargs)
+            response = await self._call_api(client, **kwargs)
             finish_reason = response.choices[0].finish_reason
             content = response.choices[0].message.content
 
@@ -468,7 +517,7 @@ class OpenRouterProvider(LLMProvider):
 
             kwargs["extra_body"] = self._build_extra_body(model, require_params=False)
 
-            response = await client.chat.completions.create(**kwargs)
+            response = await self._call_api(client, **kwargs)
             finish_reason = response.choices[0].finish_reason
             content = response.choices[0].message.content
 

@@ -37,6 +37,32 @@ class Settings(BaseSettings):
     # --- Tax (Kyrgyzstan) ---
     VAT_RATE_DEFAULT: str = "12%"
 
+    # --- Redis / job queue ---
+    REDIS_URL: str = "redis://redis:6379/0"
+    JOBS_BACKEND: str = "arq"  # arq | inprocess
+
+    # --- Worker (arq) ---
+    WORKER_REPLICAS: int = 2
+    WORKER_MAX_JOBS: int = 16
+    WORKER_JOB_TIMEOUT_S: int = 3600
+    WORKER_MAX_TRIES: int = 1
+    WORKER_HEALTH_CHECK_S: int = 30
+
+    # --- LLM concurrency ---
+    LLM_MAX_CONCURRENT: int = 8
+    LLM_RATE_LIMIT_PER_MIN: int = 0  # 0 = unlimited
+    LLM_RATE_LIMITER_BACKEND: str = "local"  # local | redis
+
+    # --- Batch limits ---
+    BATCH_SYNC_MAX: int = 5
+    BATCH_ASYNC_MAX_ITEMS: int = 200
+
+    # --- Job lifecycle / TTL ---
+    JOB_RESULT_TTL_HOURS: int = 72
+    JOB_EVENTS_RETENTION_HOURS: int = 24
+    STUCK_ITEMS_RESET_AFTER_S: int = 900
+    SSE_HEARTBEAT_S: int = 15
+
     # Sync URL for Alembic / scripts
     @property
     def database_url_sync(self) -> str:

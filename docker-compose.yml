@@ -16,16 +16,31 @@ services:
       timeout: 3s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   app:
     build: .
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    environment:
+    environment: &app_env
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-feap}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-feap}
+      REDIS_URL: redis://redis:6379/0
+      JOBS_BACKEND: ${JOBS_BACKEND:-arq}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       MODEL_LIGHT: ${MODEL_LIGHT:-}
       MODEL_MEDIUM: ${MODEL_MEDIUM:-}
@@ -38,8 +53,34 @@ services:
       LEVEL5_MODEL: ${LEVEL5_MODEL:-}
       LEVEL99_MODEL: ${LEVEL99_MODEL:-}
       VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      LLM_MAX_CONCURRENT: ${LLM_MAX_CONCURRENT:-8}
+      LLM_RATE_LIMIT_PER_MIN: ${LLM_RATE_LIMIT_PER_MIN:-0}
+      LLM_RATE_LIMITER_BACKEND: ${LLM_RATE_LIMITER_BACKEND:-local}
+      WORKER_MAX_JOBS: ${WORKER_MAX_JOBS:-16}
+      WORKER_JOB_TIMEOUT_S: ${WORKER_JOB_TIMEOUT_S:-3600}
+      BATCH_SYNC_MAX: ${BATCH_SYNC_MAX:-5}
+      BATCH_ASYNC_MAX_ITEMS: ${BATCH_ASYNC_MAX_ITEMS:-200}
+      JOB_RESULT_TTL_HOURS: ${JOB_RESULT_TTL_HOURS:-72}
+      JOB_EVENTS_RETENTION_HOURS: ${JOB_EVENTS_RETENTION_HOURS:-24}
+      STUCK_ITEMS_RESET_AFTER_S: ${STUCK_ITEMS_RESET_AFTER_S:-900}
+      SSE_HEARTBEAT_S: ${SSE_HEARTBEAT_S:-15}
     ports:
       - "${APP_PORT:-8000}:8000"
+
+  worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment: *app_env
+    command: ["arq", "feap.jobs.worker.WorkerSettings"]
+    deploy:
+      replicas: ${WORKER_REPLICAS:-2}
 
   migrate:
     build: .
@@ -73,3 +114,4 @@ services:
 
 volumes:
   pgdata:
+  redisdata:
