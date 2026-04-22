@@ -32,8 +32,8 @@ class SubsubpositionShortlistResult(BaseModel):
     )
     code_differentiation: str = Field(
         default="",
-        description="Чем КОНКРЕТНО различаются ветки? "
-        "Для каждой: «ветка A = ..., ветка B = ..., различие = ...».",
+        description="Прочитай ПОЛНЫЕ описания веток. Чем различаются? "
+        "Для каждой: «ветка A = ПОЛНОЕ ОПИСАНИЕ, ветка B = ПОЛНОЕ ОПИСАНИЕ, ключевое различие = ...».",
     )
 
     candidates: list[BranchCandidate] = Field(min_length=1, max_length=5)
@@ -61,8 +61,8 @@ class SubsubpositionResult(BaseModel):
     )
     code_differentiation: str = Field(
         default="",
-        description="Чем КОНКРЕТНО различаются коды? "
-        "Для каждой пары: «код A = ..., код B = ..., различие = ...».",
+        description="Прочитай ПОЛНЫЕ описания кодов с учётом [ВЕТКИ]. "
+        "Чем различаются? «код A (ветка X) = ..., код B (ветка Y) = ..., различие = ...».",
     )
     threshold_comparison: str = Field(
         default="",

@@ -331,6 +331,11 @@ def _compute_local_names(leaves) -> dict[str, str]:
     subposition).  This function removes those shared parts so the model
     sees only the distinguishing local hierarchy:
       "без сахара 🠺 упаковка ≤ 2.5 кг"
+
+    When branches have DIFFERENT prefixes (no global common prefix),
+    the full name_full is preserved.  This is critical: the first 🠺-part
+    carries branch-distinguishing context (e.g., "включающая видеозапись..."
+    vs "прочая") that the L5a branch template uses for grouping.
     """
     SEP = " 🠺 "
 
