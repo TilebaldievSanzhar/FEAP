@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "opi_rules.json"
 
 OPI_RULES = [

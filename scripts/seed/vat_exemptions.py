@@ -1,7 +1,7 @@
 """Seed VAT exemptions for the Kyrgyz Republic (НК КР, ст. 289).
 
 Usage:
-    python scripts/seed_vat_exemptions.py
+    python scripts/seed/vat_exemptions.py
 
 Idempotent: skips if vat_exemptions already has data.
 Requires DATABASE_URL env var or .env file.
@@ -13,7 +13,7 @@ import os
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 # Initial VAT exemptions based on Article 289 of the Tax Code of Kyrgyz Republic.

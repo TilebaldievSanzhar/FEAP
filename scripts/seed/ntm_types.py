@@ -3,7 +3,7 @@
 These are reference data — the 13 standard types of non-tariff measures.
 
 Usage:
-    python scripts/seed_ntm_types.py
+    python scripts/seed/ntm_types.py
 
 Idempotent: skips if ntm_measure_types already has data.
 Requires DATABASE_URL env var or .env file.
@@ -15,7 +15,7 @@ import os
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 # 13 measure types matching TWS.BY R12 API Kind values.

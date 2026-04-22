@@ -16,7 +16,7 @@ from pathlib import Path
 
 import openpyxl
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EXCEL_PATH = next(PROJECT_ROOT.glob("data/TWS_TNVED*.xlsx"))
 OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "leaves.json"
 

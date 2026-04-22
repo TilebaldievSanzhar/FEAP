@@ -19,7 +19,7 @@ import json
 import re
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PSN_DIR = PROJECT_ROOT / "data" / "pdfs" / "psn"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "explanatory_notes.json"
 

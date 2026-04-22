@@ -23,7 +23,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 LEAVES_PATH = PROJECT_ROOT / "data" / "parsed" / "leaves.json"
 SECTIONS_PATH = PROJECT_ROOT / "data" / "reference" / "sections.json"
 NOMENCLATURE_PATH = PROJECT_ROOT / "data" / "parsed" / "nomenclature.json"

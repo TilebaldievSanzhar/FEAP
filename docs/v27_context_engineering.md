@@ -2,7 +2,7 @@
 
 **Дата**: 2026-04-08
 **Статус**: Реализовано, готово к бенчмарку v27
-**Предшественник**: [v19 benchmark analysis](v19_benchmark_analysis.md), [DTN experiments](dtn_decision_tree_navigation.md)
+**Предшественник**: [v19 benchmark analysis](../benchmark/docs/v19_benchmark_analysis.md), [DTN experiments](dtn_decision_tree_navigation.md)
 
 ---
 

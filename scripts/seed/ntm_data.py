@@ -1,7 +1,7 @@
 """Seed NTM measures and code bindings from data/ntm_seed.json.
 
 Usage:
-    python scripts/seed_ntm_data.py [--force]
+    python scripts/seed/ntm_data.py [--force]
 
     --force: drop existing measures and re-seed (otherwise skip if data exists)
 """
@@ -16,7 +16,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
 # ── Setup path ──────────────────────────────────────────────────────────────
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from feap.config import settings  # noqa: E402

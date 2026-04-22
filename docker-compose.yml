@@ -60,13 +60,13 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-feap}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-feap}
     command: >
       sh -c "
-        python scripts/parse_excel.py &&
-        python scripts/build_tree.py &&
-        python scripts/parse_opi.py &&
-        python scripts/parse_units.py &&
-        python scripts/seed_db.py &&
-        python scripts/seed_vat_exemptions.py &&
-        python scripts/seed_excise_rates.py
+        python scripts/parse/excel.py &&
+        python scripts/build/tree.py &&
+        python scripts/parse/opi.py &&
+        python scripts/parse/units.py &&
+        python scripts/seed/db.py &&
+        python scripts/seed/vat_exemptions.py &&
+        python scripts/seed/excise_rates.py
       "
     profiles:
       - seed

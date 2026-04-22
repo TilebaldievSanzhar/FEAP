@@ -6,7 +6,7 @@ Updates the chunks with embeddings and produces data/parsed/explanatory_notes_wi
 Alternatively, can write directly to PostgreSQL if DB is available.
 
 Usage:
-    python scripts/generate_embeddings.py [--batch-size 128] [--db]
+    python scripts/rag/generate_embeddings.py [--batch-size 128] [--db]
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import sys
 import time
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "explanatory_notes.json"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "explanatory_notes_with_embeddings.json"
 

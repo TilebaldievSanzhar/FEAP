@@ -6,7 +6,7 @@ into data/ett_pdfs/.
 Source: https://eec.eaeunion.org/comission/department/catr/ett/
 
 Usage:
-    python scripts/download_ett_pdfs.py
+    python scripts/download/ett_pdfs.py
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from pathlib import Path
 
 import httpx
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ETT_DIR = PROJECT_ROOT / "data" / "ett_pdfs"
 
 # Hardcoded URLs scraped from EEC page (stable since 2022, updated periodically)

@@ -1,97 +1,172 @@
 # FEAP — Foreign Economic Activity Platform
 
-Каскадный LLM-классификатор товаров по **ТН ВЭД ЕАЭС** (10-значные коды таможенного тарифа).
+Каскадный LLM-классификатор товаров по **ТН ВЭД ЕАЭС** (10-значные коды
+таможенного тарифа) с расчётом сопутствующих платежей и проверкой мер
+нетарифного регулирования (НТР) для Кыргызской Республики.
 
-Система последовательно спускается по дереву номенклатуры (раздел → группа → позиция → субпозиция → подсубпозиция), на каждом шаге вызывая LLM с релевантным контекстом: примечаниями, пояснениями и ОПИ. При обнаружении исключений запускается backtracking.
+Система последовательно спускается по дереву номенклатуры
+(раздел → группа → позиция → субпозиция → подсубпозиция), на каждом шаге
+вызывая LLM с релевантным контекстом: примечаниями, пояснениями, ОПИ.
+Сложные уровни (L1, L3, L5) реализованы в две фазы — *shortlist* + *deep*.
+При обнаружении исключающего примечания включается backtracking
+с проактивной эскалацией на родительский уровень.
 
-Отдельный модуль **нетарифного регулирования (НТР)** определяет применимые меры (технические регламенты, лицензирование, санитарный контроль и др.) с LLM-верификацией двойного соответствия (код + описание товара).
+Отдельный модуль **НТР** определяет применимые меры (технические регламенты,
+лицензирование, санитарный/ветеринарный/фитосанитарный контроль и др.) с
+LLM-верификацией двойного соответствия (код + описание товара).
+
+Дополнительно через `/tnved/lookup/{code}` возвращаются ставка ЕТТ ЕАЭС,
+ставка НДС КР с учётом освобождений (НК КР ст. 289), ставка акциза КР
+(НК КР ст. 336) и сводка НТР.
 
 ## Архитектура
 
 ```
 Пользователь
     │
-    ├──► POST /classify ──► Cascade Orchestrator ──► 10-значный код
-    │                            │
+    ├──► POST /classify ──► Cascade Orchestrator ──► 10-значный код + цепочка
+    │                            │  (+ сессия для needs_input)
     │                  ┌─────────┼─────────────┐
     │                  ▼         ▼             ▼
-    │             OpenRouter  PostgreSQL    Voyage AI
-    │           (Claude,     + pgvector   (embeddings)
-    │            Gemini,
-    │            Llama...)
+    │             OpenRouter  PostgreSQL   (Voyage AI —
+    │           (любой LLM    + pgvector    зарезервировано
+    │            через один   tnved_*       под прецеденты)
+    │            HTTP-шлюз)   ntm_*
+    │                         vat_*, excise_*
+    │                         classification_sessions
     │
-    └──► POST /ntm/verify ──► NTM Verifier ──► меры НТР + статусы
+    ├──► POST /classify/{session_id}/answer  ── продолжение по уточнениям
+    │
+    ├──► GET  /tnved/lookup/{code} ── ЕТТ + НДС + акциз + НТР (без LLM)
+    │
+    └──► POST /ntm/verify ──► NTM Verifier ──► меры НТР со статусами
                                   │
                             ┌─────┴─────┐
                             ▼           ▼
                         PostgreSQL    LLM (light)
-                        (ntm_*)    (двойное соответствие)
+                         ntm_*    (двойное соответствие)
 ```
 
 ### Каскад классификации
 
-| Уровень | Что определяет         | Контекст                     | Тир модели |
-|---------|------------------------|------------------------------|------------|
-| 0       | Обогащение описания    | —                            | light  |
-| 1       | Раздел (I–XXI)         | Дерево, примечания, ОПИ 1    | light  |
-| 2       | Группа (2 цифры)       | Группы раздела, примечания   | medium |
-| 3       | Позиция (4 цифры)      | Позиции, пояснения (RAG), ОПИ 1–5 | heavy |
-| 4       | Субпозиция (6 цифр)    | Субпозиции, пояснения, ОПИ 6 | medium |
-| 5       | Подсубпозиция (8/10)   | Технические параметры        | light  |
+| Уровень | Что определяет           | Стратегия                       | Контекст                                     | Тир   |
+|---------|--------------------------|---------------------------------|----------------------------------------------|-------|
+| **L0**  | Обогащение описания      | 1 шаг + SGR-карточка            | —                                            | light |
+| **L1**  | Раздел (I–XXI)           | shortlist (1a) → verify (1b)    | 21 раздел, примечания кандидатов, ОПИ 1      | light |
+| **L2**  | Группа (2 цифры)         | 1 шаг                           | Группы раздела + примечания, ОПИ 1           | medium|
+| **L3**  | Позиция (4 цифры)        | shortlist (3a) → deep (3b)      | Позиции, пояснения по кандидатам, ОПИ 1–5    | heavy |
+| **L4**  | Субпозиция (6 цифр)      | 1 шаг (auto-select при N=1)     | Субпозиции, пояснения позиции, section/cross-group definitions, ОПИ 6 | medium |
+| **L5**  | Подсубпозиция (8/10)     | branch (5a) → leaf (5b), single-step при N≤5 | Ветки → коды, пояснения, definition-notes | light |
+
+**Ключевые особенности:**
+- **SGR-поля в схемах** — каждый уровень требует от модели заполнить поля
+  пошагового анализа *перед* выбором кода (`physical_nature_analysis`,
+  `threshold_analysis`, `code_differentiation` и т.п.).
+- **needs_input на любом уровне** — если LLM возвращает непустые
+  `missing_parameters`, каскад останавливается, состояние сохраняется в БД
+  под `session_id`, а пользователю возвращаются уточняющие вопросы.
+- **Backtracking** — backtrack-trigger от LLM откатывает каскад на нужный
+  уровень с записью исключённого кода. Реализована **проактивная эскалация**
+  L2 → L1 (если LLM ссылается на чужой раздел) и общая эскалация
+  «уровень N был перебран → откат на N-1».
+- **Auto-select** на L4/L5 при единственном дочернем коде — без LLM-вызова.
+- **Целостность цепочки** проверяется пост-фактум валидатором
+  (section → group → position → subposition → code_10).
 
 ## Стек технологий
 
 - **Python 3.12+** / FastAPI / Uvicorn
-- **PostgreSQL 17** + pgvector (векторный поиск)
-- **OpenRouter** — единый LLM-шлюз (Anthropic Claude, Google Gemini, Llama, Mistral и др.)
-- **Voyage AI** — эмбеддинги для RAG
-- **SQLAlchemy 2.0** (async) + Alembic (миграции)
-- **Jinja2** — шаблоны промптов
-- **Pydantic v2** — валидация и схемы ответов
+- **PostgreSQL 17 + pgvector** (поле `embedding` зарезервировано под
+  будущие прецеденты; для текущего каскада векторный поиск не используется
+  — пояснения грузятся напрямую по коду)
+- **OpenRouter** — единый OpenAI-совместимый шлюз ко всем LLM
+  (Anthropic Claude, Google Gemini, MiniMax, Qwen, StepFun и др.).
+  Для разных моделей провайдер выбирает одну из **трёх стратегий
+  structured output** (json_schema strict / json_object + schema-in-prompt /
+  plain text + schema-in-prompt) — см. `feap/llm/openrouter_provider.py`.
+- **Voyage AI** — эмбеддинги (зарезервировано под прецеденты)
+- **SQLAlchemy 2.0** (async) + Alembic
+- **Jinja2** — шаблоны промптов (system + context-блоки)
+- **Pydantic v2** — структурированные ответы LLM и валидация API
 
 ## Структура проекта
 
 ```
 FEAP/
-├── src/feap/                  # Основной пакет (src-layout)
-│   ├── main.py                # FastAPI-приложение
-│   ├── config.py              # Настройки (из .env)
-│   ├── api/                   # Эндпоинты
-│   │   ├── router.py          # POST /classify, GET /tnved/tree, ...
-│   │   └── deps.py            # Dependency injection
-│   ├── cascade/               # Ядро каскада
-│   │   ├── orchestrator.py    # Оркестратор (запуск всех уровней)
-│   │   ├── backtracker.py     # Логика отката
-│   │   ├── context_builder.py # Сборка контекста для LLM
-│   │   └── levels/            # Обработчики уровней 0–5
-│   ├── db/                    # Слой БД
-│   │   ├── engine.py          # AsyncPG engine
-│   │   ├── models.py          # ORM-модели
-│   │   └── queries.py         # Запросы
-│   ├── schemas/               # Pydantic-модели (по уровням)
-│   ├── prompts/               # Промпты
-│   │   ├── registry.py        # Реестр шаблонов
-│   │   ├── assembler.py       # Сборка system + user
-│   │   └── templates/         # Jinja2-шаблоны
-│   ├── llm/                   # LLM через OpenRouter (OpenAI-совместимый API)
-│   ├── ntm/                   # Нетарифное регулирование
-│   │   ├── schemas.py         # Pydantic-схемы верификации
-│   │   └── verifier.py        # LLM-верификация двойного соответствия
-│   └── rag/                   # RAG (эмбеддинги + поиск)
-├── scripts/                   # Подготовка данных
-│   ├── download_ett_pdfs.py   # Скачивание 96 PDF номенклатуры с ЕЭК
-│   ├── parse_ett_nomenclature.py # PDF → nomenclature.json (имена + виртуальные узлы)
-│   ├── parse_excel.py         # TWS Excel → leaves.json (ставки)
-│   ├── build_tree.py          # nomenclature.json + leaves.json → tree.json
-│   ├── seed_db.py             # Загрузка в БД (дерево, ОПИ, НТР)
-│   ├── seed_ntm_data.py       # Загрузка мер НТР из data/ntm_seed.json
-│   └── ...                    # Парсинг PDF пояснений, генерация эмбеддингов
-├── migrations/                # Alembic-миграции
-├── tests/                     # Тесты (pytest)
-├── data/                      # Данные (Excel, PDF, JSON)
-├── docker-compose.yml
-├── Dockerfile
-└── pyproject.toml
+├── src/feap/                          # Основной пакет (src-layout)
+│   ├── main.py                        # FastAPI-приложение, /health
+│   ├── config.py                      # Settings из .env (Pydantic Settings)
+│   ├── api/
+│   │   ├── router.py                  # /classify, /tnved/*, /ntm/*
+│   │   └── deps.py                    # DI: get_db, get_orchestrator
+│   ├── cascade/
+│   │   ├── orchestrator.py            # Запуск уровней, needs_input, resume
+│   │   ├── backtracker.py             # Откат с эскалацией L2→L1
+│   │   ├── validator.py               # Целостность цепочки + risk_flags
+│   │   ├── context_builder.py         # DB → dict для промптов
+│   │   └── levels/
+│   │       ├── base.py                # CascadeState (+to_dict/from_dict)
+│   │       ├── level0.py              # Обогащение карточки товара
+│   │       ├── level1.py              # 1a shortlist → 1b verify
+│   │       ├── level2.py              # Группа
+│   │       ├── level3.py              # 3a shortlist → 3b deep
+│   │       ├── level4.py              # Субпозиция (+ definitions)
+│   │       └── level5.py              # 5a branch → 5b leaf (multi-branch)
+│   ├── db/
+│   │   ├── engine.py                  # async_session
+│   │   ├── models.py                  # ORM-модели (tnved_*, ntm_*, vat_*, excise_*, sessions)
+│   │   └── queries.py                 # Все запросы каскада + НТР + сессии
+│   ├── schemas/
+│   │   ├── api.py                     # ClassifyRequest/Response, NtmSummary, ...
+│   │   ├── common.py                  # DecisionChainEntry, BacktrackTrigger
+│   │   ├── product_card.py            # L0 (с SGR-полями)
+│   │   ├── section.py                 # L1 (shortlist + result)
+│   │   ├── group.py                   # L2
+│   │   ├── position.py                # L3 (shortlist + deep)
+│   │   ├── subposition.py             # L4 (с SGR-блоком)
+│   │   ├── subsubposition.py          # L5 (branch + result)
+│   │   └── validation.py              # ClassificationResult, PartialResult
+│   ├── prompts/
+│   │   ├── registry.py                # Jinja2-окружение
+│   │   ├── assembler.py               # Сборка system + user message
+│   │   └── templates/
+│   │       ├── system/                # По одному на уровень/шаг + ntm_verify
+│   │       └── context/               # product_card, notes, opi_rules,
+│   │                                  # tree_nodes/_l4/_l5, tree_branches_l5,
+│   │                                  # explanatory, decision_chain, ...
+│   ├── llm/
+│   │   ├── client.py                  # classify() — фасад, используется уровнями
+│   │   ├── provider.py                # Абстрактный LLMProvider
+│   │   ├── openrouter_provider.py     # 3 стратегии structured output + retry
+│   │   └── models.py                  # resolve_model(level), tier-based + override
+│   ├── ntm/
+│   │   ├── schemas.py                 # NtmVerifyRequest/Response, верификации
+│   │   └── verifier.py                # LLM-верификация двойного соответствия
+│   └── rag/
+│       ├── embedder.py                # Voyage AI через httpx
+│       └── retriever.py               # pgvector (зарезервировано)
+├── scripts/                            # Подготовка данных (см. ниже)
+│   ├── download/                      #   1. Скачивание PDF
+│   ├── parse/                         #   2. PDF/Excel → JSON
+│   ├── build/                         #   3. Сборка дерева
+│   ├── seed/                          #   4. Загрузка в БД
+│   └── rag/                           #   (опц.) Генерация эмбеддингов
+├── migrations/                         # Alembic
+│   └── versions/                      #   001..006 (initial → NTM → drop verification_context)
+├── tests/                              # pytest
+├── data/
+│   ├── TWS_TNVED_2026-02-17.xlsx      # Excel со ставками от tws.by
+│   ├── ntm_seed.json                  # Меры НТР (36 мер, 157 привязок к кодам)
+│   ├── ett_pdfs/                      # 96 PDF номенклатуры с eec.eaeunion.org
+│   ├── pdfs/{psn,opi}/                # PDF пояснений и правил
+│   ├── ntm_pdfs/                      # PDF товарных списков НТР
+│   ├── reference/sections.json        # 21 раздел
+│   └── parsed/                        # Промежуточные JSON: tree, leaves,
+│                                      # nomenclature, notes, explanatory, opi, units
+├── docs/                               # Архитектурные заметки и эксперименты
+├── docker-compose.yml                  # db + migrate + app + seed
+├── Dockerfile                          # python:3.12-slim
+└── pyproject.toml                      # build-backend = setuptools.build_meta
 ```
 
 ## Быстрый старт
@@ -99,8 +174,8 @@ FEAP/
 ### Предварительные требования
 
 - Docker и Docker Compose
-- API-ключ OpenRouter (`OPENROUTER_API_KEY`) — получить на [openrouter.ai](https://openrouter.ai)
-- (Опционально) API-ключ Voyage AI (`VOYAGE_API_KEY`) — для RAG
+- API-ключ OpenRouter (`OPENROUTER_API_KEY`) — [openrouter.ai](https://openrouter.ai)
+- (Опционально) API-ключ Voyage AI (`VOYAGE_API_KEY`) — для будущего RAG
 
 ### 1. Клонирование и настройка
 
@@ -114,90 +189,80 @@ cp .env.example .env
 ```env
 POSTGRES_PASSWORD=your_secure_password
 OPENROUTER_API_KEY=sk-or-v1-your-key-here
-VOYAGE_API_KEY=pa-your-key-here   # опционально, для RAG
 ```
 
 ### 2. Первый запуск
 
 ```bash
-# Шаг 1: поднять всё (PostgreSQL → миграции → приложение — автоматически)
+# Шаг 1: поднять БД, прогнать миграции, поднять приложение
 docker compose up -d
 
-# Шаг 2: загрузить данные ТН ВЭД (разово, при первом деплое)
+# Шаг 2: однократно загрузить данные ТН ВЭД
 docker compose run --rm seed
 ```
 
 > **Что происходит при `docker compose up -d`:**
 > 1. Стартует PostgreSQL (`db`) — ждёт healthcheck
-> 2. Автоматически применяются Alembic-миграции (`migrate`) — создаются все таблицы
-> 3. Стартует FastAPI-приложение (`app`) — только после успешных миграций
+> 2. Прогоняются Alembic-миграции (`migrate`) — все таблицы
+> 3. Стартует FastAPI-приложение (`app`)
 >
-> **Что делает `seed`:** берёт `nomenclature.json` (имена из PDF ЕЭК) и
-> `leaves.json` (ставки из TWS Excel) → строит иерархию (21 раздел → 96 групп →
-> 1 228 позиций → 5 612 субпозиций → 13 279 листьев = 20 236 узлов) → загружает
-> в `tnved_tree`. Также загружает правила ОПИ 1–6 в `tnved_opi`, 13 типов
-> нетарифных мер в `ntm_measure_types` и 36 мер НТР (ТР, лицензии, санитарный
-> контроль и др.) с 157 привязками к кодам в `ntm_measures` / `ntm_measure_codes`.
-> Безопасно запускать повторно — пропустит таблицы, в которых уже есть данные.
+> **Что делает `seed`:**
+> 1. `parse/excel.py` — Excel → `data/parsed/leaves.json` (13 279 листьев)
+> 2. `build/tree.py` — `nomenclature.json` + `leaves.json` → `tree.json` (20 236 узлов)
+> 3. `parse/opi.py` — генерирует `opi_rules.json`
+> 4. `parse/units.py` — единицы измерения
+> 5. `seed/db.py` — основной seed: дерево, ОПИ, примечания, пояснения, единицы,
+>    13 типов НТР, 36 мер НТР с 157 привязками
+> 6. `seed/vat_exemptions.py` — освобождения от НДС КР (НК КР ст. 289)
+> 7. `seed/excise_rates.py` — ставки акциза КР (НК КР ст. 336)
+>
+> Все шаги idempotent — повторный запуск пропустит уже заполненные таблицы.
 
-Приложение доступно по адресу: **http://localhost:8000**
+Приложение доступно на **http://localhost:8000**, Swagger UI на `/docs`.
 
 ### 3. Проверка
 
 ```bash
-# Health-check
 curl http://localhost:8000/health
 
-# Swagger UI
-open http://localhost:8000/docs
-
-# Количество загруженных кодов в БД
 docker compose exec db psql -U feap -d feap \
   -c "SELECT level, COUNT(*) FROM tnved_tree GROUP BY level ORDER BY level;"
+# 0=Раздел=21, 1=Группа=96, 2=Позиция=1228, 3=Субпозиция=5612, 4=Лист=13279
 ```
 
-### 4. Обновление номенклатуры
+### 4. Обновление номенклатуры с ЕЭК
 
 ```bash
-# После изменений кода — пересборка и рестарт (миграции применятся автоматически)
-docker compose up -d --build
+python scripts/download/ett_pdfs.py        # Скачать 96 PDF
+python scripts/parse/ett_nomenclature.py   # Пересобрать nomenclature.json
+python scripts/parse/excel.py              # Если обновлён Excel ставок
+python scripts/build/tree.py               # Пересборка tree.json
 
-# После обновления номенклатуры ЕЭК:
-python scripts/download_ett_pdfs.py        # Скачать обновлённые PDF
-python scripts/parse_ett_nomenclature.py   # Пересобрать nomenclature.json
-# (если изменились ставки — также обновить Excel и запустить parse_excel.py)
-python scripts/build_tree.py               # Пересобрать tree.json
-docker compose exec db psql -U feap -d feap -c "TRUNCATE tnved_tree CASCADE; TRUNCATE tnved_opi;"
+docker compose exec db psql -U feap -d feap \
+  -c "TRUNCATE tnved_tree CASCADE; TRUNCATE tnved_opi;"
 docker compose run --rm seed
 ```
 
-### 5. RAG (пояснения к ТН ВЭД — опционально)
+### 5. RAG (пояснения — опционально)
 
-Для работы уровней L3/L4 с контекстом пояснений нужно загрузить PDF-файлы ЕЭК.
-Это разовый длительный процесс (~97 файлов, несколько часов на эмбеддинги):
+Сейчас уровни L3/L4 используют пояснения через **прямую загрузку по коду**
+(не RAG). Векторный поиск (`feap/rag/`) зарезервирован для будущих
+прецедентов и судебных решений. Если нужно подготовить эмбеддинги впрок:
 
 ```bash
-# Скачать PDF пояснений с сайта ЕЭК
-docker compose run --rm seed python scripts/download_pdfs.py
-
-# Распарсить PDF → структурированные чанки
-docker compose run --rm seed python scripts/parse_explanatory_pdfs.py
-
-# Распарсить примечания к разделам/группам
-docker compose run --rm seed python scripts/parse_notes_pdf.py
-
-# Сгенерировать эмбеддинги через Voyage AI и загрузить в pgvector
-docker compose run --rm seed python scripts/generate_embeddings.py
+python scripts/download/psn_pdfs.py            # Скачать 97 PDF + правила
+python scripts/parse/explanatory_pdfs.py       # PDF → JSON секций
+python scripts/parse/notes_pdf.py              # Примечания к разделам/группам
+python scripts/rag/generate_embeddings.py      # Voyage AI → embedding-колонка
 ```
-
-> Без этого шага классификация работает, но на уровнях L3/L4 не будет
-> контекста пояснений из RAG — только дерево и примечания.
 
 ## API
 
-### `POST /api/v1/classify`
+Базовый префикс: `/api/v1`.
 
-Классификация товара по текстовому описанию.
+### `POST /classify`
+
+Запуск каскада по описанию товара.
 
 ```json
 {
@@ -206,17 +271,15 @@ docker compose run --rm seed python scripts/generate_embeddings.py
 }
 ```
 
-**Возможные статусы ответа:**
+Возможные `status` в ответе:
 
-| Статус | HTTP-код | Описание |
-|--------|----------|----------|
-| `completed` | 200 | Классификация завершена, `result` содержит полный код |
-| `needs_input` | 200 | Не хватает данных, `partial` содержит вопросы |
-| `error` | 200 | Ошибка каскада, `error` содержит описание |
+| `status`      | Когда                                                          |
+|---------------|----------------------------------------------------------------|
+| `completed`   | Каскад прошёл до конца, заполнено `result`                     |
+| `needs_input` | Каскад остановлен на уровне L0/L3/L4/L5, заполнено `partial`   |
+| `error`       | Превышен лимит откатов / внутренняя ошибка, заполнено `error`  |
 
-**Ответ `completed`** — 10-значный код с цепочкой обоснований по каждому уровню каскада.
-
-**Ответ `needs_input`** — каскад остановился на определённом уровне из-за нехватки данных:
+**Ответ `needs_input`:**
 
 ```json
 {
@@ -226,21 +289,23 @@ docker compose run --rm seed python scripts/generate_embeddings.py
     "partial_code": "8509",
     "determined_to_level": 5,
     "missing_parameters": ["мощность электродвигателя"],
-    "question": "Для выбора точного кода необходимо уточнить: мощность электродвигателя",
+    "question": "Для выбора точного кода необходимо уточнить: ...",
     "questions": ["Укажите: мощность электродвигателя"],
     "classification_chain_so_far": [
-      {"level": 1, "code": "XVI", "name": "Машины и оборудование...", "reasoning": "...", "confidence": 0.9},
-      {"level": 2, "code": "85", "name": "Электрические машины...", "reasoning": "...", "confidence": 0.85}
+      {"level": 1, "code": "XVI", "name": "...", "reasoning": "...", "confidence": 0.9},
+      {"level": 2, "code": "85",  "name": "...", "reasoning": "...", "confidence": 0.85}
     ]
   }
 }
 ```
 
-Используйте `session_id` для продолжения классификации через endpoint ниже.
+`session_id` хранится в таблице `classification_sessions` (JSONB-снапшот
+`CascadeState`) и используется эндпоинтом ниже для продолжения.
 
-### `POST /api/v1/classify/{session_id}/answer`
+### `POST /classify/{session_id}/answer`
 
-Продолжение классификации с ответами на уточняющие вопросы. Каскад возобновляется с уровня, на котором остановился.
+Продолжение каскада с ответами на уточняющие вопросы. Каскад возобновляется
+не с нуля, а с уровня `stopped_at_level`.
 
 ```json
 {
@@ -251,17 +316,43 @@ docker compose run --rm seed python scripts/generate_embeddings.py
 }
 ```
 
-Ответ имеет ту же структуру, что и `/classify` — может быть `completed`, `needs_input` (повторный запрос) или `error`.
+Ответ имеет ту же структуру, что и `/classify` (`completed` /
+`needs_input` / `error`).
 
-Лимит уточнений на сессию: `SESSION_MAX_ANSWERS` (по умолчанию 3). Сессия хранится `SESSION_TTL_MINUTES` минут (по умолчанию 30).
+Лимиты: `SESSION_MAX_ANSWERS` (по умолчанию 3) итераций уточнений на сессию,
+`SESSION_TTL_MINUTES` (по умолчанию 30) — TTL сессии.
 
-### `GET /api/v1/ntm/{code}`
+### `GET /tnved/tree?level=0` или `?parent_code=...`
 
-Нетарифные меры для 10-значного кода (lookup по коду, без LLM-верификации). Возвращает все потенциально применимые меры со статусом `may_apply`.
+Навигация по дереву. По умолчанию возвращает 21 раздел.
 
-### `POST /api/v1/ntm/verify`
+### `GET /tnved/lookup/{code}`
 
-LLM-верификация двойного соответствия — определяет, какие меры НТР реально применяются к конкретному товару.
+Полная справка по 10-значному коду без LLM:
+
+- `duty_rate` — ставка ЕТТ ЕАЭС
+- `vat` — ставка НДС КР с учётом освобождений (НК КР ст. 289),
+  по умолчанию `VAT_RATE_DEFAULT` (12%)
+- `excise` — акциз КР (НК КР ст. 336), если применим
+- `unit_primary` / `unit_secondary` — единицы измерения
+- `ntm` — сводка мер НТР по совпадению кода (см. ниже)
+
+### `GET /tnved/code/{code}`
+
+Базовые поля узла дерева (имя, уровень, ставка ЕТТ, число потомков).
+
+### `GET /ntm/{code}`
+
+Все потенциально применимые меры НТР для 10-значного кода
+(*без* LLM-верификации). Все статусы — `may_apply`. Подходит для общего обзора.
+
+### `POST /ntm/verify`
+
+LLM-верификация **двойного соответствия** (код + описание товара).
+Для каждой меры с непустым квалификатором LLM сопоставляет описание товара
+с условием НПА и возвращает один из статусов: `applies`, `does_not_apply`,
+`uncertain`. Меры без квалификатора автоматически получают `applies` по
+совпадению кода.
 
 ```json
 {
@@ -270,87 +361,111 @@ LLM-верификация двойного соответствия — опр�
 }
 ```
 
-Для каждой меры LLM сопоставляет описание товара с квалификатором из НПА и возвращает один из статусов: `applies` (применяется), `does_not_apply` (не применяется) или `uncertain` (недостаточно данных).
-
-Подробная документация: [`docs/ntm_implementation.md`](docs/ntm_implementation.md)
-
-### `GET /api/v1/tnved/tree?level=0`
-
-Навигация по дереву ТН ВЭД. Параметры: `level` (уровень) или `parent_code` (потомки узла).
-
-### `GET /api/v1/tnved/lookup/{code}`
-
-Справка по 10-значному коду: тариф, НДС, акциз, нетарифные меры (code-only lookup).
-
-### `GET /api/v1/tnved/code/{code}`
-
-Детали конкретного кода.
+Подробности модуля: [`docs/ntm_implementation.md`](docs/ntm_implementation.md).
 
 ## Локальная разработка (без Docker)
 
 ```bash
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+source venv/bin/activate    # Windows (Git Bash): source venv/Scripts/activate
 pip install -e ".[dev]"
 
-# Запустить PostgreSQL отдельно (Docker или локально)
-docker compose up -d db
-
-# Миграции
+docker compose up -d db     # PostgreSQL отдельно
 alembic upgrade head
 
-# Загрузка данных (разовый процесс)
-python scripts/download_ett_pdfs.py        # Скачать 96 PDF номенклатуры с ЕЭК
-python scripts/parse_ett_nomenclature.py   # PDF → nomenclature.json
-python scripts/parse_excel.py              # TWS Excel → leaves.json (ставки)
-python scripts/build_tree.py               # Собрать tree.json
-python scripts/seed_db.py                  # Загрузить в БД
+# Полный data-pipeline (один раз):
+python scripts/download/ett_pdfs.py
+python scripts/parse/ett_nomenclature.py
+python scripts/parse/excel.py
+python scripts/parse/opi.py
+python scripts/parse/units.py
+python scripts/build/tree.py
+python scripts/seed/db.py
+python scripts/seed/vat_exemptions.py
+python scripts/seed/excise_rates.py
 
-# Запуск сервера
+# Сервер
 uvicorn feap.main:app --reload
 
 # Тесты
 pytest
 ```
 
+## Скрипты подготовки данных
+
+`scripts/` разбит на 5 логических подпапок. Полный pipeline:
+
+```
+download/  →  parse/  →  build/  →  seed/
+                                       │
+                                  (опц.) rag/
+```
+
+| Папка       | Скрипт                          | Что делает                                                         |
+|-------------|---------------------------------|--------------------------------------------------------------------|
+| `download/` | `ett_pdfs.py`                   | Скачивает 96 PDF номенклатуры ЕТТ с eec.eaeunion.org              |
+| `download/` | `psn_pdfs.py`                   | Скачивает 97 PDF пояснений + `pravila.pdf` (ОПИ)                  |
+| `parse/`    | `ett_nomenclature.py`           | PDF ЕТТ → `nomenclature.json` (имена + виртуальные узлы)          |
+| `parse/`    | `excel.py`                      | TWS Excel → `leaves.json` (13 279 листьев со ставками)            |
+| `parse/`    | `notes_pdf.py`                  | PDF ЕТТ → `notes.json` (примечания к разделам/группам/субпозициям)|
+| `parse/`    | `explanatory_pdfs.py`           | PDF пояснений → `explanatory_notes.json` (секции по позициям)     |
+| `parse/`    | `opi.py`                        | Хардкод ОПИ → `opi_rules.json`                                    |
+| `parse/`    | `units.py`                      | sudact.ru → `units.json` (доп. единицы измерения)                 |
+| `build/`    | `tree.py`                       | `nomenclature.json + leaves.json` → `tree.json` (20 236 узлов)    |
+| `seed/`     | `db.py`                         | Главный seed: дерево, ОПИ, примечания, пояснения, единицы, НТР    |
+| `seed/`     | `ntm_types.py`                  | 13 справочных типов НТР (используется `db.py` через импорт)        |
+| `seed/`     | `ntm_data.py`                   | 36 мер НТР из `data/ntm_seed.json` (используется `db.py`)          |
+| `seed/`     | `vat_exemptions.py`             | Освобождения от НДС КР (НК КР ст. 289)                            |
+| `seed/`     | `excise_rates.py`               | Ставки акциза КР (НК КР ст. 336)                                  |
+| `rag/`      | `generate_embeddings.py`        | Voyage AI → колонка `embedding` (для будущих прецедентов)         |
+
 ## Переменные окружения
 
 ### Инфраструктура
 
-| Переменная          | Описание                        | По умолчанию |
-|---------------------|---------------------------------|--------------|
-| `POSTGRES_USER`     | Пользователь PostgreSQL         | `feap`       |
-| `POSTGRES_PASSWORD` | Пароль PostgreSQL               | — (обязательно) |
-| `POSTGRES_DB`       | Имя базы данных                 | `feap`       |
-| `POSTGRES_PORT`     | Внешний порт PostgreSQL         | `5432`       |
-| `APP_PORT`          | Внешний порт приложения         | `8000`       |
+| Переменная          | Описание                          | По умолчанию    |
+|---------------------|-----------------------------------|-----------------|
+| `POSTGRES_USER`     | Пользователь PostgreSQL           | `feap`          |
+| `POSTGRES_PASSWORD` | Пароль PostgreSQL                 | — (обязательно) |
+| `POSTGRES_DB`       | Имя базы данных                   | `feap`          |
+| `POSTGRES_PORT`     | Внешний порт PostgreSQL           | `5432`          |
+| `APP_PORT`          | Внешний порт приложения           | `8000`          |
 | `DATABASE_URL`      | URL подключения (для локальной разработки) | `postgresql+asyncpg://feap:feap@localhost:5432/feap` |
 
 ### OpenRouter (LLM)
 
-| Переменная          | Описание                        | По умолчанию |
-|---------------------|---------------------------------|--------------|
-| `OPENROUTER_API_KEY` | API-ключ OpenRouter            | — (обязательно) |
-| `MODEL_LIGHT`       | Модель для простых уровней (L0, L1, L5, NTM verify) | `anthropic/claude-haiku-4-5-20251001` |
-| `MODEL_MEDIUM`      | Модель для средних уровней (L2, L4) | `anthropic/claude-sonnet-4-6` |
-| `MODEL_HEAVY`       | Модель для сложного уровня (L3 — позиция) | `anthropic/claude-opus-4-6` |
-| `LEVEL{N}_MODEL`    | Переопределение модели для уровня N (0–5, 99) | — |
+| Переменная          | Описание                                                | По умолчанию                            |
+|---------------------|---------------------------------------------------------|-----------------------------------------|
+| `OPENROUTER_API_KEY`| API-ключ OpenRouter                                     | — (обязательно)                         |
+| `MODEL_LIGHT`       | Тир light (L0, L1, L5, NTM verify)                      | `anthropic/claude-haiku-4-5-20251001`   |
+| `MODEL_MEDIUM`      | Тир medium (L2, L4)                                     | `anthropic/claude-sonnet-4-6`           |
+| `MODEL_HEAVY`       | Тир heavy (L3 — позиция)                                | `anthropic/claude-opus-4-6`             |
+| `LEVEL{N}_MODEL`    | Полный override для уровня N (0–5, 99 — NTM verify)     | — (fallback на тир)                     |
 
-### Voyage AI (эмбеддинги)
+### Voyage AI (зарезервировано)
 
-| Переменная             | Описание                       | По умолчанию |
-|------------------------|--------------------------------|--------------|
+| Переменная             | Описание                       | По умолчанию    |
+|------------------------|--------------------------------|-----------------|
 | `VOYAGE_API_KEY`       | API-ключ Voyage AI             | — (опционально) |
-| `VOYAGE_MODEL`         | Модель эмбеддингов             | `voyage-3`   |
-| `VOYAGE_EMBEDDING_DIM` | Размерность вектора            | `1024`       |
+| `VOYAGE_MODEL`         | Модель эмбеддингов             | `voyage-3`      |
+| `VOYAGE_EMBEDDING_DIM` | Размерность вектора            | `1024`          |
 
-### Каскад
+### Каскад / сессии / налоги
 
-| Переменная              | Описание                             | По умолчанию |
-|-------------------------|--------------------------------------|--------------|
-| `CASCADE_MAX_BACKTRACK` | Макс. количество откатов на сессию   | `3`          |
-| `SESSION_TTL_MINUTES`   | Время жизни сессии уточнений (минут) | `30`         |
-| `SESSION_MAX_ANSWERS`   | Макс. количество итераций уточнений  | `3`          |
+| Переменная              | Описание                                           | По умолчанию |
+|-------------------------|----------------------------------------------------|--------------|
+| `CASCADE_MAX_BACKTRACK` | Макс. количество откатов на запрос                 | `5`          |
+| `SESSION_TTL_MINUTES`   | TTL сессии уточнений                               | `30`         |
+| `SESSION_MAX_ANSWERS`   | Макс. количество итераций уточнений                | `3`          |
+| `VAT_RATE_DEFAULT`      | Ставка НДС КР по умолчанию (если нет освобождения) | `12%`        |
+
+## Дополнительная документация
+
+- `CLAUDE.md` — детальная архитектура каскада и контекст для LLM-агентов
+- `docs/ntm_implementation.md` — модуль НТР
+- `docs/ett_pdf_migration.md`, `docs/naming_problem.md` — pipeline дерева
+- `docs/v27_context_engineering.md` — оптимизация контекста L4/L5
+- `docs/structured_output_providers.md` — стратегии structured output
 
 ## Лицензия
 

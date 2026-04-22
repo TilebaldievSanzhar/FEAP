@@ -22,7 +22,7 @@ from pathlib import Path
 
 import fitz  # PyMuPDF
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ETT_DIR = PROJECT_ROOT / "data" / "ett_pdfs"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "nomenclature.json"
 

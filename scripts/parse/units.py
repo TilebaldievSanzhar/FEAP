@@ -8,7 +8,7 @@ This script fetches all 97 pages (one per group), extracts code→unit pairs,
 and saves them to data/parsed/units.json.
 
 Usage:
-    python scripts/parse_units.py
+    python scripts/parse/units.py
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import httpx
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SECTIONS_PATH = PROJECT_ROOT / "data" / "reference" / "sections.json"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "units.json"
 

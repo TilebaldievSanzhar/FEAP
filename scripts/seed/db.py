@@ -1,7 +1,7 @@
 """Master script: load tree, OPI rules, and explanatory notes into PostgreSQL.
 
 Usage:
-    python scripts/seed_db.py
+    python scripts/seed/db.py
 
 Requires DATABASE_URL env var or .env file.
 """
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 # Add src to path for feap imports
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 TREE_PATH = PROJECT_ROOT / "data" / "parsed" / "tree.json"
@@ -254,7 +254,7 @@ def main() -> None:
     if ntm_count and ntm_count > 0:
         print(f"ntm_measure_types already contains {ntm_count} rows — skipping.")
     else:
-        from seed_ntm_types import NTM_MEASURE_TYPES
+        from ntm_types import NTM_MEASURE_TYPES
 
         print(f"Seeding {len(NTM_MEASURE_TYPES)} NTM measure types...")
         with engine.begin() as conn:
@@ -274,7 +274,7 @@ def main() -> None:
     if ntm_measures_count and ntm_measures_count > 0:
         print(f"ntm_measures already contains {ntm_measures_count} rows — skipping.")
     else:
-        from seed_ntm_data import seed_ntm_data
+        from ntm_data import seed_ntm_data
 
         print("Seeding NTM measures from data/ntm_seed.json...")
         seed_ntm_data(force=False)

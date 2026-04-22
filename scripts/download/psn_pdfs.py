@@ -7,7 +7,7 @@ Downloads:
 Source: https://eec.eaeunion.org/comission/department/catr/psn/
 
 Usage:
-    python scripts/download_pdfs.py
+    python scripts/download/psn_pdfs.py
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from pathlib import Path
 
 import httpx
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PSN_DIR = PROJECT_ROOT / "data" / "pdfs" / "psn"
 OPI_DIR = PROJECT_ROOT / "data" / "pdfs" / "opi"
 

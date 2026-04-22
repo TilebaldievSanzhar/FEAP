@@ -3,7 +3,7 @@
 Based on: Закон КР №78 от 03.04.2023 (новая редакция базовых ставок акциза).
 
 Usage:
-    python scripts/seed_excise_rates.py
+    python scripts/seed/excise_rates.py
 
 Idempotent: skips if excise_rates already has data.
 Requires DATABASE_URL env var or .env file.
@@ -15,7 +15,7 @@ import os
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 LEGAL_REF = "НК КР, ст. 336 (Закон КР №78 от 03.04.2023)"
