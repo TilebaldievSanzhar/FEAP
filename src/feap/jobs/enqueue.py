@@ -27,6 +27,7 @@ class JobBackend(Protocol):
     async def enqueue_resume_item(
         self, item_id: uuid.UUID, session_id: str, answers: dict[str, str]
     ) -> None: ...
+    async def enqueue_ocr_job(self, ocr_job_id: uuid.UUID) -> None: ...
 
 
 class ArqBackend:
@@ -51,6 +52,11 @@ class ArqBackend:
             session_id,
             json.dumps(answers, ensure_ascii=False),
             _job_id=f"resume:{item_id}",
+        )
+
+    async def enqueue_ocr_job(self, ocr_job_id: uuid.UUID) -> None:
+        await self._pool.enqueue_job(
+            "run_ocr_job", str(ocr_job_id), _job_id=f"ocr:{ocr_job_id}"
         )
 
 
@@ -103,6 +109,11 @@ class InProcessBackend:
             )
         )
 
+    async def enqueue_ocr_job(self, ocr_job_id: uuid.UUID) -> None:
+        from feap.jobs.tasks import run_ocr_job
+
+        self._spawn(run_ocr_job(self._build_ctx(), str(ocr_job_id)))
+
     async def _spawn_named(self, name: str, *args: Any) -> None:
         """Internal: re-enqueue a named task (called by SyntheticArqRedis)."""
         from feap.jobs import tasks as t
@@ -111,6 +122,8 @@ class InProcessBackend:
             "run_classify_batch": t.run_classify_batch,
             "run_classify_item": t.run_classify_item,
             "run_resume_item": t.run_resume_item,
+            "run_ocr_job": t.run_ocr_job,
+            "run_ocr_split_and_enqueue": t.run_ocr_split_and_enqueue,
         }.get(name)
         if fn is None:
             logger.error("InProcessBackend: unknown task name %s", name)

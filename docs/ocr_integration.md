@@ -4,258 +4,155 @@
 
 ## 1. Назначение
 
-Текущий `POST /classify` принимает только текстовое описание товара. Для индустриального сценария критично уметь принимать **первичные документы** (инвойсы, спецификации, контракты, упаковочные листы, ГТД, товаросопроводительные) и автоматически:
+Пользователь (таможенный брокер) загружает 1..N первичных документов (инвойс, техническое описание, спецификация, упаковочный лист, контракт) — бэкенд:
 
-1. Извлечь из них товарные позиции;
-2. Нормализовать каждую позицию в карточку, пригодную для каскада;
-3. Запустить классификацию по N товарам сразу.
+1. Извлекает **сырой текст** из каждого через внутренний OCR-сервис;
+2. Прогоняет один LLM-проход, который превращает сырые тексты в список товарных карточек (`ProductCard[]`);
+3. Опционально автоматически запускает пачку классификаций через `classification_jobs`.
 
-Эта задача требует промежуточного слоя — **OCR + структурное извлечение**. У провайдера есть две модели API; нужно выбрать одну и встроить её в FEAP без потери асинхронной природы текущего бэкенда.
+Таможенный брокер может классифицировать товар, имея **только** технические характеристики — именно такие документы дают максимально богатый вход для каскада (материал, мощность, габариты). Инвойс — промежуточный случай: N товаров в одном документе, но с короткими описаниями. Если поставщик указал HS-код в инвойсе, мы берём его как подсказку (`source_ref.hs_code_hint`), **но всегда** перепроверяем через каскад — EAEU 10-знач. коды отличаются от иностранных HS, ответственность за код на декларанте.
 
-## 2. Анализ вариантов API провайдера OCR
+## 2. OCR-провайдер
 
-### Вариант A — синхронный
-- Один HTTP-запрос: документ → ответ с **markdown-текстом**.
-- Плюсы: 1 round-trip, простой happy-path.
-- Минусы:
-  1. Markdown — это **сырой текст без семантики**. Извлечение позиций инвойса из markdown потребует *ещё одного* LLM-вызова (или хрупкого regex-парсера) — то есть мы перекладываем задачу с провайдера обратно на себя.
-  2. Блокирующий HTTP-запрос на крупный документ (10+ страниц) держит TCP-соединение надолго → таймауты, retry-сложности, нагрузка на воркер.
-  3. Невозможно показать пользователю прогресс.
-  4. Нет нативной возможности параллельно обрабатывать несколько документов на одной сессии.
+Используем внутренний сервис **`ocr.trade.kg`** через простой sync-эндпоинт:
 
-### Вариант B — асинхронный (submit → poll → result)
-- Шаг 1: `POST /ocr` с файлом → `{task_id}`.
-- Шаг 2: `GET /ocr/{task_id}` → пока не готово; когда готово — **структурированный JSON** (поля зависят от типа документа: для инвойса — список line_items с product_name, qty, unit, price, hs_code_hint и т.д.).
-- Плюсы:
-  1. Структурированные данные — *ровно то, что нужно для splitter'а*. Никакого парсинга markdown.
-  2. Любой размер документа без блокирующего соединения.
-  3. Прогресс легко мапится в наш job-status.
-  4. Параллельная обработка нескольких документов — провайдер сам очередью занимается.
-  5. Совпадает с архитектурой нашего batch-классификатора (см. [`async_architecture.md`](async_architecture.md#3-job-system)) — тот же паттерн polling, единый UX-компонент во фронтенде.
+```
+POST http://192.168.250.44:8088/ocr/process
+Content-Type: multipart/form-data
 
-### Решение: **Вариант B (асинхронный со структурированным выходом)**
+file: <binary>
+```
 
-Приоритеты решения, в порядке убывания веса:
-1. **Структурированный выход — это фундамент.** Markdown потребует LLM-парсинг, который удвоит latency, цену и точку отказа.
-2. **Архитектурная согласованность.** Бэкенд уже async; job-pattern будет нужен и для batch-классификации — переиспользуем единый механизм.
-3. **UX.** Прогресс-бар на загрузке многостраничного документа — стандартное ожидание пользователя в 2026.
-4. **Надёжность.** Polling с экспоненциальным backoff устойчивее, чем 5-минутный HTTP-запрос.
+Ответ (HTTP 200):
+```json
+{
+  "task_id": "uuid",
+  "status": "completed",
+  "success": false,                       // ← информационный флаг провайдера, не используется
+  "data": {
+    "filename": "...",
+    "text": "...markdown со таблицами...",
+    "task_id": "uuid",
+    "metadata": {"page_count": 0, "source_type": "pdf"},
+    "processing_time": 11.25,
+    "metrics": {...}
+  },
+  "error": null
+}
+```
 
-**Sync-вариант (A) НЕ используем.** Даже не как fallback: смешение двух стратегий усложняет код без выигрыша. Если у провайдера sync есть для маленьких документов, мы всё равно вызываем async API — провайдер сам быстро ответит на маленький документ.
+Вызов блокирующий (3–30 сек на файл). Мы никогда не зовём его из FastAPI-хендлера — только из arq-воркера.
 
-## 3. Архитектура интеграции
+**Известная проблема (mojibake):** у PDF с кириллицей, где отсутствует корректная ToUnicode/Font-map, сервис отдаёт замещающие символы `�` вместо русских букв. Байты уже потеряны на их стороне, восстановить на клиенте нельзя. В `OcrJob.extraction[i].warning` пишем диагностическое сообщение и позволяем LLM-структурайзеру работать с читаемыми частями (латиница, модели, артикулы). В перспективе — отдельный тикет OCR-команде на принудительный image-based OCR для таких PDF.
 
-### 3.1. Модуль `feap/ocr/`
+## 3. Архитектура потока
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Frontend: POST /api/v1/ocr/jobs (multipart, N files)       │
+└─────────────────────────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│  OcrJob[pending]  (status, files_meta, auto_classify)       │
+│  файлы на диске: data/ocr_uploads/<job_id>/...              │
+│  backend.enqueue_ocr_job(job_id) → arq                      │
+└─────────────────────────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│  arq: run_ocr_job                                           │
+│  ───────────────────                                        │
+│  stage=extracting: для каждого файла →                      │
+│       POST /ocr/process → OcrFileExtraction                 │
+│       (text, processing_time_s, warning)                    │
+│  stage=structuring: один LLM-вызов (level 98) →             │
+│       StructuredProducts(products, skipped_lines, ...)      │
+│  stage=completed                                             │
+└─────────────────────────────────────────────────────────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              ▼                             ▼
+     (если auto_classify=False)    (если auto_classify=True)
+     пользователь смотрит          run_ocr_split_and_enqueue
+     /ocr/jobs/{id}, редактирует   создаёт ClassificationJob
+     в UI, вручную жмёт            (parent_ocr_job_id → ocr_job)
+     POST /classify/batch          и enqueue run_classify_batch
+```
+
+## 4. Модуль `feap/ocr/`
 
 ```
 src/feap/ocr/
 ├── __init__.py
-├── client.py              # OcrClient — обёртка над HTTP API провайдера
-├── schemas.py             # Pydantic-модели ответов провайдера (по типам)
-├── document_types.py      # Enum DocumentType + маппинги
-├── splitter.py            # LLM-разделитель: structured OCR → list[ProductCard]
-├── service.py             # OcrService — high-level use-cases
-└── errors.py              # OcrError, OcrTimeoutError, OcrUnsupportedDocument
+├── client.py         # OcrClient — httpx async, POST /ocr/process
+├── errors.py         # OcrError, OcrProviderError, OcrProviderTimeout, ...
+├── repository.py     # CRUD для ocr_jobs
+├── schemas.py        # Pydantic: OcrProviderResponse, OcrFileExtraction,
+│                     #   StructuredProduct, StructuredProducts, API envelopes
+├── service.py        # run_extraction(), run_structure() — чистая оркестрация
+├── storage.py        # Локальное хранение файлов (data/ocr_uploads/<id>/)
+└── structurer.py     # LLM level 98 — raw text → StructuredProducts
 ```
 
-### 3.2. Поток данных
+`service.py` не знает про Redis/ctx — это делает `feap/jobs/tasks.py::run_ocr_job`, который дёргает сервис и маркирует стадии. Такой split позволяет юнит-тестировать сервис с `_FakeDB` и `_StubClient`.
 
-```
-Frontend
-   │ multipart/form-data: file + document_type_hint
-   ▼
-POST /api/v1/ocr/jobs
-   │ создаёт OcrJob (БД), отдаёт ocr_job_id
-   │ запускает background task
-   ▼
-OcrService.process(file, type_hint)
-   ├─► OcrClient.submit(file)            # → provider task_id
-   ├─► OcrClient.poll(task_id)           # пока готово (с backoff)
-   ├─► OcrSchemas.parse(raw_response)    # типизированный объект
-   ├─► OcrSplitter.extract_products()    # LLM, режет на N карточек
-   └─► сохраняет результат в OcrJob.result_json
-                  │
-                  ▼ (опционально, если в запросе chain=true)
-         ClassificationJob (см. async_architecture.md)
-```
+## 5. Структура данных (`ocr_jobs`)
 
-### 3.3. `OcrClient` — HTTP-обёртка
-
-```python
-# src/feap/ocr/client.py
-class OcrClient:
-    def __init__(self, base_url: str, api_key: str, timeout: float = 30.0):
-        self._client = httpx.AsyncClient(
-            base_url=base_url,
-            headers={"Authorization": f"Bearer {api_key}"},
-            timeout=timeout,
-        )
-
-    async def submit(
-        self,
-        file: bytes,
-        filename: str,
-        document_type: DocumentType | None = None,
-    ) -> str:
-        """Отправляет документ на OCR. Возвращает provider task_id."""
-
-    async def poll(
-        self,
-        task_id: str,
-        *,
-        max_wait: float = 600.0,
-        initial_interval: float = 1.0,
-        max_interval: float = 10.0,
-    ) -> dict:
-        """Опрашивает провайдера до получения результата.
-        
-        Backoff: 1s → 1.5s → 2.25s → ... → max 10s.
-        Завершается успехом, ошибкой или OcrTimeoutError.
-        """
-
-    async def close(self) -> None:
-        await self._client.aclose()
+```sql
+CREATE TABLE ocr_jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    status VARCHAR(32) NOT NULL,
+    stage VARCHAR(32),
+    files JSONB NOT NULL DEFAULT '[]',
+        -- [{filename, size_bytes, sha256, content_type, stored_path}]
+    auto_classify BOOLEAN NOT NULL DEFAULT false,
+    params JSONB NOT NULL DEFAULT '{}',
+    extraction JSONB,
+        -- [{file_index, filename, text, processing_time_s, provider_task_id, warning}]
+    products JSONB,
+        -- [{product_card: {...ProductCard}, source_ref: {file_index, line_hint, hs_code_hint, ...}}]
+    skipped_notes JSONB,
+    linked_classification_job_id UUID,
+    error TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL
+);
 ```
 
-**Важно:**
-- `httpx.AsyncClient` (не `httpx.Client`) — соответствует FastAPI async-стилю.
-- Один экземпляр клиента на приложение (синглтон через DI), connection pool переиспользуется.
-- `poll` — *активный* polling провайдера, не путать с polling нашего job-status фронтендом.
+Миграция — `migrations/versions/007_ocr_jobs.py`. Она же добавляет FK `classification_jobs.parent_ocr_job_id → ocr_jobs.id` (сама колонка создана в 008 как plain UUID без FK — там был перекрёстный зависимый цикл).
 
-### 3.4. `OcrSchemas` — типизация по типам документов
+Статусы: `pending` → `extracting` → `structuring` → `completed | failed | cancelled`.
 
-OCR-провайдер для разных типов документов отдаёт разные структуры. Закладываем минимум 4 типа:
-
-```python
-# src/feap/ocr/document_types.py
-class DocumentType(str, Enum):
-    INVOICE = "invoice"                 # инвойс / commercial invoice
-    CUSTOMS_DECLARATION = "customs"     # ГТД / EAD
-    SPECIFICATION = "specification"     # техническая спецификация / packing list
-    CONTRACT = "contract"               # внешнеторговый контракт
-    UNKNOWN = "unknown"                 # auto-detect
-```
-
-```python
-# src/feap/ocr/schemas.py
-class InvoiceLineItem(BaseModel):
-    line_number: int | None = None
-    product_name: str                       # обязательное
-    description_extra: str | None = None    # доп. строки описания
-    quantity: float | None = None
-    unit: str | None = None
-    unit_price: float | None = None
-    total_price: float | None = None
-    currency: str | None = None
-    country_of_origin: str | None = None
-    hs_code_hint: str | None = None         # если поставщик уже указал
-    raw_row: dict[str, Any] | None = None   # сырая строка от провайдера
-
-class InvoiceOcrResult(BaseModel):
-    document_type: Literal["invoice"]
-    seller: str | None = None
-    buyer: str | None = None
-    invoice_number: str | None = None
-    invoice_date: str | None = None
-    line_items: list[InvoiceLineItem]
-    total_amount: float | None = None
-    currency: str | None = None
-    raw_text: str | None = None             # markdown для отладки
-
-# Аналогично: CustomsOcrResult, SpecificationOcrResult, ContractOcrResult.
-# Все наследуются от OcrResultBase с общими полями: pages, confidence, raw_text.
-```
-
-**Зачем держать `raw_row` и `raw_text`:** провайдер может ошибиться в маппинге; мы должны иметь возможность переразбора без повторного OCR.
-
-### 3.5. `OcrSplitter` — извлечение товарных карточек
-
-Между «структурированный OCR» и «N запусков каскада» лежит *splitter*. Он решает:
-- Очистить product_name от мусора (артикулы, страны, упаковка → отдельные поля);
-- Определить, что это **один товар**, а не комплект (для комплектов выставить флаг для ОПИ 3б);
-- Заполнить поля карточки L0 (см. `feap/schemas/product_card.py`) — material, function, dimensions, processing_degree и т.д.;
-- Если поставщик указал hs_code_hint — записать его как *подсказку* (не auto-pick — каскад всё равно проверит).
-
-**Реализация:** один LLM-вызов на batch строк документа (а не по 1 вызову на строку — экономия токенов). Промпт:
-
-```jinja
-# src/feap/prompts/templates/system/ocr_split.jinja2
-Ты получаешь структурированный JSON из OCR коммерческого инвойса.
-Для каждой строки line_items сформируй карточку товара (см. схему ProductCard).
-
-Правила:
-1. Объединяй продолжения описания (description_extra) в normalized_description.
-2. Если в строке указано несколько товаров через ";" или нумерацию — раздели их.
-3. Если строка содержит услугу (доставка, упаковка) — пропусти её.
-4. hs_code_hint сохраняй только если поставщик его указал.
-5. Если данных в строке недостаточно — заполни missing_info и clarifying_questions.
-
-Верни массив карточек ровно в порядке line_items (с возможным расщеплением).
-```
-
-Структурированный ответ:
-```python
-class SplitterOutput(BaseModel):
-    products: list[ProductCard]
-    skipped_lines: list[int] = []          # услуги, пустые строки
-    notes: str | None = None               # общие наблюдения
-```
-
-LLM-тир: **medium** (требуется аккуратное чтение, но не глубокое рассуждение). Используем `LEVEL_OCR_SPLIT_MODEL` env-переменную (см. §6).
-
-### 3.6. `OcrService` — high-level use-case
-
-```python
-# src/feap/ocr/service.py
-class OcrService:
-    def __init__(
-        self,
-        client: OcrClient,
-        splitter: OcrSplitter,
-        db_session_factory: Callable[[], AsyncSession],
-    ):
-        ...
-
-    async def process_document(
-        self,
-        ocr_job_id: str,
-        file: bytes,
-        filename: str,
-        document_type: DocumentType,
-    ) -> None:
-        """Полный цикл: submit → poll → parse → split.
-        
-        Запускается из background task. Обновляет OcrJob в БД на каждом
-        этапе (status: uploading → ocr_processing → extracting → completed).
-        """
-```
-
-Этот метод **не запускает классификацию**. Цепочка с классификацией — отдельная сущность (см. §5 ниже и [`async_architecture.md`](async_architecture.md#7-цепочка-ocr--classify)).
-
-## 4. Эндпоинты
+## 6. Эндпоинты
 
 ### `POST /api/v1/ocr/jobs`
+
+Multipart upload 1..N файлов.
 
 ```
 Content-Type: multipart/form-data
 
-file:               двоичный файл (PDF/JPG/PNG/TIFF)
-document_type:      string, optional ("invoice"|"customs"|...)
-auto_classify:      bool, optional, default=false
-                    если true — после OCR автоматически создаётся
-                    ClassificationJob и его ID попадает в статус
+files[]:        бинарные файлы (PDF / JPEG / PNG / TIFF / WEBP)
+auto_classify:  "true" | "false" — по умолчанию false
 ```
 
-**Лимиты:**
-- Размер файла: `OCR_MAX_FILE_MB` (default 25 MB);
-- Допустимые типы: PDF, JPG, JPEG, PNG, TIFF, WEBP;
-- Опционально: счётчик активных OCR-задач на пользователя (когда появится auth).
+Валидация:
+- Размер каждого файла ≤ `OCR_MAX_FILE_MB` (default 25 MB).
+- Количество файлов ≤ `OCR_MAX_FILES_PER_JOB` (default 10).
+- `Content-Type` входит в `OCR_ALLOWED_MIME`.
 
-**Ответ:**
+Ответ `202 Accepted`:
 ```json
 {
-  "ocr_job_id": "ocr_a1b2c3d4-...",
-  "status": "pending"
+  "ocr_job_id": "...",
+  "status": "pending",
+  "files_count": 2,
+  "auto_classify": false,
+  "poll_url": "/api/v1/ocr/jobs/..."
 }
 ```
 
@@ -263,163 +160,120 @@ auto_classify:      bool, optional, default=false
 
 ```json
 {
-  "ocr_job_id": "ocr_a1b2c3...",
-  "status": "completed",                 // pending | uploading | ocr_processing | extracting | completed | failed
-  "document_type": "invoice",
-  "progress": {
-    "stage": "extracting",
-    "stage_index": 3,
-    "stage_count": 4,
-    "message": "Извлечение товарных карточек (LLM)"
-  },
-  "result": {
-    "ocr_data": { ...InvoiceOcrResult... },
-    "products": [ ...ProductCard[] ... ],
-    "skipped_lines": [4, 7]
-  },
-  "linked_classification_job_id": "cls_x1y2z3...",  // если auto_classify=true
+  "ocr_job_id": "...",
+  "status": "completed",
+  "stage": "completed",
+  "auto_classify": false,
+  "files": [{"filename": "1_1.pdf", "size_bytes": 358467, "sha256": "...", "content_type": "application/pdf"}],
+  "extraction": [
+    {
+      "file_index": 0,
+      "filename": "1_1.pdf",
+      "text": "...",
+      "processing_time_s": 11.25,
+      "provider_task_id": "...",
+      "warning": null
+    }
+  ],
+  "products": [
+    {
+      "product_card": {
+        "original_description": "OceanStor Dorado 6000 V6 D6V6-1T-NVMe",
+        "normalized_description": "Система хранения данных OceanStor Dorado 6000 V6",
+        "material": null, "function": "СХД — хранение данных",
+        "has_electric_motor": false, "power_source": "электричество",
+        "intended_use": "промышленный",
+        "missing_info": [], "clarifying_questions": []
+      },
+      "source_ref": {
+        "file_index": 0, "line_hint": 1, "quantity": 1,
+        "unit_price": 93206, "currency": "EUR"
+      }
+    }
+  ],
+  "skipped_notes": ["pp. bank details, TOTAL row"],
+  "linked_classification_job_id": null,
   "error": null,
-  "created_at": "2026-04-22T10:00:00Z",
-  "completed_at": "2026-04-22T10:00:42Z"
+  "created_at": "...", "started_at": "...", "completed_at": "...", "expires_at": "..."
 }
 ```
 
 ### `DELETE /api/v1/ocr/jobs/{ocr_job_id}`
 
-Отмена задачи (если ещё в pending/processing). Завершённые удаляются по TTL.
+Отмена не-терминального job'а. Уже запущенные таски штатно дорабатывают (cooperative shutdown).
 
-### `GET /api/v1/ocr/jobs` *(опционально, для админки)*
+## 7. Цепочка OCR → Classify
 
-Список задач с фильтрами `status`, `created_after`, пагинация.
+При `auto_classify=true`:
 
-## 5. Хранилище
+1. `run_ocr_job` после `stage=structuring` энкьюит `run_ocr_split_and_enqueue(ocr_job_id)`.
+2. `run_ocr_split_and_enqueue` читает `ocr_jobs.products`, создаёт `classification_jobs` (`job_type='ocr_classify'`, `parent_ocr_job_id=ocr_job_id`), заполняет items из `ProductCard`, обновляет `ocr_jobs.linked_classification_job_id`.
+3. Стандартный batch-pipeline: arq `run_classify_batch` → `run_classify_item` × N.
 
-Таблица `ocr_jobs`:
+UI опирается на `linked_classification_job_id`, чтобы перевести пользователя с OCR-прогресса на classification-прогресс (SSE/polling остаются теми же).
 
-```sql
-CREATE TABLE ocr_jobs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    status VARCHAR(32) NOT NULL,           -- pending | uploading | ocr_processing | extracting | completed | failed | cancelled
-    document_type VARCHAR(32),
-    filename VARCHAR(255) NOT NULL,
-    file_size_bytes INTEGER NOT NULL,
-    file_sha256 CHAR(64) NOT NULL,         -- для дедупликации
-    provider_task_id VARCHAR(128),         -- task_id у OCR-провайдера
-    progress JSONB,                        -- {stage, message, stage_index, stage_count}
-    result JSONB,                          -- {ocr_data, products, skipped_lines}
-    linked_classification_job_id UUID REFERENCES classification_jobs(id) ON DELETE SET NULL,
-    error TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    started_at TIMESTAMPTZ,
-    completed_at TIMESTAMPTZ,
-    expires_at TIMESTAMPTZ NOT NULL        -- TTL: created_at + OCR_RESULT_TTL_HOURS
-);
+## 8. LLM-структуризатор (level 98)
 
-CREATE INDEX idx_ocr_jobs_status ON ocr_jobs(status);
-CREATE INDEX idx_ocr_jobs_expires ON ocr_jobs(expires_at);
-CREATE INDEX idx_ocr_jobs_sha ON ocr_jobs(file_sha256);
-```
+Один вызов на все файлы пакета. Тир `medium` (Claude Sonnet по умолчанию). Переопределение — `LEVEL98_MODEL`.
 
-**Файлы:**
-- Сами файлы **не** храним долгосрочно. Идея: после успешного OCR файл можно удалить (результат живёт в `result.ocr_data`).
-- Для idempotency: при загрузке считаем `sha256` файла — если есть `completed`-job с тем же хэшем, не моложе X часов, возвращаем тот же `ocr_job_id` без повторного OCR (экономия денег и времени).
-- Хранилище файлов на время обработки: `data/ocr_uploads/{ocr_job_id}` или S3-совместимое (см. §8).
+Промпт: `src/feap/prompts/templates/system/level98_ocr_structure.jinja2`. Инструкция:
+- Определить тип каждого документа (инвойс / спецификация / контракт / packing list / tech description / other).
+- Для табличных (инвойс, packing list) — каждая строка товара → отдельный `ProductCard`.
+- Для одиночных (tech description) — один `ProductCard` с богатым заполнением.
+- HS-код из инвойса складывать в `source_ref.hs_code_hint`, не использовать как финальный.
+- Quantity, unit, unit_price, currency, country_origin → `source_ref` (не в карточку).
+- Услуги (доставка, упаковка) и totals — в `skipped_lines`.
+- Если текст нечитаем (сплошные `�`) — вернуть пустой `products` с сообщением.
 
-**Миграция:** `migrations/versions/007_ocr_jobs.py`.
+Output schema: `StructuredProducts` (см. `feap/ocr/schemas.py`).
 
-## 6. Конфигурация (env)
+## 9. Конфигурация
 
-| Переменная | Описание | Default |
-|---|---|---|
-| `OCR_PROVIDER_BASE_URL` | URL OCR-провайдера | — (обязательно) |
-| `OCR_PROVIDER_API_KEY` | API-ключ | — (обязательно) |
-| `OCR_PROVIDER_TIMEOUT_S` | Timeout одного HTTP-запроса к провайдеру | `30` |
-| `OCR_POLL_MAX_WAIT_S` | Макс. время ожидания результата | `600` |
-| `OCR_POLL_INITIAL_INTERVAL_S` | Стартовый интервал backoff | `1.0` |
-| `OCR_POLL_MAX_INTERVAL_S` | Потолок backoff | `10.0` |
-| `OCR_MAX_FILE_MB` | Лимит размера файла | `25` |
-| `OCR_RESULT_TTL_HOURS` | TTL хранения результата OCR | `72` |
-| `OCR_DEDUP_WINDOW_HOURS` | Окно дедупликации по sha256 | `24` |
-| `OCR_UPLOAD_DIR` | Локальная директория для временных файлов | `data/ocr_uploads` |
-| `LEVEL_OCR_SPLIT_MODEL` | Override модели для splitter (level=98) | fallback на medium |
+| Переменная              | Описание                                              | Default |
+|-------------------------|-------------------------------------------------------|---------|
+| `OCR_PROVIDER_URL`      | URL внутреннего OCR                                   | `http://192.168.250.44:8088/ocr/process` |
+| `OCR_PROVIDER_TIMEOUT_S`| HTTP-timeout одного вызова                            | `300`   |
+| `OCR_MAX_FILE_MB`       | Лимит размера одного файла                            | `25`    |
+| `OCR_MAX_FILES_PER_JOB` | Макс. файлов в одном job'е                            | `10`    |
+| `OCR_RESULT_TTL_HOURS`  | TTL `ocr_jobs` в БД                                   | `72`    |
+| `OCR_UPLOAD_DIR`        | Директория хранения файлов                            | `data/ocr_uploads` |
+| `OCR_ALLOWED_MIME`      | Разрешённые Content-Type через запятую                | `application/pdf,image/jpeg,image/png,image/tiff,image/webp` |
+| `LEVEL98_MODEL`         | Override модели для OCR-структурайзера                | fallback на `MODEL_MEDIUM` |
 
-Provider URL и ключ — **обязательные**. Без них модуль OCR в DI-контейнере не регистрируется, эндпоинты возвращают 503.
+## 10. Хранилище файлов
 
-## 7. Обработка ошибок
+**MVP:** локальная директория (`data/ocr_uploads/<ocr_job_id>/<sha[:16]>_<filename>`). В `docker-compose.yml` примонтирован как named volume `ocr_uploads:/app/data/ocr_uploads`, разделяемый между `app` и `worker` контейнерами.
 
-| Ситуация | Что делаем |
-|---|---|
-| Файл превышает лимит | 413 Payload Too Large сразу, без создания job |
-| Неподдерживаемый MIME | 415 Unsupported Media Type |
-| Провайдер вернул 4xx | `OcrJob.status='failed'`, в `error` — текст; не retry |
-| Провайдер вернул 5xx | retry до 3 раз с backoff; затем `failed` |
-| `poll` вышел за `max_wait` | `failed` с error="OCR timeout"; provider task НЕ отменяется (потенциально для аудита) |
-| OcrSplitter LLM-ошибка | retry 1 раз; затем `failed` (но raw OCR-данные сохранены — фронтенд может показать как fallback) |
-| Невалидный документ (страница пустая, не текст) | provider скажет → конкретный error message; статус `failed` |
+Ограничение: работает только при развёртывании на одном хосте (или в k8s с `ReadWriteMany` volume). Для multi-node production — swap на S3/MinIO. Абстракция в `feap/ocr/storage.py` спроектирована под drop-in замену: `save_files / read_file / delete_job_dir` — три функции, можно реимплементировать через `boto3`/`minio`.
 
-**Принцип:** ошибка одного этапа не теряет результат предыдущего. Если OCR прошёл, но splitter упал — `result.ocr_data` уже сохранены, фронтенд показывает структурированные данные и предлагает «попробовать извлечь товары снова» (отдельный POST на retry-эндпоинт — см. §9).
+## 11. Обработка ошибок
 
-## 8. Хранение файлов
+| Ситуация                             | Что делаем |
+|--------------------------------------|------------|
+| Файл > `OCR_MAX_FILE_MB`              | `413 Payload Too Large` на upload, job не создаётся |
+| Неподдерживаемый MIME                 | `415 Unsupported Media Type` |
+| Больше `OCR_MAX_FILES_PER_JOB` файлов | `413` |
+| Провайдер 5xx                         | В `OcrFileExtraction.warning`, не блокирует другие файлы |
+| Провайдер timeout                     | Тот же путь, `warning="provider error: ..."` |
+| Все файлы вернули пустой текст        | Структурайзер возвращает `products=[]`, job=completed, skipped_notes объясняют |
+| Mojibake (`�` в тексте)               | Warning `"N unrecoverable glyphs"`, текст всё равно идёт в LLM |
+| LLM-структурайзер упал                | Job=failed с причиной. `extraction` уже сохранён → retry возможен без повторного OCR. |
+| Enqueue arq-таска упал                | `503`, job=failed с `enqueue failed: ...` |
 
-**MVP:** локальная файловая система (`data/ocr_uploads/{job_id}.{ext}`). Удаление после `status in ('completed', 'failed')`. Для одного инстанса достаточно.
+## 12. Тесты
 
-**Production:** S3-совместимое хранилище (MinIO для on-premise, AWS S3, Yandex Object Storage). Абстракция:
+- `tests/ocr/test_schemas.py` — round-trip фикстур провайдера через pydantic.
+- `tests/ocr/test_client.py` — httpx.MockTransport, 5xx/4xx/timeout/non-JSON → правильные exception'ы.
+- `tests/ocr/test_storage.py` — лимиты размера/числа/пустые файлы.
+- `tests/ocr/test_service.py` — `run_extraction` + `run_structure` с моками БД/клиента.
 
-```python
-class FileStorage(Protocol):
-    async def put(self, key: str, data: bytes, content_type: str) -> str: ...
-    async def get(self, key: str) -> bytes: ...
-    async def delete(self, key: str) -> None: ...
-```
+Integration-тесты (реальный OCR + реальный LLM + реальная Postgres) — отдельно в CI, не в unit pipeline. Фикстуры реальных ответов сервиса — `tests/fixtures/ocr/*.json`.
 
-С реализациями `LocalFileStorage` и `S3FileStorage`. DI выбирает по env `FILE_STORAGE_BACKEND` (local|s3).
+## 13. Открытые вопросы / будущее
 
-Для multi-instance бэкенда — обязательно S3, иначе разные воркеры не увидят файл друг друга.
-
-## 9. Retry и идемпотентность
-
-- **Дедупликация при загрузке:** см. §5 (`file_sha256`).
-- **Retry splitter:** `POST /api/v1/ocr/jobs/{id}/retry-extract` — повторный запуск splitter без повторного OCR. Полезно, если LLM упал или мы обновили промпт.
-- **Webhook от провайдера** *(опционально):* если провайдер поддерживает callback вместо polling — можно сэкономить запросы. Реализация: `POST /api/v1/ocr/webhook` + проверка подписи. Polling в этом случае становится fallback при пропущенном callback.
-
-## 10. Тесты
-
-| Уровень | Что покрываем |
-|---|---|
-| unit (`tests/ocr/test_client.py`) | mock httpx; submit, poll с разными ответами, backoff |
-| unit (`tests/ocr/test_splitter.py`) | заранее заготовленные OCR-результаты → проверка SplitterOutput |
-| integration (`tests/ocr/test_service.py`) | весь pipeline с mock-провайдером |
-| e2e (опционально, `tests/ocr/test_endpoints.py`) | реальный POST → проверка структуры ответа |
-
-**Фикстуры:** заранее сохранённые JSON-ответы провайдера в `tests/fixtures/ocr/` (по одной на тип документа + edge cases: пустой инвойс, инвойс на 100 строк, многоязычный).
-
-## 11. Безопасность
-
-- **Антивирусная проверка** загружаемых файлов *(P2)*: ClamAV (локально) или провайдерский endpoint.
-- **Проверка MIME-типа** не доверять только заголовку — проверять magic bytes (`python-magic`).
-- **Изоляция:** не открывать PDF локально (никаких `pdfplumber` от пользовательского входа без sandbox) — провайдер сам всё парсит.
-- **Логи:** не логируем сырое содержимое документа (PII), только метаданные (размер, тип, sha256, имя файла).
-
-## 12. Метрики
-
-Минимум:
-- `ocr_jobs_total{status}` — counter;
-- `ocr_duration_seconds{stage}` — histogram (upload, ocr, extract);
-- `ocr_provider_errors_total{code}` — counter;
-- `ocr_file_size_bytes` — histogram;
-- `ocr_dedup_hits_total` — counter (сколько раз сработала идемпотентность).
-
-## 13. Открытые вопросы
-
-1. **Провайдер.** Точное имя/контракт API провайдера зафиксировать в этом документе по факту выбора (API-документация → §3.4 уточнить точные поля).
-2. **Языки.** Поддерживает ли провайдер русский, кыргызский, китайский (для импорта из КНР)? Если нет — нужен пред-перевод?
-3. **Скан качества.** Какие минимальные DPI/качество принимает провайдер? Что делать с откровенно плохими сканами (отказывать или помечать low-confidence)?
-4. **PII.** Документы могут содержать персональные данные сторон сделки. Согласие на отправку внешнему OCR-провайдеру и retention-политика провайдера — оформить в `docs/data_processing.md`.
-5. **Цена.** Bill-policy (тарификация на странице/документе/токене провайдера) — для счётчика стоимости в админке.
-
-## 14. Roadmap
-
-- **MVP (Sprint 1):** OcrClient + InvoiceOcrResult + OcrSplitter + 1 endpoint POST/GET + локальное хранилище.
-- **Sprint 2:** Остальные DocumentType, дедупликация, retry-extract.
-- **Sprint 3:** S3-storage, webhook, метрики.
-- **Sprint 4:** Антивирус, multi-language pre-detection.
+1. **Mojibake fix.** Тикет OCR-команде на image-OCR fallback для PDF без ToUnicode.
+2. **Дедупликация при повторной загрузке** — по `sha256`. Пока не реализовано.
+3. **Webhook от провайдера** — нет, у сервиса polling-free sync-модель.
+4. **S3/MinIO** — P2. Разделимый volume между app и worker на MVP.
+5. **Retry-extract endpoint** — повторный запуск только LLM-структурайзера по уже сохранённым `extraction`, без повторного OCR. Полезно когда обновили промпт.
+6. **Идемпотентность на создание job'а** (`Idempotency-Key`) — P2, чтобы двойной submit с фронта не создавал два job'а.

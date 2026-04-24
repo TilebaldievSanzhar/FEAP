@@ -12,6 +12,7 @@ LEVEL_TIER: dict[int, str] = {
     3: "heavy",   # Position (2-step process)
     4: "medium",  # Subposition
     5: "light",   # Subsubposition
+    98: "medium", # OCR raw-text → ProductCard[] structurer
     99: "light",  # NTM verification (dual matching)
 }
 
@@ -23,6 +24,7 @@ LEVEL_MAX_TOKENS: dict[int, int] = {
     3: 8192,
     4: 4096,
     5: 4096,
+    98: 8192,  # OCR structurer — invoices can list many products
     99: 2048,  # NTM verification
 }
 
@@ -34,6 +36,7 @@ LEVEL_TEMPERATURE: dict[int, float | None] = {
     3: 0.0,
     4: 0.0,
     5: 0.0,
+    98: 0.0,
     99: 0.0,
 }
 
@@ -45,6 +48,7 @@ _LEVEL_MODEL_SETTINGS: dict[int, str] = {
     3: "LEVEL3_MODEL",
     4: "LEVEL4_MODEL",
     5: "LEVEL5_MODEL",
+    98: "LEVEL98_MODEL",
     99: "LEVEL99_MODEL",
 }
 

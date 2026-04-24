@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     LEVEL3_MODEL: str = ""
     LEVEL4_MODEL: str = ""
     LEVEL5_MODEL: str = ""
+    LEVEL98_MODEL: str = ""  # OCR raw-text → ProductCard[] structurer
     LEVEL99_MODEL: str = ""  # NTM verification
 
     # --- Cascade tuning ---
@@ -62,6 +63,15 @@ class Settings(BaseSettings):
     JOB_EVENTS_RETENTION_HOURS: int = 24
     STUCK_ITEMS_RESET_AFTER_S: int = 900
     SSE_HEARTBEAT_S: int = 15
+
+    # --- OCR provider (ocr.trade.kg internal service) ---
+    OCR_PROVIDER_URL: str = "http://192.168.250.44:8088/ocr/process"
+    OCR_PROVIDER_TIMEOUT_S: int = 300
+    OCR_MAX_FILE_MB: int = 25
+    OCR_MAX_FILES_PER_JOB: int = 10
+    OCR_RESULT_TTL_HOURS: int = 72
+    OCR_UPLOAD_DIR: str = "data/ocr_uploads"
+    OCR_ALLOWED_MIME: str = "application/pdf,image/jpeg,image/png,image/tiff,image/webp"
 
     # Sync URL for Alembic / scripts
     @property

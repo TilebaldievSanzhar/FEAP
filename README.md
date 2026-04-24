@@ -35,6 +35,7 @@ LLM-верификацией двойного соответствия (код +
     │            +семафор и   vat_*, excise_*
     │            RPM-лимит)   classification_sessions
     │                         classification_jobs / _items / _events
+    │                         ocr_jobs
     │
     ├──► POST /classify/{session_id}/answer  ── продолжение по уточнениям (1 товар)
     │
@@ -55,6 +56,17 @@ LLM-верификацией двойного соответствия (код +
     ├──► POST /jobs/{id}/answers   ── ответы на needs_input для нескольких items
     ├──► GET  /jobs/{id}/events    ── SSE: live прогресс (либо polling-fallback)
     ├──► DELETE /jobs/{id}         ── отмена
+    │
+    ├──► POST   /ocr/jobs          ── upload 1..N файлов (PDF / image)
+    │                                 │
+    │                          arq: run_ocr_job
+    │                          ├─ extracting  — POST ocr.trade.kg/ocr/process
+    │                          ├─ structuring — LLM level 98 → ProductCard[]
+    │                          └─ (опц.) auto_classify → run_ocr_split_and_enqueue
+    │                                            создаёт classification_job
+    │                                            (parent_ocr_job_id ссылкой)
+    │    GET    /ocr/jobs/{id}     ── status + extraction + products
+    │    DELETE /ocr/jobs/{id}     ── отмена
     │
     ├──► GET  /tnved/lookup/{code} ── ЕТТ + НДС + акциз + НТР (без LLM)
     │
@@ -479,6 +491,44 @@ Inline-resume: вызывает `orchestrator.resume(session_id, answers)`,
 Отмена job'а: помечает все pending-items как `cancelled`, job переходит
 в `cancelled`. Уже `running` items штатно дорабатывают (cooperative shutdown).
 
+### `POST /ocr/jobs`
+
+Загрузка 1..N документов (PDF / JPEG / PNG / TIFF / WEBP). Multipart:
+
+```
+files:          бинарные файлы (обязательно ≥1, не более OCR_MAX_FILES_PER_JOB)
+auto_classify:  "true" | "false"  — авто-запуск каскада после OCR (default false)
+```
+
+Ответ `202`:
+```json
+{
+  "ocr_job_id": "...",
+  "status": "pending",
+  "files_count": 2,
+  "auto_classify": false,
+  "poll_url": "/api/v1/ocr/jobs/..."
+}
+```
+
+Пайплайн в arq:
+1. `extracting` — каждый файл → POST `ocr.trade.kg/ocr/process` → raw text;
+2. `structuring` — один LLM-вызов (level 98, medium) → `ProductCard[]`;
+3. (опц.) `auto_classify=True` → создаётся `classification_job` c `parent_ocr_job_id`
+   и `ocr_jobs.linked_classification_job_id`, далее стандартный batch-pipeline.
+
+Подробности: [`docs/ocr_integration.md`](docs/ocr_integration.md).
+
+### `GET /ocr/jobs/{ocr_job_id}`
+
+Статус + метаданные файлов + `extraction` (сырой текст по файлам, с warning если
+OCR отдал mojibake) + `products` (извлечённые товарные карточки, если `status=completed`)
++ `linked_classification_job_id` (если был запущен каскад).
+
+### `DELETE /ocr/jobs/{ocr_job_id}`
+
+Отмена не-терминального OCR-job'а.
+
 ### `GET /tnved/tree?level=0` или `?parent_code=...`
 
 Навигация по дереву. По умолчанию возвращает 21 раздел.
@@ -655,10 +705,24 @@ download/  →  parse/  →  build/  →  seed/
 | `STUCK_ITEMS_RESET_AFTER_S` | После какой «тишины» `running` item возвращается в `pending`      | `900`        |
 | `SSE_HEARTBEAT_S`           | Интервал heartbeat в SSE                                          | `15`         |
 
+### OCR-провайдер
+
+| Переменная               | Описание                                                     | По умолчанию |
+|--------------------------|--------------------------------------------------------------|--------------|
+| `OCR_PROVIDER_URL`       | URL внутреннего OCR-сервиса (`/ocr/process`)                 | `http://192.168.250.44:8088/ocr/process` |
+| `OCR_PROVIDER_TIMEOUT_S` | HTTP-timeout одного вызова (на крупные PDF)                  | `300`        |
+| `OCR_MAX_FILE_MB`        | Лимит размера одного файла                                   | `25`         |
+| `OCR_MAX_FILES_PER_JOB`  | Макс. файлов в одном OCR-job'е                               | `10`         |
+| `OCR_RESULT_TTL_HOURS`   | TTL хранения OCR-job'ов в БД                                 | `72`         |
+| `OCR_UPLOAD_DIR`         | Директория хранения загруженных файлов (shared volume)       | `data/ocr_uploads` |
+| `OCR_ALLOWED_MIME`       | Разрешённые Content-Type через запятую                       | `application/pdf,image/jpeg,image/png,image/tiff,image/webp` |
+| `LEVEL98_MODEL`          | Override модели для OCR-структурайзера (raw text → ProductCard[]) | fallback на `MODEL_MEDIUM` |
+
 ## Дополнительная документация
 
 - `CLAUDE.md` — детальная архитектура каскада и контекст для LLM-агентов
 - `docs/async_architecture.md` — ТЗ по job-системе (arq + Redis + SSE)
+- `docs/ocr_integration.md` — модуль OCR (ocr.trade.kg + LLM-структуризатор)
 - `docs/ntm_implementation.md` — модуль НТР
 - `docs/ett_pdf_migration.md`, `docs/naming_problem.md` — pipeline дерева
 - `docs/v27_context_engineering.md` — оптимизация контекста L4/L5

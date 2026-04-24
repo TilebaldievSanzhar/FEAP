@@ -25,6 +25,11 @@ from typing import Any
 from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
 from feap.jobs import repository as repo
 from feap.jobs.events import publish
+from feap.jobs.schemas import BatchItemInput
+from feap.ocr import repository as ocr_repo
+from feap.ocr.errors import OcrError
+from feap.ocr.schemas import OcrFileExtraction
+from feap.ocr.service import run_extraction, run_structure
 from feap.schemas.api import ClassifyResponse
 
 logger = logging.getLogger(__name__)
@@ -269,17 +274,124 @@ async def run_resume_item(
     await _persist_response(ctx, item_id=item_id, job_id=job_id, response=response)
 
 
-# ── OCR stubs (implemented when the OCR module lands) ────────────────────────
+# ── OCR ──────────────────────────────────────────────────────────────────────
 
-async def run_ocr_job(ctx: dict, job_id_str: str) -> None:
-    raise NotImplementedError(
-        "OCR jobs are defined in docs/ocr_integration.md but not yet implemented."
-    )
+async def run_ocr_job(ctx: dict, ocr_job_id_str: str) -> None:
+    """End-to-end OCR pipeline for one uploaded job.
+
+    Stages (persisted as OcrJob.status):
+        extracting  — POST each uploaded file to the OCR provider
+        structuring — one LLM call reshapes raw text into ProductCard[]
+        completed   — results persisted; if auto_classify=True, a
+                      classification_job is created and chained.
+    """
+    ocr_job_id = uuid.UUID(ocr_job_id_str)
+    session_factory = ctx["db_session_factory"]
+
+    async with session_factory() as db:
+        job = await ocr_repo.get_job(db, ocr_job_id)
+        if job is None:
+            logger.warning("OcrJob %s vanished before processing", ocr_job_id)
+            return
+        if job.status not in ("pending", "extracting", "structuring"):
+            logger.info(
+                "OcrJob %s already in status=%s; skipping (idempotent guard)",
+                ocr_job_id, job.status,
+            )
+            return
+        auto_classify = job.auto_classify
+
+    # ── Stage: extract ───────────────────────────────────────────────────────
+    try:
+        async with session_factory() as db:
+            await ocr_repo.mark_running(db, ocr_job_id, stage="extracting")
+        async with session_factory() as db:
+            extractions = await run_extraction(db, ocr_job_id=ocr_job_id)
+    except Exception as exc:  # noqa: BLE001 — report + bail
+        logger.exception("Extraction crashed for OcrJob %s", ocr_job_id)
+        async with session_factory() as db:
+            await ocr_repo.save_failed(
+                db, ocr_job_id, error=f"extraction: {type(exc).__name__}: {exc}",
+            )
+        return
+
+    # ── Stage: structure ─────────────────────────────────────────────────────
+    try:
+        async with session_factory() as db:
+            await ocr_repo.mark_running(db, ocr_job_id, stage="structuring")
+        async with session_factory() as db:
+            structured = await run_structure(
+                db, ocr_job_id=ocr_job_id, extractions=extractions,
+            )
+    except Exception as exc:  # noqa: BLE001 — partial: extraction saved already
+        logger.exception("Structure crashed for OcrJob %s", ocr_job_id)
+        async with session_factory() as db:
+            await ocr_repo.save_failed(
+                db, ocr_job_id, error=f"structure: {type(exc).__name__}: {exc}",
+            )
+        return
+
+    # ── Optional chain: enqueue classification batch ─────────────────────────
+    if auto_classify and structured.products:
+        await ctx["redis"].enqueue_job(
+            "run_ocr_split_and_enqueue",
+            str(ocr_job_id),
+            _job_id=f"ocr-chain:{ocr_job_id}",
+        )
 
 
 async def run_ocr_split_and_enqueue(ctx: dict, ocr_job_id_str: str) -> None:
-    raise NotImplementedError(
-        "OCR→classify chaining lands together with the OCR module."
+    """Chain step: after OCR completes, create a classification_job for the products.
+
+    The classification_job references the source OCR via parent_ocr_job_id,
+    and the OCR job gets a linked_classification_job_id back-pointer for UI
+    navigation.
+    """
+    ocr_job_id = uuid.UUID(ocr_job_id_str)
+    session_factory = ctx["db_session_factory"]
+    redis_arq = ctx["redis"]
+
+    async with session_factory() as db:
+        job = await ocr_repo.get_job(db, ocr_job_id)
+        if job is None or not job.products:
+            logger.info("OcrJob %s has no products to classify", ocr_job_id)
+            return
+
+        # Convert stored ProductCard dicts into batch item inputs.
+        items: list[BatchItemInput] = []
+        for product in job.products:
+            card = product.get("product_card") or {}
+            source_ref = product.get("source_ref") or {}
+            description = card.get("normalized_description") or card.get("original_description") or ""
+            if not description.strip():
+                continue
+            items.append(
+                BatchItemInput(
+                    description=description,
+                    additional_info={},
+                    source_ref={"ocr_job_id": str(ocr_job_id), **source_ref},
+                )
+            )
+
+        if not items:
+            logger.info("OcrJob %s: no usable product descriptions", ocr_job_id)
+            return
+
+        cls_job = await repo.create_job(
+            db,
+            job_type="ocr_classify",
+            items=items,
+            parent_ocr_job_id=ocr_job_id,
+        )
+        await ocr_repo.link_classification_job(
+            db, ocr_job_id, classification_job_id=cls_job.id,
+        )
+
+    # Hand off to the standard batch pipeline.
+    await redis_arq.enqueue_job(
+        "run_classify_batch",
+        str(cls_job.id),
+        _job_id=f"batch:{cls_job.id}",
     )
 
 

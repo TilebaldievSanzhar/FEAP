@@ -64,6 +64,16 @@ services:
       JOB_EVENTS_RETENTION_HOURS: ${JOB_EVENTS_RETENTION_HOURS:-24}
       STUCK_ITEMS_RESET_AFTER_S: ${STUCK_ITEMS_RESET_AFTER_S:-900}
       SSE_HEARTBEAT_S: ${SSE_HEARTBEAT_S:-15}
+      OCR_PROVIDER_URL: ${OCR_PROVIDER_URL:-http://192.168.250.44:8088/ocr/process}
+      OCR_PROVIDER_TIMEOUT_S: ${OCR_PROVIDER_TIMEOUT_S:-300}
+      OCR_MAX_FILE_MB: ${OCR_MAX_FILE_MB:-25}
+      OCR_MAX_FILES_PER_JOB: ${OCR_MAX_FILES_PER_JOB:-10}
+      OCR_RESULT_TTL_HOURS: ${OCR_RESULT_TTL_HOURS:-72}
+      OCR_UPLOAD_DIR: /app/data/ocr_uploads
+      OCR_ALLOWED_MIME: ${OCR_ALLOWED_MIME:-application/pdf,image/jpeg,image/png,image/tiff,image/webp}
+      LEVEL98_MODEL: ${LEVEL98_MODEL:-}
+    volumes:
+      - ocr_uploads:/app/data/ocr_uploads
     ports:
       - "${APP_PORT:-8000}:8000"
 
@@ -78,6 +88,8 @@ services:
       migrate:
         condition: service_completed_successfully
     environment: *app_env
+    volumes:
+      - ocr_uploads:/app/data/ocr_uploads
     command: ["arq", "feap.jobs.worker.WorkerSettings"]
     deploy:
       replicas: ${WORKER_REPLICAS:-2}
@@ -115,3 +127,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  ocr_uploads:

@@ -15,6 +15,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -412,3 +413,56 @@ class ClassificationJobEvent(Base):
     __table_args__ = (
         Index("idx_events_job_created", "job_id", "created_at"),
     )
+
+
+# ── OCR jobs (document → raw text → structured ProductCard[]) ────────────────
+
+class OcrJob(Base):
+    __tablename__ = "ocr_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    status: Mapped[str] = mapped_column(
+        String(32), nullable=False,
+        comment="pending | extracting | structuring | completed | failed | cancelled",
+    )
+    stage: Mapped[str | None] = mapped_column(String(32))
+
+    # Input
+    files: Mapped[list[dict]] = mapped_column(JSONB, nullable=False, default=list)
+    auto_classify: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    params: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+
+    # Extract stage
+    extraction: Mapped[list[dict] | None] = mapped_column(JSONB)
+
+    # Structure stage
+    products: Mapped[list[dict] | None] = mapped_column(JSONB)
+    skipped_notes: Mapped[list[dict] | None] = mapped_column(JSONB)
+
+    # Chain
+    linked_classification_job_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+
+    error: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    started_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        server_default=func.now(), onupdate=func.now(),
+    )
+    expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("idx_ocr_jobs_status", "status"),
+        Index("idx_ocr_jobs_expires", "expires_at"),
+        Index("idx_ocr_jobs_linked_classify", "linked_classification_job_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<OcrJob {self.id} {self.status} files={len(self.files or [])}>"
