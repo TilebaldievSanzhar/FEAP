@@ -1,0 +1,385 @@
+
+===== submit.status =====
+202
+
+===== submit.headers =====
+{
+  "server": "nginx/1.24.0 (Ubuntu)",
+  "date": "Thu, 23 Apr 2026 18:43:33 GMT",
+  "content-type": "application/json",
+  "content-length": "53",
+  "connection": "keep-alive",
+  "vary": "Accept, Accept-Language, origin, Cookie",
+  "allow": "POST, OPTIONS",
+  "x-ratelimit-limit": "3",
+  "x-ratelimit-remaining": "2",
+  "x-ratelimit-reset": "1776973413",
+  "x-frame-options": "DENY",
+  "content-language": "ru",
+  "x-content-type-options": "nosniff",
+  "referrer-policy": "same-origin",
+  "cross-origin-opener-policy": "same-origin"
+}
+
+===== submit.body =====
+{
+  "request_id": "76d66979-376b-4dea-9137-7e24bda1da33"
+}
+
+===== request_id =====
+76d66979-376b-4dea-9137-7e24bda1da33
+
+===== poll.1.status =====
+200
+
+===== poll.1.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/unclassified/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": null,
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": null,
+        "duration": null,
+        "step_durations": {}
+      },
+      "status": "PREPROCESS",
+      "file_url": "/media/documents/unclassified/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": null
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.2.status =====
+200
+
+===== poll.2.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/unclassified/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": null,
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": "2026-04-23T18:43:33.973730Z",
+        "duration": 0.268471,
+        "step_durations": {
+          "preprocess_document": 0.27
+        }
+      },
+      "status": "PROCESSING_OCR",
+      "file_url": "/media/documents/unclassified/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": null
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.3.status =====
+200
+
+===== poll.3.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/unclassified/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": null,
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": "2026-04-23T18:43:38.006711Z",
+        "duration": 4.301452,
+        "step_durations": {
+          "extract_ocr_data": 4.03,
+          "preprocess_document": 0.27
+        }
+      },
+      "status": "PROCESSING_CLASSIFY",
+      "file_url": "/media/documents/unclassified/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": {
+        "items": [],
+        "raw_text": "![](_page_0_Picture_1.jpeg)\n\nМодель\n\nRTX 3060 12GB, GTX 1660 Super, GTX 1050 Ti 4GB, GT1030 4GB D4 LP Имеют форм фактор ATX,\n\nИспользование: Графическая карта для настолько ПК\n\nЧипсет GeForce® GTX Ti\n\nЧастота ядра ГП\n\nВ режиме Boost: 1506 МГц (эффективное значение) / Базовая: 1392 МГц (эффективное значение) (в режиме ОС)\n\nВ режиме Boost: 1480 МГц (эффективное значение) / Базовая: 1366 МГц (эффективное значение) (в режиме Gaming)Количество ядер CUDA 768\n\nЧастота видеоОЗУ7008 МГц (эффективное значение)\n\nОбъём ОЗУ в комплекте4 Гбайт\n\nТип ОЗУGDDR5Шина видеоОЗУ128 -разрядная\n\nШина ввода/выводаРСІ-Е 3.0 x 16\n\nМаксимальное экранное разрешение (цифровой сигнал)7680х4320\n\nПоддержка MultiView4\n\nГабаритыВ=40 Д=219 Ш=118 мм Версия АРІ DirectX12Версия АРІ OpenGL4.5Рекомендованная мощность БП300 ВтРазъёмы питанияОдин 6-контактныйВидеовыходыDual-link DVI-D \\*1HDMI-2.0b\\*3 (максимальное разрешение: 4096x2160 @60 Гц)DisplayPort - 1.4 \\*1 (максимальное разрешение: 7680x4320 @60 Гц)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.4.status =====
+200
+
+===== poll.4.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": {
+        "id": "860870cc-0261-4e88-88b1-45855944f888",
+        "name": "Technical Description",
+        "code": "09022"
+      },
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": "2026-04-23T18:43:40.981790Z",
+        "duration": 7.276531,
+        "step_durations": {
+          "extract_ocr_data": 4.03,
+          "classify_document": 2.98,
+          "preprocess_document": 0.27
+        }
+      },
+      "status": "PROCESSING_EXTRACT",
+      "file_url": "/media/documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": {
+        "items": [],
+        "raw_text": "![](_page_0_Picture_1.jpeg)\n\nМодель\n\nRTX 3060 12GB, GTX 1660 Super, GTX 1050 Ti 4GB, GT1030 4GB D4 LP Имеют форм фактор ATX,\n\nИспользование: Графическая карта для настолько ПК\n\nЧипсет GeForce® GTX Ti\n\nЧастота ядра ГП\n\nВ режиме Boost: 1506 МГц (эффективное значение) / Базовая: 1392 МГц (эффективное значение) (в режиме ОС)\n\nВ режиме Boost: 1480 МГц (эффективное значение) / Базовая: 1366 МГц (эффективное значение) (в режиме Gaming)Количество ядер CUDA 768\n\nЧастота видеоОЗУ7008 МГц (эффективное значение)\n\nОбъём ОЗУ в комплекте4 Гбайт\n\nТип ОЗУGDDR5Шина видеоОЗУ128 -разрядная\n\nШина ввода/выводаРСІ-Е 3.0 x 16\n\nМаксимальное экранное разрешение (цифровой сигнал)7680х4320\n\nПоддержка MultiView4\n\nГабаритыВ=40 Д=219 Ш=118 мм Версия АРІ DirectX12Версия АРІ OpenGL4.5Рекомендованная мощность БП300 ВтРазъёмы питанияОдин 6-контактныйВидеовыходыDual-link DVI-D \\*1HDMI-2.0b\\*3 (максимальное разрешение: 4096x2160 @60 Гц)DisplayPort - 1.4 \\*1 (максимальное разрешение: 7680x4320 @60 Гц)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.5.status =====
+200
+
+===== poll.5.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": {
+        "id": "860870cc-0261-4e88-88b1-45855944f888",
+        "name": "Technical Description",
+        "code": "09022"
+      },
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": "2026-04-23T18:43:40.981790Z",
+        "duration": 7.276531,
+        "step_durations": {
+          "extract_ocr_data": 4.03,
+          "classify_document": 2.98,
+          "preprocess_document": 0.27
+        }
+      },
+      "status": "PROCESSING_EXTRACT",
+      "file_url": "/media/documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": {
+        "items": [],
+        "raw_text": "![](_page_0_Picture_1.jpeg)\n\nМодель\n\nRTX 3060 12GB, GTX 1660 Super, GTX 1050 Ti 4GB, GT1030 4GB D4 LP Имеют форм фактор ATX,\n\nИспользование: Графическая карта для настолько ПК\n\nЧипсет GeForce® GTX Ti\n\nЧастота ядра ГП\n\nВ режиме Boost: 1506 МГц (эффективное значение) / Базовая: 1392 МГц (эффективное значение) (в режиме ОС)\n\nВ режиме Boost: 1480 МГц (эффективное значение) / Базовая: 1366 МГц (эффективное значение) (в режиме Gaming)Количество ядер CUDA 768\n\nЧастота видеоОЗУ7008 МГц (эффективное значение)\n\nОбъём ОЗУ в комплекте4 Гбайт\n\nТип ОЗУGDDR5Шина видеоОЗУ128 -разрядная\n\nШина ввода/выводаРСІ-Е 3.0 x 16\n\nМаксимальное экранное разрешение (цифровой сигнал)7680х4320\n\nПоддержка MultiView4\n\nГабаритыВ=40 Д=219 Ш=118 мм Версия АРІ DirectX12Версия АРІ OpenGL4.5Рекомендованная мощность БП300 ВтРазъёмы питанияОдин 6-контактныйВидеовыходыDual-link DVI-D \\*1HDMI-2.0b\\*3 (максимальное разрешение: 4096x2160 @60 Гц)DisplayPort - 1.4 \\*1 (максимальное разрешение: 7680x4320 @60 Гц)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.6.status =====
+200
+
+===== poll.6.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": {
+        "id": "860870cc-0261-4e88-88b1-45855944f888",
+        "name": "Technical Description",
+        "code": "09022"
+      },
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": "2026-04-23T18:43:40.981790Z",
+        "duration": 7.276531,
+        "step_durations": {
+          "extract_ocr_data": 4.03,
+          "classify_document": 2.98,
+          "preprocess_document": 0.27
+        }
+      },
+      "status": "PROCESSING_EXTRACT",
+      "file_url": "/media/documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": {
+        "items": [],
+        "raw_text": "![](_page_0_Picture_1.jpeg)\n\nМодель\n\nRTX 3060 12GB, GTX 1660 Super, GTX 1050 Ti 4GB, GT1030 4GB D4 LP Имеют форм фактор ATX,\n\nИспользование: Графическая карта для настолько ПК\n\nЧипсет GeForce® GTX Ti\n\nЧастота ядра ГП\n\nВ режиме Boost: 1506 МГц (эффективное значение) / Базовая: 1392 МГц (эффективное значение) (в режиме ОС)\n\nВ режиме Boost: 1480 МГц (эффективное значение) / Базовая: 1366 МГц (эффективное значение) (в режиме Gaming)Количество ядер CUDA 768\n\nЧастота видеоОЗУ7008 МГц (эффективное значение)\n\nОбъём ОЗУ в комплекте4 Гбайт\n\nТип ОЗУGDDR5Шина видеоОЗУ128 -разрядная\n\nШина ввода/выводаРСІ-Е 3.0 x 16\n\nМаксимальное экранное разрешение (цифровой сигнал)7680х4320\n\nПоддержка MultiView4\n\nГабаритыВ=40 Д=219 Ш=118 мм Версия АРІ DirectX12Версия АРІ OpenGL4.5Рекомендованная мощность БП300 ВтРазъёмы питанияОдин 6-контактныйВидеовыходыDual-link DVI-D \\*1HDMI-2.0b\\*3 (максимальное разрешение: 4096x2160 @60 Гц)DisplayPort - 1.4 \\*1 (максимальное разрешение: 7680x4320 @60 Гц)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.7.status =====
+200
+
+===== poll.7.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": {
+        "id": "860870cc-0261-4e88-88b1-45855944f888",
+        "name": "Technical Description",
+        "code": "09022"
+      },
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": "2026-04-23T18:43:40.981790Z",
+        "duration": 7.276531,
+        "step_durations": {
+          "extract_ocr_data": 4.03,
+          "classify_document": 2.98,
+          "preprocess_document": 0.27
+        }
+      },
+      "status": "PROCESSING_EXTRACT",
+      "file_url": "/media/documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": {
+        "items": [],
+        "raw_text": "![](_page_0_Picture_1.jpeg)\n\nМодель\n\nRTX 3060 12GB, GTX 1660 Super, GTX 1050 Ti 4GB, GT1030 4GB D4 LP Имеют форм фактор ATX,\n\nИспользование: Графическая карта для настолько ПК\n\nЧипсет GeForce® GTX Ti\n\nЧастота ядра ГП\n\nВ режиме Boost: 1506 МГц (эффективное значение) / Базовая: 1392 МГц (эффективное значение) (в режиме ОС)\n\nВ режиме Boost: 1480 МГц (эффективное значение) / Базовая: 1366 МГц (эффективное значение) (в режиме Gaming)Количество ядер CUDA 768\n\nЧастота видеоОЗУ7008 МГц (эффективное значение)\n\nОбъём ОЗУ в комплекте4 Гбайт\n\nТип ОЗУGDDR5Шина видеоОЗУ128 -разрядная\n\nШина ввода/выводаРСІ-Е 3.0 x 16\n\nМаксимальное экранное разрешение (цифровой сигнал)7680х4320\n\nПоддержка MultiView4\n\nГабаритыВ=40 Д=219 Ш=118 мм Версия АРІ DirectX12Версия АРІ OpenGL4.5Рекомендованная мощность БП300 ВтРазъёмы питанияОдин 6-контактныйВидеовыходыDual-link DVI-D \\*1HDMI-2.0b\\*3 (максимальное разрешение: 4096x2160 @60 Гц)DisplayPort - 1.4 \\*1 (максимальное разрешение: 7680x4320 @60 Гц)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.8.status =====
+200
+
+===== poll.8.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": {
+        "id": "860870cc-0261-4e88-88b1-45855944f888",
+        "name": "Technical Description",
+        "code": "09022"
+      },
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": "2026-04-23T18:43:40.981790Z",
+        "duration": 7.276531,
+        "step_durations": {
+          "extract_ocr_data": 4.03,
+          "classify_document": 2.98,
+          "preprocess_document": 0.27
+        }
+      },
+      "status": "PROCESSING_EXTRACT",
+      "file_url": "/media/documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": {
+        "items": [],
+        "raw_text": "![](_page_0_Picture_1.jpeg)\n\nМодель\n\nRTX 3060 12GB, GTX 1660 Super, GTX 1050 Ti 4GB, GT1030 4GB D4 LP Имеют форм фактор ATX,\n\nИспользование: Графическая карта для настолько ПК\n\nЧипсет GeForce® GTX Ti\n\nЧастота ядра ГП\n\nВ режиме Boost: 1506 МГц (эффективное значение) / Базовая: 1392 МГц (эффективное значение) (в режиме ОС)\n\nВ режиме Boost: 1480 МГц (эффективное значение) / Базовая: 1366 МГц (эффективное значение) (в режиме Gaming)Количество ядер CUDA 768\n\nЧастота видеоОЗУ7008 МГц (эффективное значение)\n\nОбъём ОЗУ в комплекте4 Гбайт\n\nТип ОЗУGDDR5Шина видеоОЗУ128 -разрядная\n\nШина ввода/выводаРСІ-Е 3.0 x 16\n\nМаксимальное экранное разрешение (цифровой сигнал)7680х4320\n\nПоддержка MultiView4\n\nГабаритыВ=40 Д=219 Ш=118 мм Версия АРІ DirectX12Версия АРІ OpenGL4.5Рекомендованная мощность БП300 ВтРазъёмы питанияОдин 6-контактныйВидеовыходыDual-link DVI-D \\*1HDMI-2.0b\\*3 (максимальное разрешение: 4096x2160 @60 Гц)DisplayPort - 1.4 \\*1 (максимальное разрешение: 7680x4320 @60 Гц)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.9.status =====
+200
+
+===== poll.9.body =====
+{
+  "id": "76d66979-376b-4dea-9137-7e24bda1da33",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "FAILED",
+  "created_at": "2026-04-23T18:43:33.690150Z",
+  "tasks": [
+    {
+      "id": "5e18a374-b39d-4342-a588-c1e71d6c9ea0",
+      "document_name": "documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "document_type": {
+        "id": "860870cc-0261-4e88-88b1-45855944f888",
+        "name": "Technical Description",
+        "code": "09022"
+      },
+      "total_time": {
+        "started_at": "2026-04-23T18:43:33.705259Z",
+        "completed_at": "2026-04-23T18:43:40.981790Z",
+        "duration": 7.276531,
+        "step_durations": {
+          "extract_ocr_data": 4.03,
+          "classify_document": 2.98,
+          "preprocess_document": 0.27
+        }
+      },
+      "status": "FAILED",
+      "file_url": "/media/documents/09022/da937be9-7735-4d92-b73b-987414a79808_img20230829_0017.pdf",
+      "ocr_result": {
+        "items": [],
+        "raw_text": "![](_page_0_Picture_1.jpeg)\n\nМодель\n\nRTX 3060 12GB, GTX 1660 Super, GTX 1050 Ti 4GB, GT1030 4GB D4 LP Имеют форм фактор ATX,\n\nИспользование: Графическая карта для настолько ПК\n\nЧипсет GeForce® GTX Ti\n\nЧастота ядра ГП\n\nВ режиме Boost: 1506 МГц (эффективное значение) / Базовая: 1392 МГц (эффективное значение) (в режиме ОС)\n\nВ режиме Boost: 1480 МГц (эффективное значение) / Базовая: 1366 МГц (эффективное значение) (в режиме Gaming)Количество ядер CUDA 768\n\nЧастота видеоОЗУ7008 МГц (эффективное значение)\n\nОбъём ОЗУ в комплекте4 Гбайт\n\nТип ОЗУGDDR5Шина видеоОЗУ128 -разрядная\n\nШина ввода/выводаРСІ-Е 3.0 x 16\n\nМаксимальное экранное разрешение (цифровой сигнал)7680х4320\n\nПоддержка MultiView4\n\nГабаритыВ=40 Д=219 Ш=118 мм Версия АРІ DirectX12Версия АРІ OpenGL4.5Рекомендованная мощность БП300 ВтРазъёмы питанияОдин 6-контактныйВидеовыходыDual-link DVI-D \\*1HDMI-2.0b\\*3 (максимальное разрешение: 4096x2160 @60 Гц)DisplayPort - 1.4 \\*1 (максимальное разрешение: 7680x4320 @60 Гц)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+terminal status: failed

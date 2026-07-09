@@ -1,0 +1,20 @@
+{
+  "task_id": "0efd6a1a-431a-4bb3-b11f-039cecfa3e7d",
+  "status": "completed",
+  "success": false,
+  "data": {
+    "filename": "img20230829_0017.pdf",
+    "text": "Модель\n\nRTX 3060 12GB, GTX 1660 Super, GTX 1050 Ti 4GB\n\nИспользование: Графическая карта для настольного ПК\n\nЧипсет GeForce® GTX Ti\n\nВ режиме Boost: 1506 МГц / Базовая: 1392 МГц\n\nКоличество ядер CUDA 768\n\nОбъём ОЗУ: 4 Гбайт\n\nТип ОЗУ: GDDR5\n\nШина видеоОЗУ: 128-разрядная\n\nРазъёмы питания: Один 6-контактный",
+    "task_id": "0efd6a1a-431a-4bb3-b11f-039cecfa3e7d",
+    "metadata": {"page_count": 0, "source_type": "pdf"},
+    "processing_time": 3.49,
+    "metrics": {
+      "inference_time": 3.49,
+      "total_time": 3.49,
+      "tensorrt_enabled": true,
+      "cache_hit": false,
+      "file_type": "pdf"
+    }
+  },
+  "error": null
+}

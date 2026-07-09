@@ -1,0 +1,23 @@
+{% if pairs %}
+ПАРЫ СТОРОН ДЛЯ СВЕРКИ:
+{% for p in pairs %}
+- pair_id: {{ p.pair_id }}
+  Сущность: {{ p.entity }}
+  В досье: {{ p.shipment_value }}
+  В документе ({{ p.doc_label }}): {{ p.doc_value }}
+{% endfor %}
+{% endif %}
+{% if lines %}
+СТРОКИ ДОКУМЕНТОВ:
+{% for ln in lines %}
+- строка №{{ ln.line_no }} ({{ ln.doc_label }}): {{ ln.description }}{% if ln.sku %} | артикул: {{ ln.sku }}{% endif %}{% if ln.qty %} | кол-во: {{ ln.qty }}{% endif %}
+
+{% endfor %}
+ПОЗИЦИИ ДОСЬЕ:
+{% for it in items %}
+- позиция {{ it.position }}: {{ it.description }}{% if it.sku %} | артикул: {{ it.sku }}{% endif %}
+
+{% endfor %}
+{% else %}
+Строк документов для сопоставления нет — верни пустой invoice_lines.
+{% endif %}

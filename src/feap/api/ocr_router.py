@@ -14,14 +14,15 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.api.deps import get_db, get_job_backend
+from feap.auth.deps import AuthContext, get_auth_context
 from feap.config import settings
 from feap.db.models import OcrJob
+from feap.usage import record_usage
 from feap.jobs.enqueue import JobBackend
 from feap.ocr import repository as ocr_repo
 from feap.ocr import storage
@@ -92,6 +93,7 @@ async def submit_ocr_job(
     ),
     db: AsyncSession = Depends(get_db),
     backend: JobBackend = Depends(get_job_backend),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> OcrJobSubmitResponse:
     if not files:
         raise HTTPException(400, "At least one file is required")
@@ -150,6 +152,12 @@ async def submit_ocr_job(
         logger.exception("Failed to enqueue OCR job %s", job.id)
         await ocr_repo.save_failed(db, job.id, error=f"enqueue failed: {exc}")
         raise HTTPException(503, f"Очередь временно недоступна: {exc}")
+
+    record_usage(
+        db, org_id=ctx.org_id, kind="ocr_document", quantity=len(files_meta),
+        ref_type="ocr_job", ref_id=str(job.id),
+    )
+    await db.commit()
 
     poll_url = str(http_request.url_for("get_ocr_job", ocr_job_id=str(job.id)))
     return OcrJobSubmitResponse(

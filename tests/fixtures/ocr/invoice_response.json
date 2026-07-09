@@ -1,0 +1,20 @@
+{
+  "task_id": "f60fb229-d402-4b04-800d-c3771f161d2c",
+  "status": "completed",
+  "success": false,
+  "data": {
+    "filename": "f60fb229-d402-4b04-800d-c3771f161d2c_1_1.pdf",
+    "text": "## Global Trade Distribution FZE\n\nInvoice # GT-05927-AE dd 25.01.2023\n\n| No | Description of goods | HS Code | QTY | Price | Total |\n|----|----|----|----|----|----|\n| 1 | OceanStor Dorado 6000 V6 D6V6-1T-NVMe | | 1 | 93206.00 | 93206.00 |\n| 2 | CE6863-48S6CQ-F switch | | 2 | 10192.00 | 20384.00 |",
+    "task_id": "f60fb229-d402-4b04-800d-c3771f161d2c",
+    "metadata": {"page_count": 0, "source_type": "pdf"},
+    "processing_time": 11.25,
+    "metrics": {
+      "inference_time": 11.24,
+      "total_time": 11.25,
+      "tensorrt_enabled": true,
+      "cache_hit": false,
+      "file_type": "pdf"
+    }
+  },
+  "error": null
+}

@@ -11,11 +11,11 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
-    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -466,3 +466,367 @@ class OcrJob(Base):
 
     def __repr__(self) -> str:
         return f"<OcrJob {self.id} {self.status} files={len(self.files or [])}>"
+
+
+# ── ДТ-ядро: организации, каталог, досье, драфты (docs/dt_core_dev_plan.md) ──
+
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    kind: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="self",
+        comment="self | client | counterparty",
+    )
+    inn: Mapped[str | None] = mapped_column(String(20))
+    country: Mapped[str | None] = mapped_column(String(2))
+    address: Mapped[str | None] = mapped_column(Text)
+    extra: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        server_default=func.now(), onupdate=func.now(),
+    )
+
+    __table_args__ = (Index("idx_org_inn", "inn"),)
+
+    def __repr__(self) -> str:
+        return f"<Organization {self.id} '{self.name[:30]}' {self.kind}>"
+
+
+class ProductCatalogItem(Base):
+    __tablename__ = "product_catalog"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    sku: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    hs_code: Mapped[str | None] = mapped_column(String(10))
+    attributes: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    usage_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    approved_by: Mapped[str | None] = mapped_column(String(100))
+    approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        server_default=func.now(), onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("org_id", "sku", name="uq_catalog_org_sku"),
+        Index("idx_catalog_org", "org_id"),
+        Index("idx_catalog_hs", "hs_code"),
+    )
+
+
+class Shipment(Base):
+    __tablename__ = "shipments"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    org_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL"),
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="draft",
+        comment="draft | classifying | review | ready | exported | archived",
+    )
+    procedure: Mapped[str] = mapped_column(String(10), nullable=False, default="IM40")
+    data: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, default=dict,
+        comment="ShipmentIn без items (стороны, Incoterms, валюта, фрахт...)",
+    )
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        server_default=func.now(), onupdate=func.now(),
+    )
+
+    items: Mapped[list[ShipmentItemRow]] = relationship(
+        "ShipmentItemRow", back_populates="shipment",
+        cascade="all, delete-orphan", order_by="ShipmentItemRow.position",
+    )
+    drafts: Mapped[list[DtDraftRow]] = relationship(
+        "DtDraftRow", back_populates="shipment", cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        Index("idx_shipments_org", "org_id"),
+        Index("idx_shipments_status", "status"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<Shipment {self.id} {self.status}>"
+
+
+class ShipmentItemRow(Base):
+    __tablename__ = "shipment_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    shipment_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    data: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, default=dict, comment="ShipmentItemIn",
+    )
+    hs_code: Mapped[str | None] = mapped_column(
+        String(10), comment="Денормализовано из data для выборок",
+    )
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        server_default=func.now(), onupdate=func.now(),
+    )
+
+    shipment: Mapped[Shipment] = relationship("Shipment", back_populates="items")
+
+    __table_args__ = (
+        UniqueConstraint("shipment_id", "position", name="uq_shipment_item_position"),
+        Index("idx_shipment_items_shipment", "shipment_id"),
+        Index("idx_shipment_items_hs", "hs_code"),
+    )
+
+
+class ShipmentDocumentRow(Base):
+    __tablename__ = "shipment_documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    shipment_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    kind: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="other",
+        comment="invoice | packing | cmr | awb | rail | contract | cert_origin | permit | other",
+    )
+    ocr_job_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    number: Mapped[str | None] = mapped_column(String(100))
+    doc_date: Mapped[dt.date | None] = mapped_column(Date)
+    extracted: Mapped[dict | None] = mapped_column(
+        JSONB, comment="Структурированные поля из OCR/LLM-экстрактора (M2)",
+    )
+    file_ref: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (Index("idx_shipment_docs_shipment", "shipment_id"),)
+
+
+class DtDraftRow(Base):
+    __tablename__ = "dt_drafts"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    shipment_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    org_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="ready | has_errors | needs_input",
+    )
+    structure_version: Mapped[str] = mapped_column(String(30), nullable=False)
+    graphs: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    validation_report: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    missing_parameters: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    shipment: Mapped[Shipment] = relationship("Shipment", back_populates="drafts")
+
+    __table_args__ = (
+        UniqueConstraint("shipment_id", "version", name="uq_dt_draft_version"),
+        Index("idx_dt_drafts_shipment", "shipment_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<DtDraft {self.id} v{self.version} {self.status}>"
+
+
+class ExchangeRate(Base):
+    __tablename__ = "exchange_rates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rate_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    rate: Mapped[object] = mapped_column(
+        Numeric(18, 6), nullable=False, comment="Сом за единицу валюты (официальный курс НБКР)",
+    )
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="NBKR")
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("rate_date", "currency", name="uq_exchange_rate_day_currency"),
+        Index("idx_exchange_rates_lookup", "currency", "rate_date"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<ExchangeRate {self.currency} {self.rate_date} {self.rate}>"
+
+
+class UsageEvent(Base):
+    __tablename__ = "usage_events"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    org_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    kind: Mapped[str] = mapped_column(
+        String(30), nullable=False,
+        comment="classification | ocr_document | dt_draft | export",
+    )
+    quantity: Mapped[object] = mapped_column(Numeric(12, 3), nullable=False, default=1)
+    ref_type: Mapped[str | None] = mapped_column(String(30))
+    ref_id: Mapped[str | None] = mapped_column(String(64))
+    meta: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_usage_org_kind_created", "org_id", "kind", "created_at"),
+    )
+
+
+# ── Auth (Track B1) ──────────────────────────────────────────────────────────
+
+class Account(Base):
+    __tablename__ = "accounts"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    email: Mapped[str] = mapped_column(
+        Text, nullable=False, comment="Хранится в нижнем регистре",
+    )
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False, comment="argon2id")
+    name: Mapped[str | None] = mapped_column(Text)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        server_default=func.now(), onupdate=func.now(),
+    )
+
+    memberships: Mapped[list[Membership]] = relationship(
+        "Membership", back_populates="account", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("uq_accounts_email_lower", func.lower(email), unique=True),
+    )
+
+    def __repr__(self) -> str:
+        return f"<Account {self.id} {self.email}>"
+
+
+class RefClassifier(Base):
+    """Классификаторы Решения КТС № 378 (+ национальные справочники КР).
+
+    Одна строка = одно значение одного классификатора. verified=False —
+    значение внесено из практики и требует сверки с актуальной редакцией
+    Решения 378 (TODO-verify на кастдеве); ФЛК F-09 предупреждает об этом.
+    """
+
+    __tablename__ = "ref_classifiers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    classifier_code: Mapped[str] = mapped_column(
+        String(40), nullable=False,
+        comment="delivery_terms | transport_types | customs_procedures | "
+                "mos_methods | deal_nature | doc_kinds | payment_kinds | ...",
+    )
+    item_code: Mapped[str] = mapped_column(String(20), nullable=False)
+    name_ru: Mapped[str] = mapped_column(Text, nullable=False)
+    verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False,
+        comment="False = сверить с актуальной редакцией Решения 378",
+    )
+    valid_from: Mapped[dt.date | None] = mapped_column(Date)
+    valid_to: Mapped[dt.date | None] = mapped_column(Date)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        server_default=func.now(), onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "classifier_code", "item_code", name="uq_ref_classifier_item"
+        ),
+        Index("idx_ref_classifiers_code", "classifier_code"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<RefClassifier {self.classifier_code}:{self.item_code}>"
+
+
+class Membership(Base):
+    __tablename__ = "memberships"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    role: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="declarant",
+        comment="owner | declarant | viewer",
+    )
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    account: Mapped[Account] = relationship("Account", back_populates="memberships")
+    organization: Mapped[Organization] = relationship("Organization")
+
+    __table_args__ = (
+        UniqueConstraint("account_id", "org_id", name="uq_membership_account_org"),
+        Index("idx_memberships_org", "org_id"),
+        Index("idx_memberships_account", "account_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<Membership {self.account_id}@{self.org_id} {self.role}>"

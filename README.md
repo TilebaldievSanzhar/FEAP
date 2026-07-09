@@ -330,6 +330,33 @@ python scripts/rag/generate_embeddings.py      # Voyage AI → embedding-кол�
 
 Базовый префикс: `/api/v1`.
 
+### Авторизация (`/auth`, Track B1)
+
+JWT (Bearer, HS256) + организации с ролями. Режим задаёт `AUTH_MODE`:
+
+- **`optional`** (по умолчанию, dev): токен проверяется, если прислан; без
+  токена работает прежнее поведение — заголовок `X-Org-Id` либо организация
+  `default`, полный доступ. Ничего не ломается для существующих клиентов.
+- **`required`**: все рабочие эндпоинты требуют `Authorization: Bearer <token>`
+  (кроме `register`/`login`).
+
+```
+POST   /auth/register        — аккаунт + организация + токен ({email, password, name?, org_name?})
+POST   /auth/login           — вход ({email, password, org_id?}); всегда generic 401
+GET    /auth/me              — аккаунт, активная организация, все организации
+POST   /auth/switch-org      — токен для другой своей организации
+GET    /orgs/current/members            — участники (owner)
+POST   /orgs/current/members            — добавить по email ({email, role}) (owner)
+PATCH  /orgs/current/members/{acc_id}   — сменить роль (owner; последнего owner'а не снять)
+DELETE /orgs/current/members/{acc_id}   — удалить (owner)
+```
+
+Роли: `viewer` (чтение и экспорт) < `declarant` (вся работа с ДТ и каталогом)
+< `owner` (+ участники). Роль и членство перечитываются на каждом запросе —
+исключение из организации действует мгновенно. Токен несёт активную
+организацию; объекты чужих организаций неотличимы от несуществующих (404).
+Пароли — argon2id; email нормализуется в нижний регистр.
+
 ### `POST /classify`
 
 Запуск каскада по описанию товара.
@@ -570,6 +597,139 @@ LLM-верификация **двойного соответствия** (код
 
 Подробности модуля: [`docs/ntm_implementation.md`](docs/ntm_implementation.md).
 
+### Досье поставки и проект ДТ (`/shipments`, `/dt-drafts`)
+
+Детерминированное **ДТ-ядро** (`src/feap/dt/`, без LLM): досье поставки →
+расчёт таможенной стоимости (Incoterms, распределение фрахта), графа 47
+(пошлина ЕТТ всех видов ставок / акциз / НДС), ФЛК-проверки → версионируемый
+проект ДТ → экспорт XLSX / PDF.
+
+```
+GET    /shipments                    — список досье организации
+POST   /shipments                    — создать досье (+позиции; авто-коды из каталога по SKU)
+GET    /shipments/{id}               — досье с позициями
+PUT    /shipments/{id}               — обновить (позиции заменяются целиком)
+DELETE /shipments/{id}
+POST   /shipments/{id}/clone         — копия досье (шапка+позиции, без драфтов)
+POST   /shipments/{id}/classify      — классифицировать позиции без кода (batch-job,
+                                       ?force=true — переклассифицировать все)
+POST   /shipments/{id}/dt-draft      — собрать проект ДТ (assemble+calc+ФЛК)
+GET    /dt-drafts/{id}               — графы + findings
+GET    /dt-drafts/{id}/export.xlsx   — файл «по графам» для переноса в АРМ «Брокер»
+GET    /dt-drafts/{id}/export.pdf    — печатная форма с водяным знаком «ПРОЕКТ»
+GET    /dt-drafts/{id}/export.xml    — XML (структура R.055-draft, XSD-хук)
+POST   /shipments/{id}/documents/{doc_id}/verify-permit — проверка разрешительного (TULPAR)
+```
+
+`POST /shipments/{id}/classify` создаёт стандартный batch-job
+(`job_type=shipment_classify`, прогресс — `GET /jobs/{job_id}`); по завершении
+каждого item'а код пишется обратно в позицию досье (`classification_ref =
+job_item:{id}`), ручные коды без `force` не перезаписываются.
+
+**Каталог товаров** — память компании «SKU → утверждённый код». При
+создании/обновлении досье позиции без кода получают код из каталога
+автоматически (`classification_ref = catalog:{id}`, `usage_count++`).
+Результаты LLM попадают в каталог только через явный импорт (акт утверждения):
+
+```
+GET    /catalog                      — список/поиск (q=)
+GET    /catalog/suggest?q=           — подсказки (только с утверждённым кодом)
+POST   /catalog                      — upsert по (организация, sku)
+DELETE /catalog/{id}
+POST   /catalog/import-from-shipment/{id}?approved_by=  — утвердить коды из досье
+```
+
+Нехватка данных (вес нетто для комбинированной ставки, курс НБКР, доп.
+единица) → `status=needs_input` + `missing_parameters`, суммы не занижаются
+молча. Курсы НБКР: `python scripts/fetch/nbkr_rates.py` (ежедневно).
+Организация и роль — из Bearer-токена (см. «Авторизация»); в dev-режиме
+без токена — `X-Org-Id` либо `default`.
+PDF требует TTF с кириллицей: автопоиск (Arial/DejaVu) или `DT_PDF_FONT_PATH`.
+
+### SGR-слой досье (Фаза 2): документы, кросс-сверка, графа 31, советник, fixer
+
+LLM-модули **по краям** детерминированного ядра (`dt/extractors/`,
+`dt/crosscheck.py`, `dt/describe31.py`, `dt/advisor.py`, `dt/fixer.py`):
+извлекают, объясняют и предлагают — деньги по-прежнему считает только код.
+Все LLM-эндпоинты требуют роль `declarant`+ и метерятся в `usage_events`.
+
+```
+GET    /shipments/{id}/documents                — документы досье
+POST   /shipments/{id}/documents                — привязать: {text} ИЛИ {ocr_job_id, file_index}
+DELETE /shipments/{id}/documents/{doc_id}
+POST   /shipments/{id}/documents/{doc_id}/extract?kind=   — типизация + извлечение
+POST   /shipments/{id}/crosscheck               — сверка досье с документами
+POST   /shipments/{id}/items/{position}/describe31 — предложить текст графы 31
+POST   /shipments/{id}/advise                   — риск-советник
+POST   /dt-drafts/{id}/fix-suggestions          — предложения правок по findings
+```
+
+Harness-контроли на каждом модуле (см. `docs/dt_core_dev_plan.md` §4):
+
+- **Извлечение** (`extract`): типизация (уровень 90, Routing) с порогом
+  уверенности `DT_DOCTYPE_CONFIDENCE_MIN` — ниже порога `needs_kind`, тип
+  выбирает человек (`?kind=invoice|packing|cmr|contract|cert_origin`);
+  извлечение полей (уровень 91, Cascade по типу); итоги пересчитываются
+  кодом — Σ строк vs итог документа → проверки `D-xx` со статусом
+  `mismatch`, не тихое доверие. Текст сканируют инъекционные сенсоры
+  (документы = данные, не инструкции). Результат — в
+  `shipment_documents.extracted` (JSONB, трейс и датасет).
+- **Кросс-сверка**: числа сверяет только код — правила `X-01..X-06`
+  (итог инвойса vs Σ цен, валюта, веса упаковочного/CMR vs позиции, места,
+  Incoterms) с severity `warning`; они же автоматически попадают в findings
+  каждого нового драфта. LLM (уровень 92) только нечётко сопоставляет
+  стороны и строки инвойса с позициями через `match_confidence` — ниже
+  `DT_MATCH_CONFIDENCE_MIN` = «не сопоставлено», а не догадка.
+- **Графа 31** (уровень 93): факты собирает код (позиция, классификация,
+  каталог по SKU, строки документов с точным SKU); grounding-валидатор
+  требует `facts_used` ⊆ выданных id и запрещает числа, которых нет в
+  фактах; отклонение → retry с фидбеком (лимит `DT_G31_MAX_REJECTIONS`),
+  после лимита — `accepted=false` с причинами. Только предложение:
+  применяет человек обычным PUT.
+- **Советник** (уровень 94): пороговые сигналы считает код (цена/кг-выбросы
+  против медианы `DT_PRICE_OUTLIER_FACTOR`, нет веса нетто, нетто=брутто,
+  низкий confidence классификации); LLM формулирует объяснение +
+  рекомендацию + evidence и оценивает соответствие описания коду (31↔33).
+  Ответы по невыданным сигналам/позициям отбрасываются.
+- **Fixer** (уровень 95): по каждому finding — `propose_value` (whitelist
+  редактируемых полей) | `ask_user` | `cannot_fix`; каждое предложение
+  верифицируется повторным прогоном сборки+ФЛК (`verification.verified` —
+  finding исчез и новых ошибок нет). Автоприменения нет — человек правит
+  досье сам.
+
+### Форматы и жёсткие проверки (Фаза 3)
+
+- **Классификаторы Решения 378** — таблица `ref_classifiers` (миграция 011),
+  наполнение `python scripts/seed/classifiers.py`: Incoterms, виды
+  транспорта, процедуры, методы ОС — verified; виды документов/платежей,
+  характер сделки — `verified=false` (TODO-verify по реальной ДТ КР).
+  Страны/валюты сознательно не сидируются (формат проверяют схема и F-08).
+- **Графы 24/36/44** — `deal_nature` в шапке досье, `preference` на позиции;
+  графа 44 собирается из документов досье автоматически (kind → код вида
+  документа, `DOC_KIND_CODES`), включая статус TULPAR-проверки.
+- **Полный ФЛК**: F-09 (коды по классификаторам; не загружены → одно
+  info-предупреждение, не блокировка), F-10 (самопроверка арифметики графы
+  47: адвалорные ставки, база НДС = ТС+пошлина+акциз, сходимость итогов),
+  F-13 (преференция → подтверждающий документ в 44), F-14 (меры НТР по коду →
+  разрешительный в 44; warning — применимость меры не верифицирована),
+  F-15 (даты документов; контракт раньше инвойса), W-TULPAR (плохой статус
+  проверки разрешительного).
+- **XML-экспорт** (`export.xml`) — предварительная структура R.055-draft
+  (элементы = графы 1:1, версия в `structureVersion` из
+  `DT_XML_STRUCTURE_VERSION`); официальный альбом Решения ЕЭК № 75 и XSD в
+  репозиторий не входят — финальный маппинг подтверждается пилотом загрузки
+  в АРМ «Брокер»/KEDEN. XSD-хук: задайте `DT_XML_XSD_PATH` + `pip install
+  xmlschema` — невалидный документ вернёт 422 со списком ошибок.
+- **TULPAR** (`verify-permit`) — проверка разрешительных (kind `permit` /
+  `cert_origin`): детерминированная проверка формата номера всегда; поиск по
+  публичным реестрам swis2.trade.kg — при заданном `TULPAR_SEARCH_URL`
+  (API реестров не документирован, клиент за узким интерфейсом). Результат
+  кэшируется (`TULPAR_CACHE_HOURS`), пишется в `extracted.permit_check` и
+  подхватывается графой 44 и W-TULPAR.
+
+Документы: [`docs/dt_core_dev_plan.md`](docs/dt_core_dev_plan.md) (план и
+архитектура), [`docs/dt_draft_spec.md`](docs/dt_draft_spec.md) (спецификация).
+
 ## Локальная разработка (без Docker)
 
 ```bash
@@ -705,6 +865,28 @@ download/  →  parse/  →  build/  →  seed/
 | `STUCK_ITEMS_RESET_AFTER_S` | После какой «тишины» `running` item возвращается в `pending`      | `900`        |
 | `SSE_HEARTBEAT_S`           | Интервал heartbeat в SSE                                          | `15`         |
 
+### Авторизация / ДТ-ядро
+
+| Переменная               | Описание                                                             | По умолчанию |
+|--------------------------|----------------------------------------------------------------------|--------------|
+| `AUTH_MODE`              | `optional` (dev: токен не обязателен) \| `required`                  | `optional`   |
+| `AUTH_SECRET`            | Секрет подписи JWT (HS256, ≥32 байт). Пусто в `required` — ошибка    | `""` (dev-секрет) |
+| `AUTH_TOKEN_TTL_MINUTES` | Время жизни access-токена                                            | `1440` (24 ч) |
+| `DT_CUSTOMS_FEE_KGS`     | Сбор за таможенное оформление, сом (пусто = строка не формируется)   | `""`         |
+| `NBKR_RATES_URL`         | Ежедневный XML курсов НБКР                                           | `https://www.nbkr.kg/XML/daily.xml` |
+| `DT_PDF_FONT_PATH`       | TTF с кириллицей для PDF (пусто = автопоиск Arial/DejaVu)            | `""`         |
+| `DT_PDF_FONT_BOLD_PATH`  | Жирное начертание (пусто = автопоиск / regular)                      | `""`         |
+| `DT_DOCTYPE_CONFIDENCE_MIN` | Порог уверенности типизации документа; ниже → `needs_kind`        | `0.6`        |
+| `DT_MATCH_CONFIDENCE_MIN`   | Порог сопоставления сущностей; ниже → «не сопоставлено»           | `0.6`        |
+| `DT_G31_MAX_REJECTIONS`     | Сколько раз перегенерировать графу 31 после отклонения валидатором | `2`         |
+| `DT_PRICE_OUTLIER_FACTOR`   | Во сколько раз цена/кг должна отклониться от медианы для сигнала  | `4.0`        |
+| `LEVEL90_MODEL`..`LEVEL95_MODEL` | Override моделей SGR-слоя ДТ (типизация 90, извлечение 91, сверка 92, графа 31 — 93, советник 94, fixer 95) | tier-fallback |
+| `DT_XML_STRUCTURE_VERSION`  | Версия структуры XML-экспорта (атрибут `structureVersion`)        | `R.055-draft/1` |
+| `DT_XML_XSD_PATH`           | Путь к официальному XSD (нужен `pip install xmlschema`); пусто = без валидации | `""` |
+| `TULPAR_SEARCH_URL`         | URL поиска по реестрам swis2.trade.kg; пусто = только формат-проверка | `""`     |
+| `TULPAR_TIMEOUT_S`          | Timeout запроса к реестру                                          | `20`         |
+| `TULPAR_CACHE_HOURS`        | Свежесть кэша проверки разрешительного                             | `24`         |
+
 ### OCR-провайдер
 
 | Переменная               | Описание                                                     | По умолчанию |
@@ -721,6 +903,10 @@ download/  →  parse/  →  build/  →  seed/
 ## Дополнительная документация
 
 - `CLAUDE.md` — детальная архитектура каскада и контекст для LLM-агентов
+- `docs/product_vision_v2.md` — продуктовая стратегия (рабочее место декларанта)
+- `docs/dt_core_dev_plan.md` — план и архитектура ДТ-ядра (`feap.dt`)
+- `docs/dt_draft_spec.md` — спецификация «Досье поставки → Проект ДТ»
+- `docs/kg_customs_filing_research.md` — как подаётся ДТ в КР (системы, форматы)
 - `docs/async_architecture.md` — ТЗ по job-системе (arq + Redis + SSE)
 - `docs/ocr_integration.md` — модуль OCR (ocr.trade.kg + LLM-структуризатор)
 - `docs/ntm_implementation.md` — модуль НТР

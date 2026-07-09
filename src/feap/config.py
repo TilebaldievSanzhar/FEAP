@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     LEVEL3_MODEL: str = ""
     LEVEL4_MODEL: str = ""
     LEVEL5_MODEL: str = ""
+    LEVEL90_MODEL: str = ""  # DT: типизация документа
+    LEVEL91_MODEL: str = ""  # DT: извлечение полей документа
+    LEVEL92_MODEL: str = ""  # DT: кросс-сверка (сопоставление сущностей)
+    LEVEL93_MODEL: str = ""  # DT: генератор графы 31
+    LEVEL94_MODEL: str = ""  # DT: риск-советник
+    LEVEL95_MODEL: str = ""  # DT: findings-fixer
     LEVEL98_MODEL: str = ""  # OCR raw-text → ProductCard[] structurer
     LEVEL99_MODEL: str = ""  # NTM verification
 
@@ -37,6 +43,16 @@ class Settings(BaseSettings):
 
     # --- Tax (Kyrgyzstan) ---
     VAT_RATE_DEFAULT: str = "12%"
+
+    # --- Auth (Track B1) ---
+    # optional: токен проверяется, если прислан; без него — X-Org-Id/'default'
+    #           (dev-режим, поведение до B1 полностью сохраняется).
+    # required: все защищённые эндпоинты требуют Bearer-токен.
+    AUTH_MODE: str = "optional"
+    # Секрет подписи JWT (HS256). Пусто в optional-режиме → dev-секрет
+    # (предсказуемый, только для локалки); в required — старт падает.
+    AUTH_SECRET: str = ""
+    AUTH_TOKEN_TTL_MINUTES: int = 1440  # 24 часа
 
     # --- Redis / job queue ---
     REDIS_URL: str = "redis://redis:6379/0"
@@ -63,6 +79,44 @@ class Settings(BaseSettings):
     JOB_EVENTS_RETENTION_HOURS: int = 24
     STUCK_ITEMS_RESET_AFTER_S: int = 900
     SSE_HEARTBEAT_S: int = 15
+
+    # --- DT core (проект декларации на товары) ---
+    # Сбор за таможенное оформление, сом. Пусто = строка сбора не формируется
+    # (ФЛК добавит warning W-FEE). TODO(verify): действующий НПА КР.
+    DT_CUSTOMS_FEE_KGS: str = ""
+    # Официальные курсы НБКР (ежедневный XML)
+    NBKR_RATES_URL: str = "https://www.nbkr.kg/XML/daily.xml"
+    # PDF-экспорт: путь к TTF с кириллицей. Пусто = автопоиск
+    # (Arial на Windows, DejaVu Sans на Linux) — см. exporters/pdf.py.
+    DT_PDF_FONT_PATH: str = ""
+    DT_PDF_FONT_BOLD_PATH: str = ""
+
+    # --- DT: форматы (Фаза 3) ---
+    # Версия структуры XML-экспорта (пишется в атрибут structureVersion).
+    # Финальный маппинг на альбом R.055 (Решение ЕЭК № 75) подтверждается
+    # пилотом загрузки в АРМ «Брокер»/KEDEN — правки Решения выходят ежегодно.
+    DT_XML_STRUCTURE_VERSION: str = "R.055-draft/1"
+    # Путь к официальному XSD; пусто = валидация пропускается.
+    # Требует пакет `xmlschema` (опциональный: pip install xmlschema).
+    DT_XML_XSD_PATH: str = ""
+    # --- TULPAR (проверка разрешительных, Фаза 3) ---
+    # URL поиска по публичным реестрам swis2.trade.kg; пусто = HTTP-проверка
+    # отключена (работает только детерминированная проверка формата номера).
+    TULPAR_SEARCH_URL: str = ""
+    TULPAR_TIMEOUT_S: int = 20
+    TULPAR_CACHE_HOURS: int = 24
+
+    # --- DT: SGR-слой (Фаза 2) ---
+    # Типизация документа: ниже порога → kind='unknown', тип выбирает человек.
+    DT_DOCTYPE_CONFIDENCE_MIN: float = 0.6
+    # Кросс-сверка: сопоставление сущностей ниже порога = «не сопоставлено».
+    DT_MATCH_CONFIDENCE_MIN: float = 0.6
+    # Графа 31: сколько раз перегенерировать текст после отклонения
+    # grounding-валидатором (аналог COMPLETION_MAX_REJECTIONS).
+    DT_G31_MAX_REJECTIONS: int = 2
+    # Риск-сигнал «цена/кг»: во сколько раз отклонение от медианы досье
+    # считается выбросом.
+    DT_PRICE_OUTLIER_FACTOR: float = 4.0
 
     # --- OCR provider (ocr.trade.kg internal service) ---
     OCR_PROVIDER_URL: str = "http://192.168.250.44:8088/ocr/process"

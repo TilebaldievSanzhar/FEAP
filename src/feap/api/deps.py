@@ -12,7 +12,6 @@ from feap.cascade.orchestrator import CascadeOrchestrator
 from feap.db.engine import async_session
 from feap.jobs.enqueue import (
     ArqBackend,
-    InProcessBackend,
     JobBackend,
     get_inprocess_backend,
     is_inprocess,

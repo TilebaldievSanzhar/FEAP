@@ -1,0 +1,22 @@
+FINDINGS ПРОВЕРКИ ДРАФТА:
+{% for f in findings %}
+- [{{ f.severity }}] {{ f.rule }}{% if f.graph %} ({{ f.graph }}){% endif %}: {{ f.message }}
+{% endfor %}
+
+РЕДАКТИРУЕМЫЕ ПОЛЯ (whitelist для field_path):
+- Шапка: {{ header_fields | join(", ") }}
+- Позиции (items[i].поле, i от 0 до {{ n_items - 1 }}): {{ item_fields | join(", ") }}
+
+ДОСЬЕ (JSON):
+{{ shipment | tojson(indent=1) }}
+{% if docs %}
+
+ИЗВЛЕЧЁННЫЕ ДОКУМЕНТЫ:
+{% for d in docs %}
+--- {{ d.kind }}{% if d.label %} №{{ d.label }}{% endif %} ---
+{{ d.doc | tojson(indent=1) }}
+{% endfor %}
+{% else %}
+
+Извлечённых документов нет — предлагай правки только из данных досье; остальное → ask_user.
+{% endif %}

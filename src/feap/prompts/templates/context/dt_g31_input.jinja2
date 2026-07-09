@@ -1,0 +1,15 @@
+ФАКТЫ О ПОЗИЦИИ (единственный допустимый источник данных):
+{% for f in facts %}
+- id: {{ f.id }} | {{ f.label }}: {{ f.value }} [источник: {{ f.source }}]
+{% endfor %}
+{% if not facts %}
+(фактов нет — верни максимально короткий текст и заполни missing_attributes)
+{% endif %}
+{% if rejection_feedback %}
+
+ПРЕДЫДУЩАЯ ПОПЫТКА ОТКЛОНЕНА ВАЛИДАТОРОМ. Причины:
+{% for r in rejection_feedback %}
+- {{ r }}
+{% endfor %}
+Исправь текст: убери всё, чего нет в фактах, и перечисли недостающее в missing_attributes.
+{% endif %}

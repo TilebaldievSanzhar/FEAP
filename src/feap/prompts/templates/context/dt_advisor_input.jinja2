@@ -1,0 +1,19 @@
+{% if signals %}
+РИСК-СИГНАЛЫ (посчитаны кодом):
+{% for s in signals %}
+- id: {{ s.id }} [{{ s.severity }}] {{ s.message }}
+{% endfor %}
+{% else %}
+Пороговых риск-сигналов нет — advices оставь пустым.
+{% endif %}
+{% if coded_items %}
+
+ПОЗИЦИИ С КОДАМИ (для проверки соответствия 31↔33):
+{% for it in coded_items %}
+- позиция {{ it.position }}: «{{ it.description }}»
+  код {{ it.hs_code }}: {{ it.code_name }}
+{% endfor %}
+{% else %}
+
+Позиций с кодом нет — code_checks оставь пустым.
+{% endif %}

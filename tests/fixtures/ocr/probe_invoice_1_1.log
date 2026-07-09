@@ -1,0 +1,311 @@
+
+===== submit.status =====
+202
+
+===== submit.headers =====
+{
+  "server": "nginx/1.24.0 (Ubuntu)",
+  "date": "Thu, 23 Apr 2026 18:54:47 GMT",
+  "content-type": "application/json",
+  "content-length": "53",
+  "connection": "keep-alive",
+  "vary": "Accept, Accept-Language, origin, Cookie",
+  "allow": "POST, OPTIONS",
+  "x-ratelimit-limit": "3",
+  "x-ratelimit-remaining": "2",
+  "x-ratelimit-reset": "1776974087",
+  "x-frame-options": "DENY",
+  "content-language": "ru",
+  "x-content-type-options": "nosniff",
+  "referrer-policy": "same-origin",
+  "cross-origin-opener-policy": "same-origin"
+}
+
+===== submit.body =====
+{
+  "request_id": "dd7a340d-2679-4a0a-acc0-15a106ed7e8e"
+}
+
+===== request_id =====
+dd7a340d-2679-4a0a-acc0-15a106ed7e8e
+
+===== poll.1.status =====
+200
+
+===== poll.1.body =====
+{
+  "id": "dd7a340d-2679-4a0a-acc0-15a106ed7e8e",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:54:47.561138Z",
+  "tasks": [
+    {
+      "id": "12bc3028-2929-4b81-a870-57f9b817cd91",
+      "document_name": "documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "document_type": null,
+      "total_time": {
+        "started_at": "2026-04-23T18:54:47.574348Z",
+        "completed_at": null,
+        "duration": null,
+        "step_durations": {}
+      },
+      "status": "PREPROCESS",
+      "file_url": "/media/documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "ocr_result": null
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.2.status =====
+200
+
+===== poll.2.body =====
+{
+  "id": "dd7a340d-2679-4a0a-acc0-15a106ed7e8e",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:54:47.561138Z",
+  "tasks": [
+    {
+      "id": "12bc3028-2929-4b81-a870-57f9b817cd91",
+      "document_name": "documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "document_type": null,
+      "total_time": {
+        "started_at": "2026-04-23T18:54:47.574348Z",
+        "completed_at": "2026-04-23T18:54:48.114922Z",
+        "duration": 0.540574,
+        "step_durations": {
+          "preprocess_document": 0.54
+        }
+      },
+      "status": "PROCESSING_OCR",
+      "file_url": "/media/documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "ocr_result": null
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.3.status =====
+200
+
+===== poll.3.body =====
+{
+  "id": "dd7a340d-2679-4a0a-acc0-15a106ed7e8e",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:54:47.561138Z",
+  "tasks": [
+    {
+      "id": "12bc3028-2929-4b81-a870-57f9b817cd91",
+      "document_name": "documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "document_type": null,
+      "total_time": {
+        "started_at": "2026-04-23T18:54:47.574348Z",
+        "completed_at": "2026-04-23T18:54:48.114922Z",
+        "duration": 0.540574,
+        "step_durations": {
+          "preprocess_document": 0.54
+        }
+      },
+      "status": "PROCESSING_OCR",
+      "file_url": "/media/documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "ocr_result": null
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.4.status =====
+200
+
+===== poll.4.body =====
+{
+  "id": "dd7a340d-2679-4a0a-acc0-15a106ed7e8e",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:54:47.561138Z",
+  "tasks": [
+    {
+      "id": "12bc3028-2929-4b81-a870-57f9b817cd91",
+      "document_name": "documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "document_type": null,
+      "total_time": {
+        "started_at": "2026-04-23T18:54:47.574348Z",
+        "completed_at": "2026-04-23T18:54:48.114922Z",
+        "duration": 0.540574,
+        "step_durations": {
+          "preprocess_document": 0.54
+        }
+      },
+      "status": "PROCESSING_OCR",
+      "file_url": "/media/documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "ocr_result": null
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.5.status =====
+200
+
+===== poll.5.body =====
+{
+  "id": "dd7a340d-2679-4a0a-acc0-15a106ed7e8e",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:54:47.561138Z",
+  "tasks": [
+    {
+      "id": "12bc3028-2929-4b81-a870-57f9b817cd91",
+      "document_name": "documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "document_type": null,
+      "total_time": {
+        "started_at": "2026-04-23T18:54:47.574348Z",
+        "completed_at": "2026-04-23T18:54:48.114922Z",
+        "duration": 0.540574,
+        "step_durations": {
+          "preprocess_document": 0.54
+        }
+      },
+      "status": "PROCESSING_OCR",
+      "file_url": "/media/documents/unclassified/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "ocr_result": null
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.6.status =====
+200
+
+===== poll.6.body =====
+{
+  "id": "dd7a340d-2679-4a0a-acc0-15a106ed7e8e",
+  "duration": null,
+  "tasks_completed_count": 0,
+  "task_total_count": 1,
+  "user": null,
+  "status": "PROCESSING",
+  "created_at": "2026-04-23T18:54:47.561138Z",
+  "tasks": [
+    {
+      "id": "12bc3028-2929-4b81-a870-57f9b817cd91",
+      "document_name": "documents/04021/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "document_type": {
+        "id": "0289a493-8218-479e-bdb1-354a7f81c9f0",
+        "name": "Commercial Invoice",
+        "code": "04021"
+      },
+      "total_time": {
+        "started_at": "2026-04-23T18:54:47.574348Z",
+        "completed_at": "2026-04-23T18:55:02.184185Z",
+        "duration": 14.609837,
+        "step_durations": {
+          "extract_ocr_data": 12.04,
+          "classify_document": 2.03,
+          "preprocess_document": 0.54
+        }
+      },
+      "status": "PROCESSING_EXTRACT",
+      "file_url": "/media/documents/04021/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "ocr_result": {
+        "items": [],
+        "raw_text": "![](_page_0_Picture_0.jpeg)\n\n## Global Trade Distribution FZE\n\nWare House YD-05, P.O.Box 262922 Jebel Ali Free Zone, Dubai, U.A.E. Mail: gtd@gtd.ae, Web: www.gtd.ae\n\nTel: +971 4 8808 789\n\nTRN NO: 100386206500003\n\n## Invoice № GT-05927-AE dd 25.01.2023\n\nBeneficiary: Global Trade Distribution FZE\n\nBank Name: Emirates Islamic Bank\n\nBill to: OcOO \"ДАОГруп\" (DAO Group LLC)\n\nPayment terms: 50% prepayment within 7 calendar days after\n\nsigning an annex, 50% postpayment within\n\n14 calendar days after shipment\n\nBank Address: Jebel Ali Branch, P.O. Box\n\n6564, Dubai, U.A.E\n\nAccount Number: 3707500650203\n\nIBAN: AE070340003707500650203\n\nSwift Code: MEBLAEAD\n\nTRN: 100386206500003\n\nPacking: Export Standard Packing\n\nInspection: Makers to be final.\n\nContract No GTD-073/2022 from 19.08.2023\n\n**EUR** \n\n| No | Description of goods | HS Code | соо | QTY | Price | Total<br>amount |\n|-------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|-----|-----|-----------|-----------------|\n| | Система хранения данных D6V6-1T-NVMe OceanStor Dorado 6000<br>V6(2U,Dual Ctrl,NVMe,AC\\240V HVDC,1TB Cache,4*100Gb<br>RDMA,36*Palm,SPE62C0236,Applicable to 1.2m-Depth Cabinets) | | | 1 | 93 206,00 | 93 206,00 |\n| | Сетевой коммутатор CE6863E-48S6CQ-F CE6863-48S6CQ-F switch (48*25G SFP28, 6*100G QSFP28, 2*AC power modules, 4*fan modules, port-side exhaust) | | | 2 | 10 192,00 | 20 384,00 |\n| TOTAL | | | | 3 | | 113 590,00 |\n\nIncoterms 2010:\n\nDirector of Global Trade Distribution FZE Abby Paul\n\nContact number: +97150 5656 459\n\n![](_page_0_Picture_26.jpeg)\n\n![](_page_0_Picture_27.jpeg)\n\nBy accepting this invoice, you represent, warrant and commit that you have complied and continue to comply with all applicable Export Compliance Laws and regulations and undertake to hold the Global Trade Distribution FZE harmless of any consequences arising from any compliance breach. Global Trade Distribution FZE is entitled, without incurring any liability and/or penalty, to terminate the current transaction with immediate effect if the other Party of transaction, becomes or is likely to become in any way sanctioned, restricted or prohibited by Export Compliance Laws and Regulations.\n\nFor the purposes of these clause, \"Export Compliance Laws and Regulations\" shall mean any economic, trade or financial sanctions laws, regulations, prohibitions, embargoes or restrictive import or export measures administered, enacted or enforced by a governmental institutions and agencies of the United Arab Emirates, the United Nations, the European Union, the United Kingdom, the United States of America.\n\n![](_page_0_Picture_30.jpeg)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+===== poll.7.status =====
+200
+
+===== poll.7.body =====
+{
+  "id": "dd7a340d-2679-4a0a-acc0-15a106ed7e8e",
+  "duration": 17.888443,
+  "tasks_completed_count": 1,
+  "task_total_count": 1,
+  "user": null,
+  "status": "COMPLETED",
+  "created_at": "2026-04-23T18:54:47.561138Z",
+  "tasks": [
+    {
+      "id": "12bc3028-2929-4b81-a870-57f9b817cd91",
+      "document_name": "documents/04021/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "document_type": {
+        "id": "0289a493-8218-479e-bdb1-354a7f81c9f0",
+        "name": "Commercial Invoice",
+        "code": "04021"
+      },
+      "total_time": {
+        "started_at": "2026-04-23T18:54:47.574348Z",
+        "completed_at": "2026-04-23T18:55:05.462791Z",
+        "duration": 17.888443,
+        "step_durations": {
+          "extract_ocr_data": 12.04,
+          "classify_document": 2.03,
+          "preprocess_document": 0.54,
+          "dify_field_extraction": 3.28
+        }
+      },
+      "status": "COMPLETED",
+      "file_url": "/media/documents/04021/960f178b-8e82-4342-a655-7735df605f6a_1_1.pdf",
+      "ocr_result": {
+        "items": [
+          {
+            "hs_code": null,
+            "description": "Система хранения данных D6V6-1T-NVMe OceanStor Dorado 6000 V6(2U,Dual Ctrl,NVMe,AC\\240V HVDC,1TB Cache,4*100Gb RDMA,36*Palm,SPE62C0236,Applicable to 1.2m-Depth Cabinets)",
+            "quantity": "1.0",
+            "unit": null,
+            "cost": "93206.0",
+            "price": "93206.0",
+            "currency_code": "EUR",
+            "currency_name": "EUR",
+            "document_date": "25.01.2023",
+            "document_number": "GT-05927-AE",
+            "country_origin": "Неизвестно",
+            "country_origin_code": "400",
+            "country_sender": "United Arab Emirates"
+          },
+          {
+            "hs_code": null,
+            "description": "Сетевой коммутатор CE6863E-48S6CQ-F CE6863-48S6CQ-F switch (48*25G SFP28, 6*100G QSFP28, 2*AC power modules, 4*fan modules, port-side exhaust)",
+            "quantity": "2.0",
+            "unit": null,
+            "cost": "10192.0",
+            "price": "20384.0",
+            "currency_code": "EUR",
+            "currency_name": "EUR",
+            "document_date": "25.01.2023",
+            "document_number": "GT-05927-AE",
+            "country_origin": "Неизвестно",
+            "country_origin_code": "400",
+            "country_sender": "United Arab Emirates"
+          }
+        ],
+        "raw_text": "![](_page_0_Picture_0.jpeg)\n\n## Global Trade Distribution FZE\n\nWare House YD-05, P.O.Box 262922 Jebel Ali Free Zone, Dubai, U.A.E. Mail: gtd@gtd.ae, Web: www.gtd.ae\n\nTel: +971 4 8808 789\n\nTRN NO: 100386206500003\n\n## Invoice № GT-05927-AE dd 25.01.2023\n\nBeneficiary: Global Trade Distribution FZE\n\nBank Name: Emirates Islamic Bank\n\nBill to: OcOO \"ДАОГруп\" (DAO Group LLC)\n\nPayment terms: 50% prepayment within 7 calendar days after\n\nsigning an annex, 50% postpayment within\n\n14 calendar days after shipment\n\nBank Address: Jebel Ali Branch, P.O. Box\n\n6564, Dubai, U.A.E\n\nAccount Number: 3707500650203\n\nIBAN: AE070340003707500650203\n\nSwift Code: MEBLAEAD\n\nTRN: 100386206500003\n\nPacking: Export Standard Packing\n\nInspection: Makers to be final.\n\nContract No GTD-073/2022 from 19.08.2023\n\n**EUR** \n\n| No | Description of goods | HS Code | соо | QTY | Price | Total<br>amount |\n|-------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|-----|-----|-----------|-----------------|\n| | Система хранения данных D6V6-1T-NVMe OceanStor Dorado 6000<br>V6(2U,Dual Ctrl,NVMe,AC\\240V HVDC,1TB Cache,4*100Gb<br>RDMA,36*Palm,SPE62C0236,Applicable to 1.2m-Depth Cabinets) | | | 1 | 93 206,00 | 93 206,00 |\n| | Сетевой коммутатор CE6863E-48S6CQ-F CE6863-48S6CQ-F switch (48*25G SFP28, 6*100G QSFP28, 2*AC power modules, 4*fan modules, port-side exhaust) | | | 2 | 10 192,00 | 20 384,00 |\n| TOTAL | | | | 3 | | 113 590,00 |\n\nIncoterms 2010:\n\nDirector of Global Trade Distribution FZE Abby Paul\n\nContact number: +97150 5656 459\n\n![](_page_0_Picture_26.jpeg)\n\n![](_page_0_Picture_27.jpeg)\n\nBy accepting this invoice, you represent, warrant and commit that you have complied and continue to comply with all applicable Export Compliance Laws and regulations and undertake to hold the Global Trade Distribution FZE harmless of any consequences arising from any compliance breach. Global Trade Distribution FZE is entitled, without incurring any liability and/or penalty, to terminate the current transaction with immediate effect if the other Party of transaction, becomes or is likely to become in any way sanctioned, restricted or prohibited by Export Compliance Laws and Regulations.\n\nFor the purposes of these clause, \"Export Compliance Laws and Regulations\" shall mean any economic, trade or financial sanctions laws, regulations, prohibitions, embargoes or restrictive import or export measures administered, enacted or enforced by a governmental institutions and agencies of the United Arab Emirates, the United Nations, the European Union, the United Kingdom, the United States of America.\n\n![](_page_0_Picture_30.jpeg)"
+      }
+    }
+  ],
+  "aggregation": null
+}
+
+terminal status: completed

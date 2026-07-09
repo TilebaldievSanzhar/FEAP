@@ -280,6 +280,11 @@ def main() -> None:
         seed_ntm_data(force=False)
         print("NTM measures done!")
 
+    # Классификаторы Решения 378 (Фаза 3, графы 20/24/25/36/43/44/47 + ФЛК F-09)
+    from classifiers import seed_classifiers
+
+    seed_classifiers(force=False)
+
     engine.dispose()
 
 

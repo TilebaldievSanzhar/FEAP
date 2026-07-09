@@ -27,8 +27,6 @@ from feap.jobs import repository as repo
 from feap.jobs.events import publish
 from feap.jobs.schemas import BatchItemInput
 from feap.ocr import repository as ocr_repo
-from feap.ocr.errors import OcrError
-from feap.ocr.schemas import OcrFileExtraction
 from feap.ocr.service import run_extraction, run_structure
 from feap.schemas.api import ClassifyResponse
 
@@ -162,12 +160,27 @@ async def _persist_response(
     payload = _serialize_response(response)
 
     async with session_factory() as db:
+        item = await repo.get_item(db, item_id)
+        source_ref = dict(item.source_ref or {}) if item is not None else {}
+
         if response.status == "completed" and response.result is not None:
             await repo.save_item_completed(
                 db, item_id,
                 result_json=payload["result"],
                 session_id=None,
             )
+            # Цепочка ДТ: item пришёл из досье — вернуть код в позицию.
+            # Ошибка записи не должна ронять сохранение результата классификации.
+            if source_ref.get("shipment_item_id"):
+                from feap.dt import classify_link
+
+                try:
+                    await classify_link.apply_item_result(
+                        db, job_item_id=item_id,
+                        source_ref=source_ref, result_json=payload["result"],
+                    )
+                except Exception:  # noqa: BLE001
+                    logger.exception("DT write-back failed for item %s", item_id)
             event_name = "item_done"
             event_payload = {
                 "item_id": str(item_id),
@@ -215,6 +228,14 @@ async def _maybe_publish_finished(
     session_factory = ctx["db_session_factory"]
     async with session_factory() as db:
         counts = await repo.recount_items(db, job_id)
+        job = await repo.get_job(db, job_id)
+        if job is not None and job.job_type == "shipment_classify":
+            from feap.dt import classify_link
+
+            try:
+                await classify_link.finalize_shipment_job(db, job, new_status)
+            except Exception:  # noqa: BLE001
+                logger.exception("DT finalize failed for job %s", job_id)
         await repo.log_event(
             db, job_id=job_id, event_type="finished",
             payload={"status": new_status, "counts": counts},

@@ -12,6 +12,12 @@ LEVEL_TIER: dict[int, str] = {
     3: "heavy",   # Position (2-step process)
     4: "medium",  # Subposition
     5: "light",   # Subsubposition
+    90: "light",  # DT: типизация документа (routing)
+    91: "medium", # DT: извлечение полей документа
+    92: "light",  # DT: кросс-сверка — нечёткое сопоставление сущностей
+    93: "medium", # DT: генератор описания графы 31
+    94: "medium", # DT: риск-советник
+    95: "medium", # DT: findings-fixer
     98: "medium", # OCR raw-text → ProductCard[] structurer
     99: "light",  # NTM verification (dual matching)
 }
@@ -24,6 +30,12 @@ LEVEL_MAX_TOKENS: dict[int, int] = {
     3: 8192,
     4: 4096,
     5: 4096,
+    90: 2048,  # doc typing — короткий routing-ответ
+    91: 8192,  # извлечение — инвойс может содержать десятки строк
+    92: 4096,
+    93: 4096,
+    94: 8192,
+    95: 8192,
     98: 8192,  # OCR structurer — invoices can list many products
     99: 2048,  # NTM verification
 }
@@ -36,6 +48,12 @@ LEVEL_TEMPERATURE: dict[int, float | None] = {
     3: 0.0,
     4: 0.0,
     5: 0.0,
+    90: 0.0,
+    91: 0.0,
+    92: 0.0,
+    93: 0.0,
+    94: 0.0,
+    95: 0.0,
     98: 0.0,
     99: 0.0,
 }
@@ -48,6 +66,12 @@ _LEVEL_MODEL_SETTINGS: dict[int, str] = {
     3: "LEVEL3_MODEL",
     4: "LEVEL4_MODEL",
     5: "LEVEL5_MODEL",
+    90: "LEVEL90_MODEL",
+    91: "LEVEL91_MODEL",
+    92: "LEVEL92_MODEL",
+    93: "LEVEL93_MODEL",
+    94: "LEVEL94_MODEL",
+    95: "LEVEL95_MODEL",
     98: "LEVEL98_MODEL",
     99: "LEVEL99_MODEL",
 }

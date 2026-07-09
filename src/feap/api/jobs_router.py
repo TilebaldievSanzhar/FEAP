@@ -26,15 +26,15 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.api.deps import get_db, get_job_backend
+from feap.auth.deps import AuthContext, get_auth_context
 from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
 from feap.config import settings
 from feap.db.models import ClassificationJob, ClassificationJobItem
 from feap.jobs import repository as repo
 from feap.jobs.enqueue import JobBackend
-from feap.jobs.events import publish, subscribe
+from feap.jobs.events import subscribe
 from feap.jobs.schemas import (
     BatchAsyncResponse,
-    BatchSyncResponse,
     ClassifyBatchRequest,
     JobAnswerRequest,
     JobAnswersBatchRequest,
@@ -48,6 +48,7 @@ from feap.jobs.schemas import (
 from feap.jobs.sync_runner import run_batch_sync
 from feap.schemas.api import ClassifyResponse
 from feap.schemas.validation import ClassificationResult, PartialResult
+from feap.usage import record_usage
 
 router = APIRouter(prefix="/api/v1")
 logger = logging.getLogger(__name__)
@@ -117,6 +118,7 @@ async def classify_batch(
     http_request: Request,
     db: AsyncSession = Depends(get_db),
     backend: JobBackend = Depends(get_job_backend),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> Any:
     """Submit N items for classification. Returns sync or async response based on mode."""
     n = len(request.items)
@@ -144,10 +146,19 @@ async def classify_batch(
         )
 
     if use_sync:
-        return await run_batch_sync(request.items)
+        result = await run_batch_sync(request.items)
+        record_usage(
+            db, org_id=ctx.org_id, kind="classification", quantity=n,
+            ref_type="classify_batch_sync", meta={"mode": "sync"},
+        )
+        await db.commit()
+        return result
 
     # Async path: persist job + items, hand off to backend.
-    job = await repo.create_job(db, job_type="classify_batch", items=request.items)
+    job = await repo.create_job(
+        db, job_type="classify_batch", items=request.items,
+        params={"org_id": str(ctx.org_id)},
+    )
     try:
         await backend.enqueue_batch(job.id)
     except Exception as exc:  # noqa: BLE001
@@ -156,6 +167,11 @@ async def classify_batch(
             status_code=503,
             detail=f"Очередь временно недоступна: {exc}",
         )
+    record_usage(
+        db, org_id=ctx.org_id, kind="classification", quantity=n,
+        ref_type="classification_job", ref_id=str(job.id), meta={"mode": "async"},
+    )
+    await db.commit()
 
     base = str(http_request.url_for("get_job", job_id=str(job.id)))
     return BatchAsyncResponse(

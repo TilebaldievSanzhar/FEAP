@@ -7,11 +7,13 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.api.deps import get_db, get_orchestrator
+from feap.auth.deps import AuthContext, get_auth_context
 from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
 from feap.config import settings
+from feap.usage import record_usage
 from feap.db.models import TnvedNode
 from feap.db.queries import get_excise_rate, get_ntm_measures_for_code, get_vat_exemption
-from feap.ntm.schemas import NtmVerifiedMeasure, NtmVerifyRequest, NtmVerifyResponse
+from feap.ntm.schemas import NtmVerifyRequest, NtmVerifyResponse
 from feap.ntm.verifier import verify_ntm_measures
 from feap.schemas.api import (
     AnswerRequest,
@@ -91,16 +93,25 @@ async def classify_product(
     request: ClassifyRequest,
     db: AsyncSession = Depends(get_db),
     orchestrator: CascadeOrchestrator = Depends(get_orchestrator),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> ClassifyResponse:
     """Classify a product by its description.
 
     Returns either a completed classification or a request for additional info.
     """
-    return await orchestrator.classify(
+    response = await orchestrator.classify(
         description=request.description,
         db=db,
         additional_info=request.additional_info or None,
     )
+    # Метеринг: одна классификация = одно событие; resume (answer) не тарифицируется.
+    record_usage(
+        db, org_id=ctx.org_id, kind="classification", quantity=1,
+        ref_type="classify", ref_id=response.session_id,
+        meta={"status": response.status},
+    )
+    await db.commit()
+    return response
 
 
 @router.post("/classify/{session_id}/answer", response_model=ClassifyResponse)
