@@ -64,9 +64,24 @@ class StructuredProduct(BaseModel):
     """One product extracted by the LLM from raw OCR text."""
 
     product_card: ProductCard
+    # Kept as a plain dict downstream (stored as JSONB, spread into
+    # BatchItemInput.source_ref), but the JSON Schema advertises its keys
+    # explicitly: OpenAI's strict mode rejects free-form objects.
     source_ref: dict = Field(
         default_factory=dict,
-        description="Hints back to the source: {file_index, line_hint, hs_code_hint, quantity, unit, unit_price, currency}",
+        description="Hints back to the source: {file_index, line_hint, hs_code_hint, quantity, unit, unit_price, currency, country_origin}",
+        json_schema_extra={
+            "properties": {
+                "file_index": {"type": ["integer", "null"]},
+                "line_hint": {"type": ["string", "null"]},
+                "hs_code_hint": {"type": ["string", "null"]},
+                "quantity": {"type": ["number", "null"]},
+                "unit": {"type": ["string", "null"]},
+                "unit_price": {"type": ["number", "null"]},
+                "currency": {"type": ["string", "null"]},
+                "country_origin": {"type": ["string", "null"]},
+            },
+        },
     )
 
 

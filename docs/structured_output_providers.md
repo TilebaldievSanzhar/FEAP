@@ -19,6 +19,49 @@
 - Стандартная стратегия `_classify_strict_schema` в `OpenRouterProvider`
 - `reasoning: {effort: "none"}` — отключает reasoning для гибридных моделей (DeepSeek)
 
+### OpenAI GPT-5.x (`openai/gpt-5.6-luna`, `gpt-5.5`, `o1`/`o3`/`o4`) — reasoning-семейство
+
+Работает через `_classify_strict_schema`, но требует **двух отличий** от остальных моделей
+(проверено вживую на `openai/gpt-5.6-luna`, 2026-08):
+
+**1. `temperature` не поддерживается.** В `supported_parameters` эндпоинта её нет.
+С `provider.require_parameters: true` запрос падает с
+`404 No endpoints found that can handle the requested parameters` — OpenRouter
+не находит провайдера, умеющего этот параметр. Параметр вырезается по префиксу
+модели (`_NO_TEMPERATURE_MODEL_PREFIXES` / `_supports_temperature()`),
+детерминизм при этом сохраняется: reasoning-модели и так игнорируют sampling-настройки.
+
+**2. Строгий диалект JSON Schema.** OpenAI отклоняет схему, если у любого объекта
+нет `additionalProperties: false` и `required` со **всеми** ключами из `properties`:
+
+```
+400 Invalid schema for response_format 'SectionResult':
+In context=('properties','candidates','items'),
+'additionalProperties' is required to be supplied and to be false.
+```
+
+Pydantic не генерирует ни того, ни другого (необязательные поля просто отсутствуют
+в `required`). Схема нормализуется функцией `_strictify_schema()`, которая
+применяется только к моделям из `_OPENAI_STRICT_SCHEMA_PREFIXES` — путь остальных
+провайдеров (Gemini, Anthropic, DeepSeek) не меняется.
+
+Следствия нормализации:
+- Все SGR-поля (`step1_product_nature`, `parameter_extraction`, …) становятся
+  обязательными — модель обязана их заполнить, а не пропустить. Для SGR это плюс.
+- Nullable-поля (`X | None`) уже приходят как `anyOf: [{...}, {"type":"null"}]` — годятся как есть.
+- **Free-form `dict` в схеме недопустим.** Единственный такой случай —
+  `StructuredProduct.source_ref` (level 98); ему проставлен явный
+  `json_schema_extra.properties` с 8 ключами. Python-тип остался `dict`,
+  downstream-код и БД не затронуты.
+
+**Что поддерживается без правок:** `max_tokens`, `minimum`/`maximum`,
+`minItems`/`maxItems` внутри strict-схемы, `reasoning: {effort: "none"}`
+(reasoning_tokens = 0, бюджет `LEVEL_MAX_TOKENS` не съедается).
+
+Проверка: 21/21 схем (9 каскадных + 5 DT-экстракторов + DocType, EntityMatch, G31,
+Advisor, Fixer, StructuredProducts, NtmVerification) проходят через
+`OpenRouterProvider.classify()` и валидируются Pydantic.
+
 ### DeepSeek V3.2 (`deepseek/deepseek-v3.2`)
 - `json_schema` + `strict: true` — **работает** (grammar-constrained у провайдеров AtlasCloud и др.)
 - Гибридная модель (thinking/non-thinking). Reasoning отключается через `reasoning: {effort: "none"}`
@@ -93,6 +136,32 @@ result = OutputModel.model_validate(data)
 ```
 
 **Результат тестирования:** 8/8 schema каскада (ProductCard, SectionShortlistResult, SectionResult, GroupResult, ShortlistResult, PositionResult, SubpositionResult, SubsubpositionResult) — все прошли. Avg latency: ~25с (включая mandatory thinking).
+
+### Gemini 3.5 Flash Lite (`google/gemini-3.5-flash-lite`)
+
+- `json_schema` + `strict: true` + `require_parameters` — **работает**
+  (grammar-constrained decoding у Google AI Studio / Vertex).
+  Схема идёт в «сыром» виде, без `_strictify_schema()` — диалект Google
+  принимает pydantic-схему как есть.
+- **Reasoning отключить нельзя.** `reasoning: {effort: "none"}` даёт
+  `400 "Reasoning is mandatory for this endpoint and cannot be disabled."`
+  на всех 9 эндпоинтах. Модель добавлена в `_MANDATORY_REASONING_PREFIXES`.
+- **Overhead от reasoning отсутствует**: на практике `reasoning_tokens = 0`,
+  бюджет `LEVEL_MAX_TOKENS` (4096/8192) не съедается,
+  `_HIGH_MAX_TOKENS_PREFIXES` не нужен.
+- `temperature` поддерживают только эндпоинты Google AI Studio; на Vertex её нет.
+  С `require_parameters: true` роутинг сам уходит на AI Studio — 404 не возникает,
+  правки не требуются.
+
+Отличие от `gemini-3.1-flash-lite`, который остаётся на стратегии
+`json_object` + схема в промпте: у 3.5 strict-режим работает нативно,
+а вот `reasoning: {effort: "none"}` — наоборот, перестал приниматься.
+
+**Результат тестирования (2026-09-07):** 21/21 схем прошли через
+`OpenRouterProvider.classify()` — 9 каскадных (L0–L5), 5 DT-экстракторов,
+DocType, EntityMatch, G31, Advisor, Fixer, StructuredProducts, NtmVerification.
+Все SGR-поля заполнены содержательно (не пустые строки).
+Latency: ~1.3–3.4 с/вызов, ~14 с на полный каскад.
 
 ### Qwen 3.5-27B (`qwen/qwen3.5-27b`)
 - `json_schema` + `strict: true` — **НЕ работает**. Все провайдеры (Alibaba, AtlasCloud, Venice) — уровень 2, schema игнорируется.
@@ -222,6 +291,7 @@ result = OutputModel.model_validate(data)
 | Модель | Стратегия | Reasoning | Markdown fences | Latency/вызов |
 |--------|-----------|-----------|-----------------|---------------|
 | Anthropic Claude | `json_schema` strict | отключаем | нет | ~3-8с |
+| Gemini 3.5 Flash Lite | `json_schema` strict | **mandatory** (но 0 токенов) | нет | ~1-3с |
 | DeepSeek V3.2 | `json_schema` strict | отключаем | нет | ~3-6с |
 | Qwen 3-235B | `json_schema` strict | не нужен | нет | ~12-18с |
 | Qwen 3.5-27B | `json_object` + prompt + `/no_think` | отключаем | нет | ~3-11с |
@@ -262,6 +332,7 @@ extra_body["reasoning"] = {"effort": "none"}
 | Модель | Стратегия | Детали |
 |--------|-----------|--------|
 | Anthropic, OpenAI, DeepSeek, Qwen3-235B | `json_schema` strict | Grammar-constrained decoding |
+| Gemini 3.5 Flash Lite | `json_schema` strict | Grammar-constrained; без `reasoning: {effort: "none"}` |
 | MiniMax M2.* | `json_object` + prompt | Schema в system prompt, markdown fence stripping |
 | Qwen 3.5-* | `json_object` + prompt | Schema в system prompt + `/no_think` |
 | StepFun Step-* | **plain text** + prompt | Без response_format, JSON extraction из текста |
@@ -304,3 +375,5 @@ extra_body["reasoning"] = {"effort": "none"}
 | minimax/minimax-m2.7 | $0.30 | $1.20 | json_object + prompt | Schema в промпте + fence strip | 2026-03 |
 | minimax/minimax-m2.7-highspeed | $0.60 | $2.40 | (не на OpenRouter) | Прямой API MiniMax | 2026-03 |
 | stepfun/step-3.5-flash | $0.10 | $0.30 | plain text + prompt | Без response_format, mandatory reasoning | 2026-03 |
+| openai/gpt-5.6-luna | $0.20 | $1.20 | json_schema strict | Без temperature + strictify схемы | 2026-08 |
+| google/gemini-3.5-flash-lite | $0.30 | $2.50 | json_schema strict | Нативный; reasoning не отключается | 2026-09 |

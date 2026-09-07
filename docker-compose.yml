@@ -72,6 +72,9 @@ services:
       OCR_UPLOAD_DIR: /app/data/ocr_uploads
       OCR_ALLOWED_MIME: ${OCR_ALLOWED_MIME:-application/pdf,image/jpeg,image/png,image/tiff,image/webp}
       LEVEL98_MODEL: ${LEVEL98_MODEL:-}
+      AUTH_MODE: ${AUTH_MODE:-optional}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_TOKEN_TTL_MINUTES: ${AUTH_TOKEN_TTL_MINUTES:-1440}
     volumes:
       - ocr_uploads:/app/data/ocr_uploads
     ports:

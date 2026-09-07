@@ -45,11 +45,32 @@ _PLAIN_TEXT_SCHEMA_MODEL_PREFIXES: tuple[str, ...] = (
     "stepfun/step-",
 )
 
+# Models whose OpenRouter endpoints reject `temperature` (OpenAI reasoning
+# family: gpt-5.x, o1/o3/o4). With provider.require_parameters=True sending it
+# yields 404 "No endpoints found that can handle the requested parameters".
+_NO_TEMPERATURE_MODEL_PREFIXES: tuple[str, ...] = (
+    "openai/gpt-5",
+    "openai/o1",
+    "openai/o3",
+    "openai/o4",
+)
+
+# Models whose json_schema strict mode follows OpenAI's stricter dialect:
+# every object needs additionalProperties:false and `required` listing ALL
+# properties. Pydantic emits neither, so the schema is normalized first.
+_OPENAI_STRICT_SCHEMA_PREFIXES: tuple[str, ...] = (
+    "openai/",
+)
+
 # Models with mandatory reasoning (thinking) that cannot be disabled.
-# For these models, we must NOT send reasoning: {effort: "none"}.
+# For these models, we must NOT send reasoning: {effort: "none"} — the
+# endpoint answers 400 "Reasoning is mandatory for this endpoint and cannot
+# be disabled". Gemini 3.5 Flash Lite still reports reasoning_tokens = 0 in
+# practice, so no extra token budget is needed for it.
 _MANDATORY_REASONING_PREFIXES: tuple[str, ...] = (
     "minimax/minimax-m2",
     "stepfun/step-",
+    "google/gemini-3.5-flash-lite",
 )
 
 # Models that need higher max_tokens due to mandatory reasoning overhead.
@@ -101,6 +122,29 @@ def _strip_defaults(node: Any) -> Any:
     return node
 
 
+def _strictify_schema(node: Any) -> Any:
+    """Normalize a JSON Schema to OpenAI's strict Structured Outputs dialect.
+
+    OpenAI rejects a schema unless every object carries
+    `additionalProperties: false` and a `required` array naming *all* of its
+    properties. Optionality is expressed by nullable types instead, which
+    Pydantic already emits for `X | None` fields; fields with defaults simply
+    become mandatory in the response (the model has to emit the default-ish
+    value explicitly).
+    """
+    if isinstance(node, list):
+        return [_strictify_schema(item) for item in node]
+    if not isinstance(node, dict):
+        return node
+
+    out = {k: _strictify_schema(v) for k, v in node.items()}
+    props = out.get("properties")
+    if isinstance(props, dict):
+        out["additionalProperties"] = False
+        out["required"] = list(props.keys())
+    return out
+
+
 def _prepare_schema(schema: dict[str, Any]) -> dict[str, Any]:
     """Prepare Pydantic JSON schema for OpenRouter structured output.
 
@@ -150,6 +194,16 @@ def _uses_plain_text_schema(model: str) -> bool:
     These models don't support any response_format parameter.
     """
     return any(model.startswith(prefix) for prefix in _PLAIN_TEXT_SCHEMA_MODEL_PREFIXES)
+
+
+def _supports_temperature(model: str) -> bool:
+    """Check if the model's endpoints accept the `temperature` parameter."""
+    return not any(model.startswith(p) for p in _NO_TEMPERATURE_MODEL_PREFIXES)
+
+
+def _needs_openai_strict_schema(model: str) -> bool:
+    """Check if the model requires OpenAI's strict JSON Schema dialect."""
+    return any(model.startswith(p) for p in _OPENAI_STRICT_SCHEMA_PREFIXES)
 
 
 def _has_mandatory_reasoning(model: str) -> bool:
@@ -255,6 +309,16 @@ class OpenRouterProvider(LLMProvider):
 
         schema = output_model.model_json_schema()
         schema = _prepare_schema(schema)
+
+        # OpenAI's strict dialect demands additionalProperties:false + full
+        # `required` on every object; other providers accept the plain schema.
+        if _needs_openai_strict_schema(model):
+            schema = _strictify_schema(schema)
+
+        # Reasoning-family models (gpt-5.x, o-series) reject `temperature`;
+        # sending it with require_parameters=True fails provider routing.
+        if temperature is not None and not _supports_temperature(model):
+            temperature = None
 
         # Bump max_tokens for models with mandatory reasoning overhead
         if _needs_high_max_tokens(model):
@@ -373,8 +437,10 @@ class OpenRouterProvider(LLMProvider):
         last_error: Exception | None = None
 
         for attempt in range(1, _MAX_RETRIES + 1):
-            # Bump temperature on retry to break deterministic repetition loops
-            temp = temperature if attempt == 1 else _RETRY_TEMPERATURE
+            # Bump temperature on retry to break deterministic repetition loops.
+            # Skipped when temperature is unset — either by config or because
+            # the model rejects the parameter (see _supports_temperature).
+            temp = temperature if attempt == 1 or temperature is None else _RETRY_TEMPERATURE
 
             kwargs: dict[str, Any] = {
                 "model": model,
@@ -501,7 +567,7 @@ class OpenRouterProvider(LLMProvider):
         last_error: Exception | None = None
 
         for attempt in range(1, _MAX_RETRIES + 1):
-            temp = temperature if attempt == 1 else _RETRY_TEMPERATURE
+            temp = temperature if attempt == 1 or temperature is None else _RETRY_TEMPERATURE
 
             kwargs: dict[str, Any] = {
                 "model": model,
