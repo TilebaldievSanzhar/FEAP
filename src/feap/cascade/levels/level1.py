@@ -14,6 +14,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
+from feap.cascade.selection import selected_candidate
 from feap.db.queries import get_opi_rules, get_sections, get_section_notes_for_codes
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
@@ -116,13 +117,14 @@ class Level1Section(BaseCascadeLevel):
                 section_name = s.name
                 break
 
+        chosen = selected_candidate(result.candidates, "section", result.selected_section)
         state.add_decision(DecisionChainEntry(
             level=1,
             code=result.selected_section,
             name=section_name,
-            reasoning=result.candidates[0].reasoning if result.candidates else "",
+            reasoning=chosen.reasoning if chosen else "",
             rules_applied=result.applied_rules,
-            confidence=result.candidates[0].confidence if result.candidates else 0.5,
+            confidence=chosen.confidence if chosen else 0.5,
         ))
 
         return result

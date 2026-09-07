@@ -5,10 +5,11 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from feap.schemas.common import BacktrackTrigger
+from feap.schemas.codes import Code2, Decision2
 
 
 class GroupCandidate(BaseModel):
-    group: str = Field(description="2-digit group code")
+    group: Code2 = Field(description="2-digit group code")
     group_name: str
     # --- SGR: анализ ДО confidence ---
     text_match_analysis: str = Field(
@@ -35,6 +36,6 @@ class GroupResult(BaseModel):
     )
     # --- Решение ---
     candidates: list[GroupCandidate] = Field(min_length=1, max_length=5)
-    selected_group: str
+    selected_group: Decision2
     applied_rules: list[str] = Field(default_factory=list)
     backtrack_trigger: BacktrackTrigger | None = None

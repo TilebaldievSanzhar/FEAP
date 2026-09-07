@@ -14,6 +14,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
+from feap.cascade.selection import classify_choice
 from feap.db.queries import (
     get_children,
     get_cross_group_definitions,
@@ -111,7 +112,9 @@ class Level5Subsubposition(BaseCascadeLevel):
                 cross_group_notes=cross_def_notes,
             )
             # Multi-branch: use top-2 branches to prevent "invisible code" errors
-            selected_branches = _get_top_branches(shortlist, max_branches=2)
+            selected_branches = _get_top_branches(
+                shortlist, max_branches=2, valid_branches={c["code"][:8] for c in codes_data},
+            )
             branch_codes = [c for c in codes_data if any(c["code"].startswith(b) for b in selected_branches)]
             if not branch_codes:
                 logger.warning("L5a selected branches %s not found, falling back to all codes", selected_branches)
@@ -203,7 +206,9 @@ class Level5Subsubposition(BaseCascadeLevel):
             cross_group_notes=cross_group_notes,
         )
 
-        shortlist = await classify(
+        shortlist = await classify_choice(
+            classify_fn=classify,
+            choices={"selected_code_8": set(branches_map)},
             level=5,
             system_prompt=system,
             user_message=user,
@@ -236,7 +241,9 @@ class Level5Subsubposition(BaseCascadeLevel):
             cross_group_notes=cross_group_notes,
         )
 
-        return await classify(
+        return await classify_choice(
+            classify_fn=classify,
+            choices={"selected_code_10": {c["code"] for c in codes_data}},
             level=5,
             system_prompt=system,
             user_message=user,
@@ -292,19 +299,13 @@ class Level5Subsubposition(BaseCascadeLevel):
         # Validate that selected code exists
         valid_codes = {c.code for c in leaves}
         if result.selected_code_10 not in valid_codes:
-            prefix8 = result.selected_code_10[:8] if result.selected_code_10 else ""
-            candidates = [c for c in leaves if c.code.startswith(prefix8)]
-            if not candidates:
-                prefix6 = result.selected_code_10[:6] if result.selected_code_10 else ""
-                candidates = [c for c in leaves if c.code.startswith(prefix6)]
-            if candidates:
-                result.selected_code_10 = candidates[-1].code
-                result.selected_code_8 = result.selected_code_10[:8]
-                result.confidence = min(result.confidence, 0.4)
+            raise ValueError(f"Selected code is not a leaf of {subposition_code}")
 
+        # Derived fields have one source of truth, regardless of model formatting.
+        result.subposition = subposition_code
+        result.selected_code_8 = result.selected_code_10[:8]
         state.code_10 = result.selected_code_10
-        if not result.final_code:
-            result.final_code = _format_code(result.selected_code_10)
+        result.final_code = _format_code(result.selected_code_10)
 
         leaf_name = ""
         for c in leaves:
@@ -376,15 +377,18 @@ def _compute_local_names(leaves) -> dict[str, str]:
 def _get_top_branches(
     shortlist: SubsubpositionShortlistResult,
     max_branches: int = 2,
+    valid_branches: set[str] | None = None,
 ) -> list[str]:
     """Extract top-N distinct branches from L5a shortlist result."""
     branches: list[str] = [shortlist.selected_code_8]
     # Add runner-up candidates sorted by confidence
     for cand in sorted(shortlist.candidates, key=lambda c: c.confidence, reverse=True):
-        if cand.code_8 not in branches:
-            branches.append(cand.code_8)
         if len(branches) >= max_branches:
             break
+        if valid_branches is not None and cand.code_8 not in valid_branches:
+            continue
+        if cand.code_8 not in branches:
+            branches.append(cand.code_8)
     return branches
 
 

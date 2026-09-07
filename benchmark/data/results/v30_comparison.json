@@ -1,0 +1,639 @@
+{
+  "sampling": {
+    "seed": 20260907,
+    "easy": 9,
+    "medium": 12,
+    "hard": 9
+  },
+  "historical_v29": {
+    "cases": 30,
+    "code10_correct": 22
+  },
+  "constrained_run_before_blank_group_fix": {
+    "cases": 30,
+    "completed": 29,
+    "code10_correct": 23,
+    "errors": 1
+  },
+  "targeted_backtrack_retest": {
+    "case_id": "BENCH-H25",
+    "code10_correct": true
+  },
+  "diagnostic_aggregate_after_targeted_retest": {
+    "cases": 30,
+    "code10_correct": 24,
+    "warning": "Mixed revisions; not a fresh final-revision 30-case benchmark"
+  },
+  "paired_fresh_baseline": {
+    "cases": 18,
+    "baseline_correct": 16,
+    "constrained_correct": 16
+  },
+  "rows": [
+    {
+      "case_id": "BENCH-E30",
+      "difficulty": "easy",
+      "expected_code_10": "9701910000",
+      "v29": {
+        "status": "completed",
+        "code_10": "9701910000",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "9701910000",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "9701910000",
+        "confidence": 0.0
+      }
+    },
+    {
+      "case_id": "BENCH-E08",
+      "difficulty": "easy",
+      "expected_code_10": "2103100000",
+      "v29": {
+        "status": "completed",
+        "code_10": "2103909009",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "2103100000",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "2103100000",
+        "confidence": 0.1
+      }
+    },
+    {
+      "case_id": "BENCH-E07",
+      "difficulty": "easy",
+      "expected_code_10": "1511109002",
+      "v29": {
+        "status": "completed",
+        "code_10": "1511109002",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "1511109002",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "1511109002",
+        "confidence": 0.0
+      }
+    },
+    {
+      "case_id": "BENCH-E14",
+      "difficulty": "easy",
+      "expected_code_10": "4202929100",
+      "v29": {
+        "status": "completed",
+        "code_10": "4202929100",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "4202929100",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "4202929100",
+        "confidence": 0.95
+      }
+    },
+    {
+      "case_id": "BENCH-E28",
+      "difficulty": "easy",
+      "expected_code_10": "9608101000",
+      "v29": {
+        "status": "completed",
+        "code_10": "9608101000",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "9608101000",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "9608101000",
+        "confidence": 0.0
+      }
+    },
+    {
+      "case_id": "BENCH-E24",
+      "difficulty": "easy",
+      "expected_code_10": "8516400000",
+      "v29": {
+        "status": "completed",
+        "code_10": "8516900000",
+        "confidence": 0.1
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8516400000",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "8516400000",
+        "confidence": 0.0
+      }
+    },
+    {
+      "case_id": "BENCH-E20",
+      "difficulty": "easy",
+      "expected_code_10": "7010904300",
+      "v29": {
+        "status": "completed",
+        "code_10": "7010904300",
+        "confidence": 0.4
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "7010904300",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "7010904300",
+        "confidence": 0.0
+      }
+    },
+    {
+      "case_id": "BENCH-E29",
+      "difficulty": "easy",
+      "expected_code_10": "7113190000",
+      "v29": {
+        "status": "completed",
+        "code_10": "7113190000",
+        "confidence": 1.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "7113190000",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "7113200000",
+        "confidence": 0.4
+      }
+    },
+    {
+      "case_id": "BENCH-E15",
+      "difficulty": "easy",
+      "expected_code_10": "4412330000",
+      "v29": {
+        "status": "completed",
+        "code_10": "4412330000",
+        "confidence": 1.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "4412330000",
+        "confidence": 0.98
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "4412330000",
+        "confidence": 0.95
+      }
+    },
+    {
+      "case_id": "BENCH-M17",
+      "difficulty": "medium",
+      "expected_code_10": "3923309090",
+      "v29": {
+        "status": "completed",
+        "code_10": "3923309090",
+        "confidence": 0.9
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "3923900000",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "3923309090",
+        "confidence": 0.85
+      }
+    },
+    {
+      "case_id": "BENCH-M33",
+      "difficulty": "medium",
+      "expected_code_10": "8481808199",
+      "v29": {
+        "status": "completed",
+        "code_10": "8481808199",
+        "confidence": 0.1
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8481808199",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-M08",
+      "difficulty": "medium",
+      "expected_code_10": "1905319900",
+      "v29": {
+        "status": "completed",
+        "code_10": "1905319900",
+        "confidence": 0.5
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "1905319900",
+        "confidence": 0.5
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "1905319900",
+        "confidence": 0.5
+      }
+    },
+    {
+      "case_id": "BENCH-M15",
+      "difficulty": "medium",
+      "expected_code_10": "3304100000",
+      "v29": {
+        "status": "completed",
+        "code_10": "3304100000",
+        "confidence": 1.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "3304100000",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "3304100000",
+        "confidence": 1.0
+      }
+    },
+    {
+      "case_id": "BENCH-M11",
+      "difficulty": "medium",
+      "expected_code_10": "2710194210",
+      "v29": {
+        "status": "completed",
+        "code_10": "2710194210",
+        "confidence": 0.95
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "2710194210",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "2710194210",
+        "confidence": 0.0
+      }
+    },
+    {
+      "case_id": "BENCH-M23",
+      "difficulty": "medium",
+      "expected_code_10": "6203423500",
+      "v29": {
+        "status": "completed",
+        "code_10": "6203423500",
+        "confidence": 1.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "6203423500",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "6203423500",
+        "confidence": 1.0
+      }
+    },
+    {
+      "case_id": "BENCH-M34",
+      "difficulty": "medium",
+      "expected_code_10": "8501522009",
+      "v29": {
+        "status": "completed",
+        "code_10": "8501522001",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8501522001",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-M19",
+      "difficulty": "medium",
+      "expected_code_10": "4104115100",
+      "v29": {
+        "status": "completed",
+        "code_10": "4104195100",
+        "confidence": 0.5
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "4104195100",
+        "confidence": 0.5
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "4104195100",
+        "confidence": 0.5
+      }
+    },
+    {
+      "case_id": "BENCH-M24",
+      "difficulty": "medium",
+      "expected_code_10": "6204430000",
+      "v29": {
+        "status": "completed",
+        "code_10": "6204430000",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "6204430000",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "6204430000",
+        "confidence": 0.0
+      }
+    },
+    {
+      "case_id": "BENCH-M01",
+      "difficulty": "medium",
+      "expected_code_10": "0202309008",
+      "v29": {
+        "status": "completed",
+        "code_10": "0202309008",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "0202309008",
+        "confidence": 0.5
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "0202309008",
+        "confidence": 0.5
+      }
+    },
+    {
+      "case_id": "BENCH-M38",
+      "difficulty": "medium",
+      "expected_code_10": "8606920000",
+      "v29": {
+        "status": "completed",
+        "code_10": "8606920000",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8606920000",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-M12",
+      "difficulty": "medium",
+      "expected_code_10": "3004900006",
+      "v29": {
+        "status": "completed",
+        "code_10": "3004900006",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "3004900006",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "completed",
+        "code_10": "3004900006",
+        "confidence": 0.0
+      }
+    },
+    {
+      "case_id": "BENCH-H26",
+      "difficulty": "hard",
+      "expected_code_10": "8903329900",
+      "v29": {
+        "status": "completed",
+        "code_10": "8903329900",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8903329900",
+        "confidence": 0.5
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-H23",
+      "difficulty": "hard",
+      "expected_code_10": "2710124500",
+      "v29": {
+        "status": "completed",
+        "code_10": "2710124500",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "2710124500",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-H28",
+      "difficulty": "hard",
+      "expected_code_10": "8703231981",
+      "v29": {
+        "status": "completed",
+        "code_10": "8703231981",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8703231981",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-H27",
+      "difficulty": "hard",
+      "expected_code_10": "3808918000",
+      "v29": {
+        "status": "completed",
+        "code_10": "3808911000",
+        "confidence": 0.95
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "3808911000",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-H24",
+      "difficulty": "hard",
+      "expected_code_10": "6201400000",
+      "v29": {
+        "status": "completed",
+        "code_10": "6201900000",
+        "confidence": 0.4
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "6201400000",
+        "confidence": 1.0
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-H02",
+      "difficulty": "hard",
+      "expected_code_10": "8443321009",
+      "v29": {
+        "status": "completed",
+        "code_10": "8443999000",
+        "confidence": 0.4
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8443318000",
+        "confidence": 0.5
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-H04",
+      "difficulty": "hard",
+      "expected_code_10": "8509400000",
+      "v29": {
+        "status": "completed",
+        "code_10": "8509400000",
+        "confidence": 0.0
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8509400000",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    },
+    {
+      "case_id": "BENCH-H25",
+      "difficulty": "hard",
+      "expected_code_10": "9402100001",
+      "v29": {
+        "status": "completed",
+        "code_10": "9402100001",
+        "confidence": 1.0
+      },
+      "v30_constrained": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      },
+      "v30_backtrack_check": {
+        "status": "completed",
+        "code_10": "9402100001",
+        "confidence": 1.0
+      }
+    },
+    {
+      "case_id": "BENCH-H29",
+      "difficulty": "hard",
+      "expected_code_10": "8704239809",
+      "v29": {
+        "status": "completed",
+        "code_10": "8704239209",
+        "confidence": 0.95
+      },
+      "v30_constrained": {
+        "status": "completed",
+        "code_10": "8704239209",
+        "confidence": 0.95
+      },
+      "v30_baseline": {
+        "status": "error",
+        "code_10": null,
+        "confidence": null
+      }
+    }
+  ]
+}

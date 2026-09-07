@@ -5,6 +5,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
+from feap.cascade.selection import classify_choice, selected_candidate
 from feap.db.queries import (
     get_children,
     get_cross_group_definitions,
@@ -117,12 +118,17 @@ class Level4Subposition(BaseCascadeLevel):
             cross_group_notes=cross_def_notes,
         )
 
-        result = await classify(
+        result = await classify_choice(
+            classify_fn=classify,
+            choices={"selected_subposition": {s.code for s in subpositions}},
             level=4,
             system_prompt=system,
             user_message=user,
             output_model=SubpositionResult,
         )
+
+        if result.backtrack_trigger:
+            return result
 
         # Fallback: if LLM signals missing parameters but still picked a subposition,
         # accept the subposition with reduced confidence instead of stopping.
@@ -139,16 +145,6 @@ class Level4Subposition(BaseCascadeLevel):
                 )
                 return result
 
-        # Validate that the selected subposition exists among available options
-        valid_codes = {s.code for s in subpositions}
-        if result.selected_subposition not in valid_codes:
-            # Try to find closest match by 4-digit prefix
-            prefix4 = result.selected_subposition[:4] if result.selected_subposition else ""
-            candidates = [s for s in subpositions if s.code.startswith(prefix4)]
-            if candidates:
-                result.selected_subposition = candidates[-1].code
-                result.confidence = min(result.confidence, 0.4)
-
         state.subposition = result.selected_subposition
 
         sp_name = ""
@@ -157,9 +153,10 @@ class Level4Subposition(BaseCascadeLevel):
                 sp_name = s.name
                 break
 
+        chosen = selected_candidate(result.candidates, "subposition", result.selected_subposition)
         state.add_decision(DecisionChainEntry(
             level=4, code=result.selected_subposition, name=sp_name,
-            reasoning=result.candidates[0].reasoning if result.candidates else "",
+            reasoning=chosen.reasoning if chosen else "",
             rules_applied=result.applied_rules,
             confidence=result.confidence,
         ))

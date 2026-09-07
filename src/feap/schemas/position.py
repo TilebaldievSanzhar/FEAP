@@ -5,10 +5,11 @@ from __future__ import annotations
 from pydantic import BaseModel, Field, field_validator
 
 from feap.schemas.common import BacktrackTrigger
+from feap.schemas.codes import Code4, Decision4
 
 
 class PositionCandidate(BaseModel):
-    position: str = Field(description="4-digit position code")
+    position: Code4 = Field(description="4-digit position code")
     position_text: str
     # --- SGR: анализ ДО confidence ---
     text_match_score: str = Field(
@@ -34,7 +35,7 @@ class ShortlistResult(BaseModel):
         description="Шаг 2: По каким критериям различаются позиции в этой группе",
     )
     # --- Решение ---
-    shortlisted: list[str] = Field(
+    shortlisted: list[Code4] = Field(
         min_length=1, max_length=5, description="List of 4-digit position codes"
     )
     reasoning: str
@@ -60,7 +61,7 @@ class PositionResult(BaseModel):
     )
     # --- Решение (ПОСЛЕ анализа) ---
     candidates: list[PositionCandidate] = Field(min_length=1, max_length=5)
-    selected_position: str
+    selected_position: Decision4
     applied_rules: list[str] = Field(default_factory=list)
     precedents_found: list[str] = Field(default_factory=list)
     missing_parameters: list[str] = Field(

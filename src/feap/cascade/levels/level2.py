@@ -5,6 +5,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
+from feap.cascade.selection import classify_choice, selected_candidate
 from feap.db.queries import (
     get_group_notes_for_section,
     get_groups_by_section,
@@ -65,12 +66,17 @@ class Level2Group(BaseCascadeLevel):
             excluded_reasons=excluded_reasons,
         )
 
-        result = await classify(
+        result = await classify_choice(
+            classify_fn=classify,
+            choices={"selected_group": {g["code"] for g in groups_data}},
             level=2,
             system_prompt=system,
             user_message=user,
             output_model=GroupResult,
         )
+
+        if result.backtrack_trigger:
+            return result
 
         state.group = result.selected_group
 
@@ -80,13 +86,14 @@ class Level2Group(BaseCascadeLevel):
                 group_name = g.name
                 break
 
+        chosen = selected_candidate(result.candidates, "group", result.selected_group)
         state.add_decision(DecisionChainEntry(
             level=2,
             code=result.selected_group,
             name=group_name,
-            reasoning=result.candidates[0].reasoning if result.candidates else "",
+            reasoning=chosen.reasoning if chosen else "",
             rules_applied=result.applied_rules,
-            confidence=result.candidates[0].confidence if result.candidates else 0.5,
+            confidence=chosen.confidence if chosen else 0.5,
         ))
 
         return result

@@ -10,6 +10,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
+from feap.cascade.selection import classify_choice, selected_candidate
 from feap.db.queries import get_children, get_explanations_by_codes, get_node_by_code, get_notes, get_opi_rules
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
@@ -56,7 +57,9 @@ class Level3Position(BaseCascadeLevel):
             group_notes=group_notes,
         )
 
-        shortlist = await classify(
+        shortlist = await classify_choice(
+            classify_fn=classify,
+            choices={"shortlisted": {p["code"] for p in positions_data}},
             level=3,
             system_prompt=system_sl,
             user_message=user_sl,
@@ -92,12 +95,17 @@ class Level3Position(BaseCascadeLevel):
             opi_rules=rules_data,
         )
 
-        result = await classify(
+        result = await classify_choice(
+            classify_fn=classify,
+            choices={"selected_position": {p["code"] for p in positions_data}},
             level=3,
             system_prompt=system_deep,
             user_message=user_deep,
             output_model=PositionResult,
         )
+
+        if result.backtrack_trigger:
+            return result
 
         # If LLM signals missing parameters, propagate to state and stop
         if result.missing_parameters:
@@ -116,13 +124,14 @@ class Level3Position(BaseCascadeLevel):
                 pos_name = p.name
                 break
 
+        chosen = selected_candidate(result.candidates, "position", result.selected_position)
         state.add_decision(DecisionChainEntry(
             level=3,
             code=result.selected_position,
             name=pos_name,
-            reasoning=result.candidates[0].reasoning if result.candidates else "",
+            reasoning=chosen.reasoning if chosen else "",
             rules_applied=result.applied_rules,
-            confidence=result.candidates[0].confidence if result.candidates else 0.5,
+            confidence=chosen.confidence if chosen else 0.5,
         ))
 
         return result

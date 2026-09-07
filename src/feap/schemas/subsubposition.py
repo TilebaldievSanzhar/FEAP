@@ -7,13 +7,15 @@ SGR fields guide reasoning before the decision:
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from feap.schemas.codes import Code8, Code10, Decision8, Decision10, normalize_code
 
 
 class BranchCandidate(BaseModel):
     """Candidate branch (8-digit code group) for L5a shortlist."""
 
-    code_8: str = Field(description="8-значный код ветки")
+    code_8: Code8 = Field(description="8-значный код ветки")
     branch_text: str = Field(default="", description="Текст/название ветки")
     reasoning: str = Field(default="")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -37,12 +39,12 @@ class SubsubpositionShortlistResult(BaseModel):
     )
 
     candidates: list[BranchCandidate] = Field(min_length=1, max_length=5)
-    selected_code_8: str = Field(description="Выбранный 8-значный код")
+    selected_code_8: Decision8 = Field(description="Выбранный 8-значный код")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class SubsubpositionCandidate(BaseModel):
-    code_10: str = Field(description="10-digit code")
+    code_10: Code10 = Field(description="10-digit code")
     code_text: str = Field(default="", description="Name/text of the code")
     reasoning: str = Field(default="")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -76,8 +78,8 @@ class SubsubpositionResult(BaseModel):
         default_factory=list,
         description="Кандидаты с обоснованием",
     )
-    selected_code_8: str = Field(description="8-digit code")
-    selected_code_10: str = Field(description="10-digit code")
+    selected_code_8: Decision8 = Field(description="8-digit code")
+    selected_code_10: Decision10 = Field(description="10-digit code")
     reasoning: str = Field(default="", description="Step-by-step reasoning for the selected code")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     missing_parameters: list[str] = Field(
@@ -85,6 +87,17 @@ class SubsubpositionResult(BaseModel):
         description="Parameters needed but not provided — requires user input",
     )
     final_code: str = Field(default="", description="Final formatted code (computed post-hoc)")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _derive_code_8(cls, data: object) -> object:
+        # The 8-digit prefix is a derived value, not an independent LLM decision.
+        # Some providers return the 6-digit parent here even in strict mode.
+        if isinstance(data, dict):
+            code = normalize_code(data.get("selected_code_10"))
+            if isinstance(code, str) and len(code) == 10 and code.isascii() and code.isdigit():
+                data = {**data, "selected_code_8": code[:8]}
+        return data
 
     @field_validator("missing_parameters", mode="before")
     @classmethod

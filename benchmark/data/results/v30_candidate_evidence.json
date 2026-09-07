@@ -1,0 +1,61 @@
+[
+  {
+    "case_id": "BENCH-E24",
+    "schema": "SectionResult",
+    "model_selected": "XVI",
+    "candidates": [
+      {
+        "code": "VII",
+        "confidence": 0.0,
+        "reasoning": "Товар не относится к пластиковым или резиновым изделиям."
+      },
+      {
+        "code": "XV",
+        "confidence": 0.0,
+        "reasoning": "Электрические приборы исключены из раздела XV и классифицируются в разделе XVI."
+      },
+      {
+        "code": "XVI",
+        "confidence": 1.0,
+        "reasoning": "Товар полностью соответствует описанию раздела как электротехническое оборудование бытового назначения."
+      }
+    ],
+    "legacy_recorded_confidence": 0.0
+  },
+  {
+    "case_id": "BENCH-E24",
+    "schema": "GroupResult",
+    "model_selected": "85",
+    "candidates": [
+      {
+        "code": "84",
+        "confidence": 0.0,
+        "reasoning": "An electric iron is an electro-thermic appliance, which is specifically covered under heading 8516 in Chapter 85, making Chapter 84 incorrect."
+      },
+      {
+        "code": "85",
+        "confidence": 1.0,
+        "reasoning": "The product is an electric iron powered by electricity, containing a heating element, perfectly matching the scope of Chapter 85 (specifically heading 8516)."
+      }
+    ],
+    "legacy_recorded_confidence": 0.0
+  },
+  {
+    "case_id": "BENCH-E24",
+    "schema": "PositionResult",
+    "model_selected": "8516",
+    "candidates": [
+      {
+        "code": "8509",
+        "confidence": 0.0,
+        "reasoning": "Утюг не является электромеханической машиной со встроенным электродвигателем; кроме того, примечание 4(ж) к группе 85 прямо исключает электронагревательные приборы из товарной позиции 8509."
+      },
+      {
+        "code": "8516",
+        "confidence": 1.0,
+        "reasoning": "Товар представляет собой электрический утюг с функцией пароувлажнения, что прямо поименовано в тексте позиции 8516 («электроутюги»)."
+      }
+    ],
+    "legacy_recorded_confidence": 0.0
+  }
+]

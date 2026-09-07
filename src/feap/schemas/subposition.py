@@ -11,10 +11,11 @@ from __future__ import annotations
 from pydantic import BaseModel, Field, field_validator
 
 from feap.schemas.common import BacktrackTrigger
+from feap.schemas.codes import Code6, Decision6
 
 
 class SubpositionCandidate(BaseModel):
-    subposition: str = Field(description="6-digit subposition code")
+    subposition: Code6 = Field(description="6-digit subposition code")
     subposition_text: str
     reasoning: str
     confidence: float = Field(ge=0.0, le=1.0)
@@ -49,7 +50,7 @@ class SubpositionResult(BaseModel):
 
     # --- Candidates + decision ---
     candidates: list[SubpositionCandidate] = Field(min_length=1, max_length=5)
-    selected_subposition: str
+    selected_subposition: Decision6
     applied_rules: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
     missing_parameters: list[str] = Field(
