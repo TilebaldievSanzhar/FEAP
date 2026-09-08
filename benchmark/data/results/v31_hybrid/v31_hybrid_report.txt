@@ -1,0 +1,74 @@
+
+╔══ Benchmark Report: benchmark_100 / v31_hybrid ══╗
+  Run at : 2026-09-07T16:17:00.268316+00:00
+  Cases  : 100
+
+─── Key Metrics ─────────────────────────────────────────
+  Heading accuracy (4-digit)      : 0.980  ★ primary KPI
+  Subheading accuracy (6-digit)   : 0.910
+  Code-10 accuracy (10-digit)     : 0.810
+  Hierarchical score (weighted)   : 0.9330
+  ECE (calibration)               : 0.0691
+  Duty rate accuracy              : 0.000
+
+─── System Behaviour ────────────────────────────────────
+  Total cases        : 100
+  Completed          : 100  (100.0%)
+  Needs input        : 0
+  Errors             : 0
+  Correctly stopped  : 0
+  Wrongly stopped    : 0
+  Fell into trap code: 2
+
+─── Hierarchical Accuracy ───────────────────────────────
+section     : 0.990  (99/100)
+group       : 0.990  (99/100)
+heading     : 0.980  (98/100)
+subheading  : 0.910  (91/100)
+code_8      : 0.840  (84/100)
+code_10     : 0.810  (81/100)
+score       : 0.9330  (weighted composite)
+
+─── Accuracy by Difficulty ──────────────────────────────
+  easy      heading=0.967  code10=0.933  score=0.9567  (n=30)
+  medium    heading=1.000  code10=0.800  score=0.9463  (n=40)
+  hard      heading=0.967  code10=0.700  score=0.8917  (n=30)
+
+─── Accuracy by Section (heading level) ─────────────────
+  Section XV     heading=0.800  code10=0.600  (n=5)
+  Section I      heading=0.875  code10=0.625  (n=8)
+  Section II     heading=1.000  code10=1.000  (n=4)
+  Section III    heading=1.000  code10=1.000  (n=2)
+  Section IV     heading=1.000  code10=0.857  (n=7)
+  Section V      heading=1.000  code10=0.667  (n=3)
+  Section VI     heading=1.000  code10=0.889  (n=9)
+  Section VII    heading=1.000  code10=1.000  (n=3)
+  Section VIII   heading=1.000  code10=0.667  (n=3)
+  Section IX     heading=1.000  code10=0.667  (n=3)
+
+─── Confidence Calibration ──────────────────────────────
+  Cases with confidence   : 100
+  Cases without confidence: 0
+  ECE  (Expected)         : 0.0691   ← primary KPI (lower=better)
+  MCE  (Maximum)          : 0.5000
+  ACE  (Average)          : 0.1921
+  Overconfident bins      : 1
+  Underconfident bins     : 2
+
+─── Financial / Duty-Rate Impact ────────────────────────
+  Evaluable cases  : 0
+  Unevaluable      : 100  (no duty rate in ground truth)
+  Duty correct     : 0 / 0  (0.0%)
+  No impact errors : 0
+  Minor errors     : 0   (≤ 2.0pp)
+  Major errors     : 0   (> 5.0pp)  ← critical
+  Mean |Δ duty|    : 0.00 pp
+  Max  |Δ duty|    : 0.00 pp
+
+─── Latency ─────────────────────────────────────────────
+  mean : 18686 ms
+  p50  : 18082 ms
+  p95  : 23309 ms
+  p99  : 47991 ms
+
+╚═══════════════════════════════════════════════════════╝

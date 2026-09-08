@@ -119,6 +119,65 @@ async def test_group_backtrack_can_leave_decision_blank():
     ) is result
 
 
+@pytest.mark.parametrize('excluded_code,target_level', [('0406', 3), ('040690', 4)])
+async def test_forward_level_backtrack_requires_repair(excluded_code, target_level):
+    from feap.schemas.common import BacktrackTrigger
+    invalid = GroupResult(
+        selected_group='', candidates=[{
+            'group': '04', 'group_name': 'Молоко', 'exclusion_check': '',
+            'reasoning': 'Недостаточно данных', 'confidence': 0.5,
+        }],
+        backtrack_trigger=BacktrackTrigger(
+            target_level=target_level, excluded_code=excluded_code, reason='Need another choice'),
+    )
+    valid = invalid.model_copy(update={'selected_group': '04', 'backtrack_trigger': None})
+    call = AsyncMock(side_effect=[invalid, valid])
+    result = await classify_choice(
+        classify_fn=call, choices={'selected_group': {'04'}},
+        level=2, user_message='cheese', output_model=GroupResult,
+    )
+    assert result.selected_group == '04'
+    assert call.await_count == 2
+    assert 'backtrack_trigger=null' in call.call_args.kwargs['user_message']
+
+
+async def test_invalid_backtrack_cannot_exhaust_repairs_then_escape():
+    from feap.schemas.common import BacktrackTrigger
+    invalid = GroupResult(selected_group='', candidates=[{
+        'group': '04', 'group_name': 'Молоко', 'exclusion_check': '',
+        'reasoning': 'Недостаточно данных', 'confidence': 0.5,
+    }], backtrack_trigger=BacktrackTrigger(
+        target_level=3, excluded_code='0406', reason='Cannot classify'))
+    call = AsyncMock(return_value=invalid)
+    with pytest.raises(ValueError, match='earlier cascade level'):
+        await classify_choice(classify_fn=call, choices={'selected_group': {'04'}},
+                              level=2, user_message='cheese')
+    assert call.await_count == 2
+
+
+async def test_l2_repairs_backtrack_before_committing_group(monkeypatch):
+    import feap.cascade.levels.level2 as module
+    from feap.schemas.common import BacktrackTrigger
+    for name in vars(module):
+        if name.startswith('get_'):
+            monkeypatch.setattr(module, name, AsyncMock(return_value=[]))
+    monkeypatch.setattr(module, 'get_groups_by_section', AsyncMock(return_value=[
+        SimpleNamespace(code='04', name='Молоко'),
+    ]))
+    invalid = SimpleNamespace(selected_group='', backtrack_trigger=BacktrackTrigger(
+        target_level=3, excluded_code='0406', reason='Недостаточно данных'))
+    valid = SimpleNamespace(selected_group='04', backtrack_trigger=None, applied_rules=[],
+                            candidates=[SimpleNamespace(group='04', reasoning='Молоко', confidence=0.9)])
+    call = AsyncMock(side_effect=[invalid, valid])
+    monkeypatch.setattr(module, 'classify', call)
+    state = CascadeState('Сыр')
+    state.section = 'I'
+    state.product_card = {'original_description': 'Сыр', 'normalized_description': 'Сыр'}
+    await module.Level2Group().run(state, None)
+    assert state.group == state.chain[-1].code == '04'
+    assert call.await_count == 2
+
+
 async def test_blank_decision_without_control_signal_is_invalid():
     call = AsyncMock(return_value=l4_result(''))
     with pytest.raises(ValueError):

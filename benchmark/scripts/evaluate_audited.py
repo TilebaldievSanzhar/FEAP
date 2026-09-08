@@ -9,44 +9,85 @@ import contextvars
 import hashlib
 import json
 import subprocess
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 
+import feap
+import psycopg2
+from psycopg2 import sql
+
 from benchmark.evaluator.runner import BenchmarkRunner
 from benchmark.scripts import evaluate
+from feap.config import settings
 from feap.llm.client import get_provider
-from feap.llm.models import resolve_model
+from feap.llm.models import get_max_tokens, get_temperature, resolve_model
 
 case_id = contextvars.ContextVar('benchmark_case_id', default=None)
+
+
+def database_fingerprint():
+    """Hash classification reference data, excluding mutable sessions/embeddings."""
+    fingerprints = {}
+    with closing(psycopg2.connect(settings.database_url_sync)) as connection, connection:
+        for table in ('tnved_tree', 'tnved_notes', 'tnved_explanatory_notes', 'tnved_opi'):
+            digest = hashlib.sha256()
+            count = 0
+            with connection.cursor(name=f'audit_{table}') as cursor:
+                cursor.execute(sql.SQL(
+                    "SELECT to_jsonb(t) - 'embedding' - 'updated_at' FROM {} AS t ORDER BY id"
+                ).format(sql.Identifier(table)))
+                for (row,) in cursor:
+                    digest.update(json.dumps(row, sort_keys=True, ensure_ascii=False).encode())
+                    digest.update(b'\n')
+                    count += 1
+            fingerprints[table] = {'rows': count, 'sha256': digest.hexdigest()}
+    return fingerprints
 
 
 def main():
     args = evaluate.parse_args()
     args.results_dir.mkdir(parents=True, exist_ok=True)
     prefix = args.results_dir / args.run_id
+    # PYTHONPATH may point feap at an isolated historical worktree while this
+    # common evaluator stays in the working checkout. Record the code actually imported.
+    source_root = Path(feap.__file__).resolve().parents[2]
     manifest = {
         'started_at': datetime.now(UTC).isoformat(),
-        'git_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
-        'git_diff_sha256': hashlib.sha256(subprocess.check_output(['git', 'diff', 'HEAD'])).hexdigest(),
+        'git_revision': subprocess.check_output(
+            ['git', '-C', str(source_root), 'rev-parse', 'HEAD'], text=True,
+        ).strip(),
+        'git_diff_sha256': hashlib.sha256(subprocess.check_output(
+            ['git', '-C', str(source_root), 'diff', 'HEAD', '--', 'src/feap'],
+        )).hexdigest(),
+        'reference_data': database_fingerprint(),
         'dataset_sha256': hashlib.sha256(args.dataset.read_bytes()).hexdigest(),
         'models': {str(level): resolve_model(level) for level in range(6)},
+        'generation': {str(level): {'max_tokens': get_max_tokens(level),
+                                   'temperature': get_temperature(level)}
+                       for level in range(6)},
+        'cascade_max_backtrack': settings.CASCADE_MAX_BACKTRACK,
+        'retry_errors': args.retry_errors,
+        'retry_case_ids': sorted(args.retry_case_id),
         'concurrency': args.concurrency,
         'timeout': args.timeout,
         'source_sha256': {
-            str(path): hashlib.sha256(path.read_bytes()).hexdigest()
-            for path in sorted(Path('src/feap').rglob('*'))
+            path.relative_to(source_root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in sorted((source_root / 'src/feap').rglob('*'))
             if path.suffix in {'.py', '.jinja2'}
         },
     }
     manifest_path = prefix.with_name(prefix.name + '_manifest.json')
     if manifest_path.exists() and not args.no_resume:
         previous = json.loads(manifest_path.read_text(encoding='utf-8'))
-        for key in ('dataset_sha256', 'models', 'source_sha256'):
+        for key in ('dataset_sha256', 'models', 'source_sha256', 'reference_data',
+                    'generation', 'cascade_max_backtrack'):
             if previous.get(key) != manifest[key]:
                 raise ValueError(f'Cannot resume with changed {key}; use a new run-id')
         manifest['previous_invocations'] = [
             *previous.get('previous_invocations', []),
-            {key: previous[key] for key in ('started_at', 'concurrency', 'timeout')},
+            {key: previous.get(key) for key in ('started_at', 'concurrency', 'timeout',
+                                               'retry_errors', 'retry_case_ids')},
         ]
     manifest_path.write_text(
         json.dumps(manifest, indent=2), encoding='utf-8',
@@ -72,6 +113,8 @@ def main():
             'model': kwargs['model'],
             'messages': kwargs['messages'],
             'response_format': kwargs.get('response_format'),
+            'generation': {key: kwargs.get(key)
+                           for key in ('max_tokens', 'temperature', 'extra_body')},
             'raw_content': response.choices[0].message.content,
             'finish_reason': response.choices[0].finish_reason,
             'usage': response.usage.model_dump() if response.usage else None,

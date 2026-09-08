@@ -96,6 +96,10 @@ def parse_args() -> argparse.Namespace:
         help="On resume, retry failed requests and keep completed predictions",
     )
     p.add_argument(
+        "--retry-case-id", action="append", default=[],
+        help="Retry only this failed case (repeatable); preserve all other predictions",
+    )
+    p.add_argument(
         "--timeout",
         type=float,
         default=120.0,
@@ -121,6 +125,7 @@ async def run_classification(args: argparse.Namespace, dataset) -> list:
         output_path=pred_path,
         resume=not args.no_resume,
         retry_errors=args.retry_errors,
+        retry_case_ids=set(args.retry_case_id),
     )
     return predictions
 

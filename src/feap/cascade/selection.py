@@ -8,6 +8,7 @@ from typing import Annotated, Literal, TypeVar, get_origin
 
 from pydantic import BaseModel, BeforeValidator, Field, ValidationError, create_model
 
+from feap.cascade.backtracker import _infer_target_level
 from feap.schemas.codes import normalize_code
 
 T = TypeVar('T', bound=BaseModel)
@@ -74,7 +75,16 @@ async def classify_choice(
     for attempt in range(2):
         try:
             result = await classify_fn(**kwargs)
-            if getattr(result, 'backtrack_trigger', None):
+            trigger = getattr(result, 'backtrack_trigger', None)
+            if trigger:
+                # Handlers return early on backtrack without committing a code.
+                # L2 may exclude a group while requesting a section change:
+                # apply_backtrack handles this via its existing L2->L1 escalation.
+                # Other same/forward-level triggers cannot be executed.
+                target = _infer_target_level(trigger)
+                group_reselection = target == kwargs['level'] == 2
+                if target >= kwargs['level'] and not group_reselection:
+                    raise ValueError('Backtrack must target an earlier cascade level')
                 return result
             for field, allowed in choices.items():
                 code = getattr(result, field)
@@ -98,5 +108,9 @@ async def classify_choice(
                 'цифрами без пробелов и пояснений. В candidates используй коды того же '
                 'уровня и из того же списка. Не выбирай последний код по умолчанию.\n'
                 + allowed_text
+                + f'\nЕсли нужен backtrack_trigger, исключаемый код должен относиться '
+                f'к уровню строго меньше текущего ({kwargs["level"]}). Нельзя возвращаться '
+                'на текущий или следующий уровень. Иначе верни backtrack_trigger=null '
+                'и выбери допустимый код.'
             )
     raise AssertionError('unreachable')

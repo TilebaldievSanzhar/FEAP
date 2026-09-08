@@ -57,6 +57,7 @@ class BenchmarkRunner:
         output_path: Path,
         resume: bool = True,
         retry_errors: bool = False,
+        retry_case_ids: set[str] | None = None,
     ) -> list[CasePrediction]:
         """
         Classify every case in `dataset` and save predictions to `output_path`.
@@ -77,8 +78,21 @@ class BenchmarkRunner:
             existing = load_predictions(output_path)
             logger.info("Resuming: %d cases already done", len(existing))
 
-        if retry_errors:
-            existing = [p for p in existing if p.status != "error"]
+        if retry_case_ids and (not resume or retry_errors):
+            raise ValueError('Targeted retry requires resume and cannot combine with retry_errors')
+        failed_ids = {p.case_id for p in existing if p.status == 'error'}
+        if retry_case_ids and not retry_case_ids <= failed_ids:
+            raise ValueError('Targeted retry IDs must refer to existing failed predictions')
+        retry_ids = failed_ids if retry_errors else (retry_case_ids or set())
+        if retry_errors or retry_case_ids:
+            # Preserve the original failures, including infrastructure failures,
+            # instead of silently replacing evidence with a later successful attempt.
+            history_path = output_path.with_name(output_path.stem + '_retry_history.jsonl')
+            with history_path.open('a', encoding='utf-8') as history:
+                for pred in existing:
+                    if pred.case_id in retry_ids:
+                        history.write(pred.model_dump_json() + '\n')
+            existing = [p for p in existing if p.case_id not in retry_ids]
             save_predictions(existing, output_path)
 
         done_ids = {p.case_id for p in existing}

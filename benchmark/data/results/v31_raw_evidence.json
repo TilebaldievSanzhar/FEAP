@@ -1,0 +1,634 @@
+{
+  "v31_baseline": {
+    "trace_sha256": "c68114820428b7bf52d2c09c03bb63ed2036e84a494f2d58d0e3e9be70872980",
+    "predictions_sha256": "c8c0f0ec5449638bac3ac3f38dea24fc1638d9f500aa3c139ee9253d86933b13",
+    "l4_substitutions": [
+      {
+        "case_id": "BENCH-E23",
+        "raw_selected_subposition": "8422110000",
+        "final_subposition": "842290",
+        "raw_confidence": 1.0,
+        "raw_specificity_check": "Товар является посудомоечной машиной. В дереве субпозиций первая группа — [ПОСУДОМОЕЧНЫЕ МАШИНЫ], которая делится на бытовые (8422 11) и прочие (8422 19). Так как товар имеет бытовой характер назначения (бытовая посудомоечная машина), он полностью подпадает под субпозицию 8422 11."
+      },
+      {
+        "case_id": "BENCH-M13",
+        "raw_selected_subposition": "3004310000",
+        "final_subposition": "300490",
+        "raw_confidence": 1.0,
+        "raw_specificity_check": "Сравниваем группы субпозиций внутри позиции 3004. Товар представляет собой инсулин человеческий рекомбинантный в виде готового раствора для инъекций. Группа [ПРОЧИЕ, СОДЕРЖАЩИЕ ГОРМОНЫ ИЛИ ДРУГИЕ СОЕДИНЕНИЯ ТОВАРНОЙ ПОЗИЦИИ 2937] содержит конкретную подсубпозицию 3004 31, охватывающую лекарственные средства, содержащие инсулин. Товар содержит инсулин, поэтому полностью подходит под данную ветку и исключает попадание в прочие категории."
+      },
+      {
+        "case_id": "BENCH-H09",
+        "raw_selected_subposition": "9102120000",
+        "final_subposition": "910299",
+        "raw_confidence": 1.0,
+        "raw_specificity_check": "Товар представляет собой наручные электронные часы с LCD дисплеем (приводимые в действие электричеством). Проверяем группы: первая группа — «Часы наручные, приводимые в действие электричеством...»: подкатегория 9102 11 — только с механической индикацией (не подходит, индикация LCD/оптико-электронная); подкатегория 9102 12 — только с оптико-электронной индикацией (подходит идеально, так как дисплей LCD является оптико-электронным). Вторая и третья группы не подходят, так как часы электрические."
+      },
+      {
+        "case_id": "BENCH-H16",
+        "raw_selected_subposition": "9102120000",
+        "final_subposition": "910299",
+        "raw_confidence": 0.95,
+        "raw_specificity_check": "Товар представляет собой наручные электронные часы с дисплеем AMOLED. Согласно дереву субпозиций позиции 9102, первая группа охватывает наручные часы, приводимые в действие электричеством. Внутри неё имеются следующие варианты: 910211 (только с механической индикацией), 910212 (только с оптико-электронной индикацией) и 910219 (прочие). Поскольку часы оснащены электронным дисплеем AMOLED, они имеют оптико-электронную индикацию (цифровой дисплей), что точно соответствует подсубпозиции 9102 12."
+      },
+      {
+        "case_id": "BENCH-H20",
+        "raw_selected_subposition": "8508 19",
+        "final_subposition": "850870",
+        "raw_confidence": 0.8,
+        "raw_specificity_check": "Товар представляет собой робот-пылесос со встроенным электродвигателем. Первая группа субпозиций со встроенным электродвигателем требует проверки мощности в ваттах и объема пылесборника. Поскольку электрическая мощность в Вт и объем пылесборника не указаны в описании товара, невозможно достоверно применить критерии подсубпозиции 8508 11. Согласно правилам классификации, при отсутствии необходимого параметра для конкретной субпозиции следует выбирать остаточную позицию 'прочие'. Следовательно, товар попадает в субпозицию 8508 19."
+      },
+      {
+        "case_id": "BENCH-H25",
+        "raw_selected_subposition": "9402100000",
+        "final_subposition": "940290",
+        "raw_confidence": 1,
+        "raw_specificity_check": "Товар представляет собой стоматологическое кресло. Группа субпозиций с одним дефисом 9402 10 охватывает стоматологические, парикмахерские или аналогичные кресла и части к ним. Товар напрямую описывается в данной субпозиции. Группа 9402 90 ('прочая') предназначена для остальной мебели (операционные столы, больничные койки и т.д.), поэтому не подходит."
+      }
+    ],
+    "selected_confidence_mismatches": [
+      {
+        "case_id": "BENCH-E01",
+        "field": "group",
+        "selected": "04",
+        "first_candidate": "01",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E02",
+        "field": "group",
+        "selected": "03",
+        "first_candidate": "01",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E05",
+        "field": "section",
+        "selected": "II",
+        "first_candidate": "I",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E07",
+        "field": "section",
+        "selected": "III",
+        "first_candidate": "II",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E08",
+        "field": "section",
+        "selected": "IV",
+        "first_candidate": "II",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E11",
+        "field": "section",
+        "selected": "VI",
+        "first_candidate": "V",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E16",
+        "field": "section",
+        "selected": "X",
+        "first_candidate": "IX",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E16",
+        "field": "group",
+        "selected": "48",
+        "first_candidate": "47",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E17",
+        "field": "group",
+        "selected": "49",
+        "first_candidate": "47",
+        "first_confidence": 0,
+        "selected_confidence": 0.95,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E18",
+        "field": "group",
+        "selected": "63",
+        "first_candidate": "52",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E19",
+        "field": "section",
+        "selected": "XII",
+        "first_candidate": "VII",
+        "first_confidence": 0.1,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.1
+      },
+      {
+        "case_id": "BENCH-E22",
+        "field": "position",
+        "selected": "7610",
+        "first_candidate": "7604",
+        "first_confidence": 0.2,
+        "selected_confidence": 0.8,
+        "stored_confidence": 0.2
+      },
+      {
+        "case_id": "BENCH-E23",
+        "field": "section",
+        "selected": "XVI",
+        "first_candidate": "XV",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E24",
+        "field": "group",
+        "selected": "85",
+        "first_candidate": "84",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E25",
+        "field": "section",
+        "selected": "XVIII",
+        "first_candidate": "XVI",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E26",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "XVI",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E27",
+        "field": "section",
+        "selected": "XIX",
+        "first_candidate": "VII",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E28",
+        "field": "section",
+        "selected": "XX",
+        "first_candidate": "VII",
+        "first_confidence": 0.1,
+        "selected_confidence": 0.95,
+        "stored_confidence": 0.1
+      },
+      {
+        "case_id": "BENCH-E28",
+        "field": "group",
+        "selected": "96",
+        "first_candidate": "94",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-E30",
+        "field": "section",
+        "selected": "XXI",
+        "first_candidate": "IX",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M01",
+        "field": "group",
+        "selected": "02",
+        "first_candidate": "01",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M05",
+        "field": "position",
+        "selected": "1517",
+        "first_candidate": "1516",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M06",
+        "field": "section",
+        "selected": "IV",
+        "first_candidate": "I",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M09",
+        "field": "section",
+        "selected": "IV",
+        "first_candidate": "II",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M10",
+        "field": "section",
+        "selected": "IV",
+        "first_candidate": "II",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M18",
+        "field": "group",
+        "selected": "40",
+        "first_candidate": "39",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M21",
+        "field": "section",
+        "selected": "IX",
+        "first_candidate": "II",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M23",
+        "field": "group",
+        "selected": "62",
+        "first_candidate": "61",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M26",
+        "field": "section",
+        "selected": "XIII",
+        "first_candidate": "V",
+        "first_confidence": 0.1,
+        "selected_confidence": 0.99,
+        "stored_confidence": 0.1
+      },
+      {
+        "case_id": "BENCH-M26",
+        "field": "position",
+        "selected": "6802",
+        "first_candidate": "6801",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M25",
+        "field": "section",
+        "selected": "XII",
+        "first_candidate": "VII",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M27",
+        "field": "group",
+        "selected": "73",
+        "first_candidate": "72",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M31",
+        "field": "section",
+        "selected": "XVI",
+        "first_candidate": "XV",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M32",
+        "field": "section",
+        "selected": "XVI",
+        "first_candidate": "XV",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M33",
+        "field": "section",
+        "selected": "XVI",
+        "first_candidate": "XV",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M34",
+        "field": "section",
+        "selected": "XVI",
+        "first_candidate": "XV",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M35",
+        "field": "section",
+        "selected": "XVI",
+        "first_candidate": "XV",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M35",
+        "field": "group",
+        "selected": "85",
+        "first_candidate": "84",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M36",
+        "field": "group",
+        "selected": "85",
+        "first_candidate": "84",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M37",
+        "field": "section",
+        "selected": "XVI",
+        "first_candidate": "XV",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M38",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "XV",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M39",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "XV",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-M40",
+        "field": "section",
+        "selected": "XVIII",
+        "first_candidate": "XVI",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H08",
+        "field": "section",
+        "selected": "XVI",
+        "first_candidate": "VII",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H08",
+        "field": "group",
+        "selected": "85",
+        "first_candidate": "84",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H09",
+        "field": "group",
+        "selected": "91",
+        "first_candidate": "90",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H11",
+        "field": "section",
+        "selected": "XVIII",
+        "first_candidate": "XVI",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H12",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "XV",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H12",
+        "field": "group",
+        "selected": "87",
+        "first_candidate": "86",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H13",
+        "field": "section",
+        "selected": "XX",
+        "first_candidate": "VII",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H14",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "XV",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H15",
+        "field": "group",
+        "selected": "85",
+        "first_candidate": "84",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H16",
+        "field": "section",
+        "selected": "XVIII",
+        "first_candidate": "XVI",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H17",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "XVI",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H17",
+        "field": "group",
+        "selected": "87",
+        "first_candidate": "86",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H18",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "XVI",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H18",
+        "field": "group",
+        "selected": "88",
+        "first_candidate": "86",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H22",
+        "field": "section",
+        "selected": "XX",
+        "first_candidate": "XI",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H23",
+        "field": "group",
+        "selected": "27",
+        "first_candidate": "25",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H26",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "VII",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H26",
+        "field": "group",
+        "selected": "89",
+        "first_candidate": "86",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H25",
+        "field": "section",
+        "selected": "XX",
+        "first_candidate": "XVI",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H28",
+        "field": "section",
+        "selected": "XVII",
+        "first_candidate": "XVI",
+        "first_confidence": 0,
+        "selected_confidence": 1,
+        "stored_confidence": 0.0
+      },
+      {
+        "case_id": "BENCH-H30",
+        "field": "group",
+        "selected": "85",
+        "first_candidate": "84",
+        "first_confidence": 0.0,
+        "selected_confidence": 1.0,
+        "stored_confidence": 0.0
+      }
+    ]
+  },
+  "v31_core": {
+    "trace_sha256": "bdc618633b37b7eefbdea137e72d5216db3c5a2c3d3dccbb5795c550fee737ac",
+    "predictions_sha256": "bf8c1cc5aefd0767b8ade06f7160df7e9b33db10b77dd61225d00621467b6b05",
+    "l4_substitutions": [],
+    "selected_confidence_mismatches": []
+  }
+}

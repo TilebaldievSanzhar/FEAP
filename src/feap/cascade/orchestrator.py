@@ -197,9 +197,11 @@ class CascadeOrchestrator:
             trigger = getattr(result, "backtrack_trigger", None)
             if trigger is not None:
                 target = _infer_target_level_quick(trigger)
-                # Ignore nonsensical triggers: target must be < current level,
-                # and the parent state for that level must exist.
-                if target >= level.level:
+                # L2 can reject a group before committing any group decision.
+                # Let apply_backtrack perform its L2->L1 escalation in this case;
+                # ignoring the trigger would advance to L3 with state.group=None.
+                group_reselection = target == level.level == 2
+                if target >= level.level and not group_reselection:
                     logger.warning(
                         "Ignoring backtrack trigger from level %d with target %d "
                         "(target must be < current level). excluded_code='%s'",

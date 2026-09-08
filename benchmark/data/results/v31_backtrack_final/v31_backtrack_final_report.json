@@ -1,0 +1,62 @@
+{
+  "name": "v31_backtrack3 / v31_backtrack_final",
+  "ran_at": "2026-09-08T03:41:50.032500+00:00",
+  "n_cases": 3,
+  "key_metrics": {
+    "heading_accuracy": 1.0,
+    "subheading_accuracy": 1.0,
+    "code_10_accuracy": 0.6666666666666666,
+    "hierarchical_score": 0.9333333333333333,
+    "ece": 0.26666666666666666,
+    "duty_accuracy": 0.0
+  },
+  "behaviour": {
+    "completion_rate": 1.0,
+    "needs_input": 0,
+    "errors": 0,
+    "trap_hits": 0
+  },
+  "latency_ms": {
+    "mean": 23870.474700039875,
+    "p50": 19633.975700009614,
+    "p95": 33429.19489997439,
+    "p99": 33429.19489997439
+  },
+  "by_difficulty": {
+    "hard": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 0.6666666666666666,
+      "n": 3
+    }
+  },
+  "by_section": {
+    "I": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 0.5,
+      "n": 2
+    },
+    "XX": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 1
+    }
+  },
+  "reliability_diagram": [
+    {
+      "bin_lower": 0.2,
+      "bin_upper": 0.30000000000000004,
+      "mean_confidence": 0.2,
+      "fraction_correct": 1.0,
+      "count": 1,
+      "gap": -0.8
+    },
+    {
+      "bin_lower": 0.9,
+      "bin_upper": 1.0,
+      "mean_confidence": 1.0,
+      "fraction_correct": 1.0,
+      "count": 2,
+      "gap": 0.0
+    }
+  ]
+}

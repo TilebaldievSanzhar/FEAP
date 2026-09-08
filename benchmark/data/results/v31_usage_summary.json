@@ -1,0 +1,72 @@
+{
+  "v31_baseline": {
+    "trace_sha256": "c68114820428b7bf52d2c09c03bb63ed2036e84a494f2d58d0e3e9be70872980",
+    "prediction_count": 100,
+    "api_response_count": 796,
+    "api_usage_cost_usd": 1.9671679,
+    "prompt_tokens": 3671518,
+    "completion_tokens": 346285,
+    "model_calls": {
+      "google/gemini-3.5-flash-lite": 796
+    },
+    "zero_confidence_predictions": 54
+  },
+  "v31_core": {
+    "trace_sha256": "bdc618633b37b7eefbdea137e72d5216db3c5a2c3d3dccbb5795c550fee737ac",
+    "prediction_count": 100,
+    "api_response_count": 793,
+    "api_usage_cost_usd": 1.9865837,
+    "prompt_tokens": 3652204,
+    "completion_tokens": 356369,
+    "model_calls": {
+      "google/gemini-3.5-flash-lite": 793
+    },
+    "zero_confidence_predictions": 0
+  },
+  "v31_hybrid": {
+    "trace_sha256": "16ec2c66ce57d163d59c2ed9624aadc613d3714e2d68c42c8f684d0b2c052ec5",
+    "prediction_count": 100,
+    "api_response_count": 788,
+    "api_usage_cost_usd": 2.0833455,
+    "prompt_tokens": 3600551,
+    "completion_tokens": 355091,
+    "model_calls": {
+      "google/gemini-3.5-flash-lite": 690,
+      "google/gemini-3-flash-preview": 98
+    },
+    "zero_confidence_predictions": 0
+  },
+  "v31_core_repeat": {
+    "trace_sha256": "983b72403f6bfbfb10640eb657d353176d5b581ef460d2abc23e853420c83dc6",
+    "prediction_count": 100,
+    "api_response_count": 800,
+    "api_usage_cost_usd": 1.9969236,
+    "prompt_tokens": 3679962,
+    "completion_tokens": 357174,
+    "model_calls": {
+      "google/gemini-3.5-flash-lite": 800
+    },
+    "zero_confidence_predictions": 0
+  },
+  "v31_prompt_probe": {
+    "api_usage_cost_usd": 0.3194376
+  },
+  "v31_model_probe": {
+    "api_usage_cost_usd": 0.3904225
+  },
+  "v31_leaf_context_probe": {
+    "api_usage_cost_usd": 0.328434
+  },
+  "note": "Sum of usage.cost for captured successful API responses, including repeated and interrupted attempts. Not an invoice and not solely the cost of final predictions.",
+  "v31_backtrack_validation": {
+    "trace_sha256": "d0fb7ea1a4eb4f7ea34f78b8caa7de4bf009d59e182c68ffcf9edb40453b8b4f",
+    "api_response_count": 25,
+    "api_usage_cost_usd": 0.0602469
+  },
+  "v31_backtrack_final": {
+    "trace_sha256": "0fd06e8332c47112abcffff49743c057c9f7d115e8a59b205c5a10e8504f72f9",
+    "api_response_count": 31,
+    "api_usage_cost_usd": 0.0759857
+  },
+  "total_captured_cost_usd": 9.2085474
+}

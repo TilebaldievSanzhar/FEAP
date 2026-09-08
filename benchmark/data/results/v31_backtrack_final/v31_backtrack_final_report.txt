@@ -1,0 +1,64 @@
+
+╔══ Benchmark Report: v31_backtrack3 / v31_backtrack_final ══╗
+  Run at : 2026-09-08T03:41:50.032500+00:00
+  Cases  : 3
+
+─── Key Metrics ─────────────────────────────────────────
+  Heading accuracy (4-digit)      : 1.000  ★ primary KPI
+  Subheading accuracy (6-digit)   : 1.000
+  Code-10 accuracy (10-digit)     : 0.667
+  Hierarchical score (weighted)   : 0.9333
+  ECE (calibration)               : 0.2667
+  Duty rate accuracy              : 0.000
+
+─── System Behaviour ────────────────────────────────────
+  Total cases        : 3
+  Completed          : 3  (100.0%)
+  Needs input        : 0
+  Errors             : 0
+  Correctly stopped  : 0
+  Wrongly stopped    : 0
+  Fell into trap code: 0
+
+─── Hierarchical Accuracy ───────────────────────────────
+section     : 1.000  (3/3)
+group       : 1.000  (3/3)
+heading     : 1.000  (3/3)
+subheading  : 1.000  (3/3)
+code_8      : 0.667  (2/3)
+code_10     : 0.667  (2/3)
+score       : 0.9333  (weighted composite)
+
+─── Accuracy by Difficulty ──────────────────────────────
+  hard      heading=1.000  code10=0.667  score=0.9333  (n=3)
+
+─── Accuracy by Section (heading level) ─────────────────
+  Section I      heading=1.000  code10=0.500  (n=2)
+  Section XX     heading=1.000  code10=1.000  (n=1)
+
+─── Confidence Calibration ──────────────────────────────
+  Cases with confidence   : 3
+  Cases without confidence: 0
+  ECE  (Expected)         : 0.2667   ← primary KPI (lower=better)
+  MCE  (Maximum)          : 0.8000
+  ACE  (Average)          : 0.4000
+  Overconfident bins      : 0
+  Underconfident bins     : 1
+
+─── Financial / Duty-Rate Impact ────────────────────────
+  Evaluable cases  : 0
+  Unevaluable      : 3  (no duty rate in ground truth)
+  Duty correct     : 0 / 0  (0.0%)
+  No impact errors : 0
+  Minor errors     : 0   (≤ 2.0pp)
+  Major errors     : 0   (> 5.0pp)  ← critical
+  Mean |Δ duty|    : 0.00 pp
+  Max  |Δ duty|    : 0.00 pp
+
+─── Latency ─────────────────────────────────────────────
+  mean : 23870 ms
+  p50  : 19634 ms
+  p95  : 33429 ms
+  p99  : 33429 ms
+
+╚═══════════════════════════════════════════════════════╝

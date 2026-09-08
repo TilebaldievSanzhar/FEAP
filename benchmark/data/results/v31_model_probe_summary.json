@@ -1,0 +1,1032 @@
+{
+  "unique_cases": 30,
+  "paired_trials": 60,
+  "note": "Repeats share goods and contexts; trial counts are not independent sample sizes.",
+  "variants": {
+    "control": {
+      "n": 60,
+      "correct": 54,
+      "errors": 0,
+      "parent_correct_n": 60,
+      "parent_correct_hits": 54,
+      "api_calls": 60,
+      "api_usage_cost_usd": 0.1673102
+    },
+    "variant": {
+      "n": 60,
+      "correct": 54,
+      "errors": 0,
+      "parent_correct_n": 60,
+      "parent_correct_hits": 54,
+      "api_calls": 60,
+      "api_usage_cost_usd": 0.22311229999999999
+    }
+  },
+  "outcomes": [
+    {
+      "case_id": "BENCH-E07",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "151110",
+      "control": {
+        "selected": "151110",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "151110",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E07",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "151110",
+      "variant": {
+        "selected": "151110",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "151110",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E08",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "210310",
+      "control": {
+        "selected": "210310",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "210310",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E08",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "210310",
+      "variant": {
+        "selected": "210310",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "210310",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E14",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "420292",
+      "control": {
+        "selected": "420292",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "420292",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E14",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "420292",
+      "control": {
+        "selected": "420292",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "420292",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E15",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "441233",
+      "variant": {
+        "selected": "441233",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "441233",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E15",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "441233",
+      "variant": {
+        "selected": "441233",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "441233",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E20",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "701090",
+      "control": {
+        "selected": "701090",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "701090",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E20",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "701090",
+      "variant": {
+        "selected": "701090",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "701090",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E24",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "851640",
+      "control": {
+        "selected": "851640",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "851640",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E24",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "851640",
+      "control": {
+        "selected": "851640",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "851640",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E28",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "960810",
+      "control": {
+        "selected": "960810",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "960810",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E28",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "960810",
+      "control": {
+        "selected": "960810",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "960810",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E29",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "711319",
+      "variant": {
+        "selected": "711319",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "711319",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E29",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "711319",
+      "control": {
+        "selected": "711319",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "711319",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E30",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "970191",
+      "control": {
+        "selected": "970191",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "970191",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-E30",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "970191",
+      "control": {
+        "selected": "970191",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "970191",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H02",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "844332",
+      "control": {
+        "selected": "844331",
+        "correct": false,
+        "error": false
+      },
+      "variant": {
+        "selected": "844331",
+        "correct": false,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H02",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "844332",
+      "variant": {
+        "selected": "844331",
+        "correct": false,
+        "error": false
+      },
+      "control": {
+        "selected": "844331",
+        "correct": false,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H04",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "850940",
+      "control": {
+        "selected": "850940",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "850940",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H04",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "850940",
+      "control": {
+        "selected": "850940",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "850940",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H23",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "271012",
+      "control": {
+        "selected": "271012",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "271012",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H23",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "271012",
+      "control": {
+        "selected": "271012",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "271012",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H24",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "620140",
+      "variant": {
+        "selected": "620190",
+        "correct": false,
+        "error": false
+      },
+      "control": {
+        "selected": "620140",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H24",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "620140",
+      "variant": {
+        "selected": "620190",
+        "correct": false,
+        "error": false
+      },
+      "control": {
+        "selected": "620140",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H25",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "940210",
+      "control": {
+        "selected": "940210",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "940210",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H25",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "940210",
+      "control": {
+        "selected": "940210",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "940210",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H26",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "890332",
+      "variant": {
+        "selected": "890332",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "890332",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H26",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "890332",
+      "control": {
+        "selected": "890332",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "890332",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H27",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "380891",
+      "control": {
+        "selected": "380891",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "380891",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H27",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "380891",
+      "variant": {
+        "selected": "380891",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "380891",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H28",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "870323",
+      "variant": {
+        "selected": "870323",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "870323",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H28",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "870323",
+      "control": {
+        "selected": "870323",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "870323",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H29",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "870423",
+      "variant": {
+        "selected": "870423",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "870423",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-H29",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "870423",
+      "control": {
+        "selected": "870423",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "870423",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M01",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "020230",
+      "variant": {
+        "selected": "020230",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "020230",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M01",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "020230",
+      "control": {
+        "selected": "020230",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "020230",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M08",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "190531",
+      "variant": {
+        "selected": "190531",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "190531",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M08",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "190531",
+      "control": {
+        "selected": "190531",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "190531",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M11",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "271019",
+      "variant": {
+        "selected": "271019",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "271019",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M11",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "271019",
+      "variant": {
+        "selected": "271019",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "271019",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M12",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "300490",
+      "variant": {
+        "selected": "300490",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "300490",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M12",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "300490",
+      "variant": {
+        "selected": "300490",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "300490",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M15",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "330410",
+      "variant": {
+        "selected": "330410",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "330410",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M15",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "330410",
+      "control": {
+        "selected": "330410",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "330410",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M17",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "392330",
+      "control": {
+        "selected": "392390",
+        "correct": false,
+        "error": false
+      },
+      "variant": {
+        "selected": "392330",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M17",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "392330",
+      "control": {
+        "selected": "392390",
+        "correct": false,
+        "error": false
+      },
+      "variant": {
+        "selected": "392330",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M19",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "410411",
+      "variant": {
+        "selected": "410419",
+        "correct": false,
+        "error": false
+      },
+      "control": {
+        "selected": "410419",
+        "correct": false,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M19",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "410411",
+      "control": {
+        "selected": "410419",
+        "correct": false,
+        "error": false
+      },
+      "variant": {
+        "selected": "410419",
+        "correct": false,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M23",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "620342",
+      "variant": {
+        "selected": "620342",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "620342",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M23",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "620342",
+      "control": {
+        "selected": "620342",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "620342",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M24",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "620443",
+      "variant": {
+        "selected": "620443",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "620443",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M24",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "620443",
+      "variant": {
+        "selected": "620443",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "620443",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M33",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "848180",
+      "variant": {
+        "selected": "848180",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "848180",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M33",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "848180",
+      "variant": {
+        "selected": "848180",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "848180",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M34",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "850152",
+      "variant": {
+        "selected": "850152",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "850152",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M34",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "850152",
+      "control": {
+        "selected": "850152",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "850152",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M38",
+      "repeat": 0,
+      "parent_correct": true,
+      "expected": "860692",
+      "variant": {
+        "selected": "860692",
+        "correct": true,
+        "error": false
+      },
+      "control": {
+        "selected": "860692",
+        "correct": true,
+        "error": false
+      }
+    },
+    {
+      "case_id": "BENCH-M38",
+      "repeat": 1,
+      "parent_correct": true,
+      "expected": "860692",
+      "control": {
+        "selected": "860692",
+        "correct": true,
+        "error": false
+      },
+      "variant": {
+        "selected": "860692",
+        "correct": true,
+        "error": false
+      }
+    }
+  ],
+  "input_sha256": "447716a2df82f02e82ddc49c21a51acda126a8764c82a600ec66a10b65e4cd40",
+  "manifest": {
+    "trace_sha256": "bdc618633b37b7eefbdea137e72d5216db3c5a2c3d3dccbb5795c550fee737ac",
+    "dataset_sha256": "6dacde442df86347f1b47768a264053d35f607f00fba585393fb80d42fbaf666",
+    "variant_sha256": "ea86795a887cfc204c5d59806117c95624b9c159c014dd250323ebb04952bba4",
+    "models": {
+      "control": "google/gemini-3.5-flash-lite",
+      "variant": "google/gemini-3-flash-preview"
+    },
+    "repeat": 2,
+    "seed": 3101,
+    "concurrency": 2,
+    "case_ids": [
+      "BENCH-E07",
+      "BENCH-E08",
+      "BENCH-E14",
+      "BENCH-E15",
+      "BENCH-E20",
+      "BENCH-E24",
+      "BENCH-E28",
+      "BENCH-E29",
+      "BENCH-E30",
+      "BENCH-H02",
+      "BENCH-H04",
+      "BENCH-H23",
+      "BENCH-H24",
+      "BENCH-H25",
+      "BENCH-H26",
+      "BENCH-H27",
+      "BENCH-H28",
+      "BENCH-H29",
+      "BENCH-M01",
+      "BENCH-M08",
+      "BENCH-M11",
+      "BENCH-M12",
+      "BENCH-M15",
+      "BENCH-M17",
+      "BENCH-M19",
+      "BENCH-M23",
+      "BENCH-M24",
+      "BENCH-M33",
+      "BENCH-M34",
+      "BENCH-M38"
+    ]
+  }
+}
