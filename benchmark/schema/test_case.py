@@ -25,7 +25,7 @@ class GroundTruth(BaseModel):
     heading: str = Field(description="4-digit heading, e.g. '8509'")
     subheading: str = Field(description="6-digit subheading, e.g. '850980'")
     code_8: str = Field(description="8-digit EAEU code, e.g. '85098000'")
-    code_10: str = Field(description="10-digit national code, e.g. '8509800000'")
+    code_10: str = Field(description="10-digit EAEU TN VED code used in Kyrgyzstan, e.g. '8509800000'")
 
     # Tariff data (filled from DB or source document)
     duty_rate: str | None = Field(default=None, description="Applicable duty rate string")
