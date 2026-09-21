@@ -53,6 +53,11 @@ def _summary(results):
         calibration[name] = asdict(metric)
     return {
         'n': n, 'status': dict(Counter(r.status for r in results)),
+        'coverage': sum(r.status == 'completed' for r in results) / n,
+        'accuracy_on_completed': counts['code_10'] / sum(r.status == 'completed' for r in results)
+        if any(r.status == 'completed' for r in results) else None,
+        'high_confidence_errors': sum(r.confidence is not None and r.confidence >= 0.8
+                                      and not r.code_10_match for r in results),
         'correct': counts, 'accuracy': {k: v / n for k, v in counts.items()},
         'l4_given_correct_heading': {
             'correct': counts['subheading'], 'n': counts['heading'],

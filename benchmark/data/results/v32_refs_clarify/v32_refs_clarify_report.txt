@@ -1,0 +1,69 @@
+
+╔══ Benchmark Report: v32_dev8 / v32_refs_clarify ══╗
+  Run at : 2026-09-21T08:32:23.449803+00:00
+  Cases  : 8
+
+─── Key Metrics ─────────────────────────────────────────
+  Heading accuracy (4-digit)      : 0.375  ★ primary KPI
+  Subheading accuracy (6-digit)   : 0.375
+  Code-10 accuracy (10-digit)     : 0.250
+  Hierarchical score (weighted)   : 0.3625
+  ECE (calibration)               : 0.0167
+  Duty rate accuracy              : 0.000
+
+─── System Behaviour ────────────────────────────────────
+  Total cases        : 8
+  Completed          : 3  (37.5%)
+  Needs input        : 4
+  Errors             : 1
+  Correctly stopped  : 1
+  Wrongly stopped    : 3
+  Fell into trap code: 0
+
+─── Hierarchical Accuracy ───────────────────────────────
+section     : 0.375  (3/8)
+group       : 0.375  (3/8)
+heading     : 0.375  (3/8)
+subheading  : 0.375  (3/8)
+code_8      : 0.375  (3/8)
+code_10     : 0.250  (2/8)
+score       : 0.3625  (weighted composite)
+
+─── Accuracy by Difficulty ──────────────────────────────
+  medium    heading=0.500  code10=0.250  score=0.4750  (n=4)
+  hard      heading=0.250  code10=0.250  score=0.2500  (n=4)
+
+─── Accuracy by Section (heading level) ─────────────────
+  Section I      heading=0.000  code10=0.000  (n=2)
+  Section VIII   heading=0.000  code10=0.000  (n=1)
+  Section XVII   heading=0.000  code10=0.000  (n=1)
+  Section XVI    heading=0.500  code10=0.000  (n=2)
+  Section VII    heading=1.000  code10=1.000  (n=1)
+  Section XX     heading=1.000  code10=1.000  (n=1)
+
+─── Confidence Calibration ──────────────────────────────
+  Cases with confidence   : 3
+  Cases without confidence: 5
+  ECE  (Expected)         : 0.0167   ← primary KPI (lower=better)
+  MCE  (Maximum)          : 0.0167
+  ACE  (Average)          : 0.0167
+  Overconfident bins      : 0
+  Underconfident bins     : 1
+
+─── Financial / Duty-Rate Impact ────────────────────────
+  Evaluable cases  : 0
+  Unevaluable      : 8  (no duty rate in ground truth)
+  Duty correct     : 0 / 0  (0.0%)
+  No impact errors : 0
+  Minor errors     : 0   (≤ 2.0pp)
+  Major errors     : 0   (> 5.0pp)  ← critical
+  Mean |Δ duty|    : 0.00 pp
+  Max  |Δ duty|    : 0.00 pp
+
+─── Latency ─────────────────────────────────────────────
+  mean : 21934 ms
+  p50  : 21498 ms
+  p95  : 34222 ms
+  p99  : 34222 ms
+
+╚═══════════════════════════════════════════════════════╝

@@ -44,3 +44,4 @@ class PartialResult(BaseModel):
         description="Specific clarifying questions for the user",
     )
     classification_chain_so_far: list[DecisionChainEntry] = Field(default_factory=list)
+    evidence_checks: list[dict] = Field(default_factory=list)

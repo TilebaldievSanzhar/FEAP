@@ -1,0 +1,79 @@
+{
+  "name": "v32_dev8 / v32_refs_clarify",
+  "ran_at": "2026-09-21T08:32:23.449803+00:00",
+  "n_cases": 8,
+  "key_metrics": {
+    "heading_accuracy": 0.375,
+    "subheading_accuracy": 0.375,
+    "code_10_accuracy": 0.25,
+    "hierarchical_score": 0.36250000000000004,
+    "ece": 0.016666666666666607,
+    "duty_accuracy": 0.0
+  },
+  "behaviour": {
+    "completion_rate": 0.375,
+    "needs_input": 4,
+    "errors": 1,
+    "trap_hits": 0
+  },
+  "latency_ms": {
+    "mean": 21934.466250007972,
+    "p50": 21498.23359999573,
+    "p95": 34221.673500025645,
+    "p99": 34221.673500025645
+  },
+  "by_difficulty": {
+    "medium": {
+      "heading_accuracy": 0.5,
+      "code_10_accuracy": 0.25,
+      "n": 4
+    },
+    "hard": {
+      "heading_accuracy": 0.25,
+      "code_10_accuracy": 0.25,
+      "n": 4
+    }
+  },
+  "by_section": {
+    "I": {
+      "heading_accuracy": 0.0,
+      "code_10_accuracy": 0.0,
+      "n": 2
+    },
+    "VII": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 1
+    },
+    "VIII": {
+      "heading_accuracy": 0.0,
+      "code_10_accuracy": 0.0,
+      "n": 1
+    },
+    "XVI": {
+      "heading_accuracy": 0.5,
+      "code_10_accuracy": 0.0,
+      "n": 2
+    },
+    "XX": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 1
+    },
+    "XVII": {
+      "heading_accuracy": 0.0,
+      "code_10_accuracy": 0.0,
+      "n": 1
+    }
+  },
+  "reliability_diagram": [
+    {
+      "bin_lower": 0.9,
+      "bin_upper": 1.0,
+      "mean_confidence": 0.9833333333333334,
+      "fraction_correct": 1.0,
+      "count": 3,
+      "gap": -0.016666666666666607
+    }
+  ]
+}

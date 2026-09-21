@@ -1,0 +1,158 @@
+{
+  "n_calls": 25,
+  "n_correct_parent": 24,
+  "selected_recall": 0.8333333333333334,
+  "top2_recall": 0.9583333333333334,
+  "cases": [
+    {
+      "case_id": "BENCH-E20",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-H05",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-H08",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-H14",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-H19",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-H23",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-H28",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-H29",
+      "parent_correct": true,
+      "selected_hit": false,
+      "top2_hit": false
+    },
+    {
+      "case_id": "BENCH-M01",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M02",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M04",
+      "parent_correct": true,
+      "selected_hit": false,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M07",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M09",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M10",
+      "parent_correct": true,
+      "selected_hit": false,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M11",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M20",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M23",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M25",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M30",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M32",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M33",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M34",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M36",
+      "parent_correct": true,
+      "selected_hit": false,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M37",
+      "parent_correct": true,
+      "selected_hit": true,
+      "top2_hit": true
+    },
+    {
+      "case_id": "BENCH-M39",
+      "parent_correct": false,
+      "selected_hit": false,
+      "top2_hit": false
+    }
+  ]
+}

@@ -62,6 +62,7 @@ async def classify_choice(
     *,
     classify_fn: Callable[..., Awaitable[T]],
     choices: dict[str, Collection[str]],
+    validate_result: Callable[[T], None] | None = None,
     **kwargs,
 ) -> T:
     """One bounded repair for malformed/off-tree choices, never a guessed leaf.
@@ -86,6 +87,8 @@ async def classify_choice(
                 if target >= kwargs['level'] and not group_reselection:
                     raise ValueError('Backtrack must target an earlier cascade level')
                 return result
+            if validate_result:
+                validate_result(result)
             for field, allowed in choices.items():
                 code = getattr(result, field)
                 if not code and getattr(result, 'missing_parameters', None):
@@ -108,6 +111,7 @@ async def classify_choice(
                 'цифрами без пробелов и пояснений. В candidates используй коды того же '
                 'уровня и из того же списка. Не выбирай последний код по умолчанию.\n'
                 + allowed_text
+                + ('\nОшибка проверки доказательств: ' + str(exc)[:500] if validate_result else '')
                 + f'\nЕсли нужен backtrack_trigger, исключаемый код должен относиться '
                 f'к уровню строго меньше текущего ({kwargs["level"]}). Нельзя возвращаться '
                 'на текущий или следующий уровень. Иначе верни backtrack_trigger=null '

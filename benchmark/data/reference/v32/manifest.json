@@ -1,0 +1,62 @@
+{
+  "16": {
+    "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.16_2022_10.09.2023.pdf",
+    "sha256": "15570c27486bbae4e5545cb2cc92eeb0775262c730c0622af03ce324e46a5061",
+    "pages": 11,
+    "retrieved_on": "2026-09-21"
+  },
+  "44": {
+    "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.44_2022_16.06.2022.pdf",
+    "sha256": "1c7abb43e53bdc16f0b63d5d7db434c8cba137c5778ea89c0cb4f33e2a31e3ec",
+    "pages": 56,
+    "retrieved_on": "2026-09-21"
+  },
+  "84": {
+    "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.84_2022_27.04.2026.pdf",
+    "sha256": "7ab67f603272daa3e4637c0daa98cf274059d18396145454e2b93f8a25dd16d3",
+    "pages": 143,
+    "retrieved_on": "2026-09-21"
+  },
+  "85": {
+    "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.85_2022_05.07.2026.pdf",
+    "sha256": "6d91d7ae3001af29623d74c2b758f3c8452f87716027378ee0889397b7806d3f",
+    "pages": 127,
+    "retrieved_on": "2026-09-21"
+  },
+  "87": {
+    "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.87_2022_22.01.2026.pdf",
+    "sha256": "4c705ac9b62fd54b57ff40bb6aa88c17e2109a3bf3d00e706ded973e74071016",
+    "pages": 120,
+    "retrieved_on": "2026-09-21"
+  },
+  "94": {
+    "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.94_2022_08.03.2026.pdf",
+    "sha256": "e87d6249bc007ce274fe3d3ffe575559c65340393100bfdb1ef4ff12c9b232bd",
+    "pages": 20,
+    "retrieved_on": "2026-09-21"
+  },
+  "95": {
+    "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.95_2022.pdf",
+    "sha256": "a1ed9abdcd300c8ea9fd6657ca332fa11d366cdca34ef25ac975f96bfa109f2c",
+    "pages": 10,
+    "retrieved_on": "2026-09-21"
+  },
+  "04": {
+    "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.04_2022_25.04.2022.pdf",
+    "sha256": "5b94a99f1784e8f82d77883235360b96440781fab68c76c15bdb06a516584277",
+    "pages": 19,
+    "retrieved_on": "2026-09-21"
+  },
+  "10": {
+    "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.10_2022_25.04.2022.pdf",
+    "sha256": "22986cc7cbca59417296f14dbe5668dbcd10cf585ae9e9ad6dabad1eeaadc887",
+    "pages": 7,
+    "retrieved_on": "2026-09-21"
+  },
+  "41": {
+    "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.41_2022.pdf",
+    "sha256": "871219209cdca4e6b730b52d2e664ed85e09b5ad698fa2b3528ec88414ce3af7",
+    "pages": 11,
+    "retrieved_on": "2026-09-21"
+  }
+}

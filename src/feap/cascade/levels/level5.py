@@ -15,6 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
 from feap.cascade.selection import classify_choice
+from feap.cascade.evidence import evidence_context, evidence_prompt, evidence_records, evidence_validator, pause_for_evidence
+from feap.config import settings
 from feap.db.queries import (
     get_children,
     get_cross_group_definitions,
@@ -30,6 +32,7 @@ from feap.schemas.subsubposition import (
     SubsubpositionCandidate,
     SubsubpositionResult,
     SubsubpositionShortlistResult,
+    EvidenceSubsubpositionResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,7 +45,7 @@ class Level5Subsubposition(BaseCascadeLevel):
     level = 5
 
     def get_output_model(self):
-        return SubsubpositionResult
+        return SubsubpositionResult if settings.SGR_EVIDENCE_POLICY == 'legacy' else EvidenceSubsubpositionResult
 
     async def run(self, state: CascadeState, db: AsyncSession) -> SubsubpositionResult:
         subposition_code = state.subposition
@@ -103,7 +106,7 @@ class Level5Subsubposition(BaseCascadeLevel):
         chain = [e.model_dump() for e in state.chain]
 
         # Decide: two-step or single-step
-        if len(codes_data) > SINGLE_STEP_THRESHOLD:
+        if len(codes_data) > SINGLE_STEP_THRESHOLD and settings.SGR_EVIDENCE_POLICY == 'legacy':
             # ── Step 5a: Branch selection (8-digit) ──
             shortlist = await self._step_branch(
                 state, db, subposition_code, codes_data, chain, explanations, leaves,
@@ -245,9 +248,13 @@ class Level5Subsubposition(BaseCascadeLevel):
             classify_fn=classify,
             choices={"selected_code_10": {c["code"] for c in codes_data}},
             level=5,
-            system_prompt=system,
-            user_message=user,
-            output_model=SubsubpositionResult,
+            system_prompt=system + evidence_prompt(),
+            user_message=user + evidence_context(state.product_description),
+            output_model=self.get_output_model(),
+            validate_result=evidence_validator(
+                decision_field='selected_code_10',
+                descriptions={c['code']: c['name'] for c in codes_data},
+                source=state.product_description),
         )
 
     def _auto_select(self, state: CascadeState, leaf: dict, subposition_code: str) -> SubsubpositionResult:
@@ -283,6 +290,8 @@ class Level5Subsubposition(BaseCascadeLevel):
         subposition_code: str,
     ) -> SubsubpositionResult:
         """Post-process: handle missing params, validate code, update state."""
+        if pause_for_evidence(state, result):
+            return result
         # Fallback: accept best-guess even with missing parameters
         if result.missing_parameters:
             if result.selected_code_10 and result.selected_code_10.strip():
@@ -318,6 +327,7 @@ class Level5Subsubposition(BaseCascadeLevel):
             reasoning=result.reasoning,
             rules_applied=[],
             confidence=result.confidence,
+            evidence_checks=evidence_records(result),
         ))
 
         return result

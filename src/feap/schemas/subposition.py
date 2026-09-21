@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from feap.schemas.common import BacktrackTrigger
 from feap.schemas.codes import Code6, Decision6
+from feap.schemas.evidence import EvidenceFields
 
 
 class SubpositionCandidate(BaseModel):
@@ -67,3 +68,7 @@ class SubpositionResult(BaseModel):
         if v is None:
             return []
         return v
+
+
+class EvidenceSubpositionResult(SubpositionResult, EvidenceFields):
+    """EvidenceFields come first in Pydantic's inherited field order."""

@@ -48,3 +48,13 @@ def test_identical_runs_have_no_discordance():
     report = compare(dataset(), [prediction()], [prediction()])
     assert report['paired_code_10']['mcnemar_exact_two_sided_p'] == 1
     assert report['paired_code_10']['accuracy_delta'] == 0
+
+
+def test_abstention_changes_coverage_not_accuracy_denominator():
+    rows = [prediction('0'), prediction('1', status='needs_input'),
+            prediction('2', '8516400001'), prediction('3', status='error')]
+    report = compare(dataset(4), rows, rows)['candidate']
+    assert report['coverage'] == 0.5
+    assert report['accuracy_on_completed'] == 0.5
+    assert report['accuracy']['code_10'] == 0.25
+    assert report['high_confidence_errors'] == 1

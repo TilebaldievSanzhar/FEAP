@@ -10,6 +10,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from feap.schemas.codes import Code8, Code10, Decision8, Decision10, normalize_code
+from feap.schemas.evidence import EvidenceFields
 
 
 class BranchCandidate(BaseModel):
@@ -107,3 +108,7 @@ class SubsubpositionResult(BaseModel):
         if v is None:
             return []
         return v
+
+
+class EvidenceSubsubpositionResult(SubsubpositionResult, EvidenceFields):
+    """Preserve prefix derivation and validation, with evidence before decisions."""

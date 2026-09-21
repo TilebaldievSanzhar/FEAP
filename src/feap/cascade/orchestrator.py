@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.backtracker import BacktrackLimitExceeded, apply_backtrack, _infer_target_level
 from feap.cascade.levels.base import CascadeState
+from feap.cascade.evidence import evidence_records
 from feap.cascade.levels.level0 import Level0Enrichment
 from feap.cascade.levels.level1 import Level1Section
 from feap.cascade.levels.level2 import Level2Group
@@ -131,6 +132,9 @@ class CascadeOrchestrator:
             # Merge answers into product card as additional fields
             for key, value in answers.items():
                 state.product_card[key] = value
+            # L4/L5 cite authoritative input. Custom dictionary keys alone were
+            # not rendered by product_card.jinja2, so answers could be invisible.
+            state.product_card['original_description'] = state.product_description
         else:
             # L0 stopped before creating product_card — answers go into description only
             pass
@@ -245,6 +249,7 @@ class CascadeOrchestrator:
                     question=state.clarifying_question or "Необходимы дополнительные данные",
                     questions=questions,
                     classification_chain_so_far=list(state.chain),
+                    evidence_checks=evidence_records(result),
                 ))
 
             current_level_idx += 1

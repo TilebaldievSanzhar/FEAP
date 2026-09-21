@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings
 
 
@@ -38,6 +40,7 @@ class Settings(BaseSettings):
 
     # --- Cascade tuning ---
     CASCADE_MAX_BACKTRACK: int = 5
+    SGR_EVIDENCE_POLICY: Literal['legacy', 'best_guess', 'clarify'] = 'legacy'
     SESSION_TTL_MINUTES: int = 30
     SESSION_MAX_ANSWERS: int = 3
 

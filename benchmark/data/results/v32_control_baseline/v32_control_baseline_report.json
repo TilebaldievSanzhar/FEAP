@@ -1,0 +1,74 @@
+{
+  "name": "v32_control16 / v32_control_baseline",
+  "ran_at": "2026-09-21T08:22:12.997351+00:00",
+  "n_cases": 16,
+  "key_metrics": {
+    "heading_accuracy": 1.0,
+    "subheading_accuracy": 1.0,
+    "code_10_accuracy": 1.0,
+    "hierarchical_score": 1.0,
+    "ece": 0.009999999999999898,
+    "duty_accuracy": 0.0
+  },
+  "behaviour": {
+    "completion_rate": 1.0,
+    "needs_input": 0,
+    "errors": 0,
+    "trap_hits": 0
+  },
+  "latency_ms": {
+    "mean": 16992.504181249387,
+    "p50": 17369.427199999336,
+    "p95": 19934.640699997544,
+    "p99": 19934.640699997544
+  },
+  "by_difficulty": {
+    "medium": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 16
+    }
+  },
+  "by_section": {
+    "XVI": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 9
+    },
+    "X": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 2
+    },
+    "VII": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 1
+    },
+    "XI": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 1
+    },
+    "XIII": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 2
+    },
+    "XV": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 1
+    }
+  },
+  "reliability_diagram": [
+    {
+      "bin_lower": 0.9,
+      "bin_upper": 1.0,
+      "mean_confidence": 0.9900000000000001,
+      "fraction_correct": 1.0,
+      "count": 16,
+      "gap": -0.009999999999999898
+    }
+  ]
+}

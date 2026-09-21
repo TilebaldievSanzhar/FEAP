@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.cascade.levels.base import BaseCascadeLevel, CascadeState
 from feap.cascade.selection import classify_choice, selected_candidate
+from feap.cascade.evidence import evidence_context, evidence_prompt, evidence_records, evidence_validator, pause_for_evidence
+from feap.config import settings
 from feap.db.queries import (
     get_children,
     get_cross_group_definitions,
@@ -18,14 +20,14 @@ from feap.db.queries import (
 from feap.llm.client import classify
 from feap.prompts.assembler import PromptAssembler
 from feap.schemas.common import DecisionChainEntry
-from feap.schemas.subposition import SubpositionResult
+from feap.schemas.subposition import EvidenceSubpositionResult, SubpositionResult
 
 
 class Level4Subposition(BaseCascadeLevel):
     level = 4
 
     def get_output_model(self):
-        return SubpositionResult
+        return SubpositionResult if settings.SGR_EVIDENCE_POLICY == 'legacy' else EvidenceSubpositionResult
 
     async def run(self, state: CascadeState, db: AsyncSession) -> SubpositionResult:
         position_code = state.position
@@ -122,12 +124,19 @@ class Level4Subposition(BaseCascadeLevel):
             classify_fn=classify,
             choices={"selected_subposition": {s.code for s in subpositions}},
             level=4,
-            system_prompt=system,
-            user_message=user,
-            output_model=SubpositionResult,
+            system_prompt=system + evidence_prompt(),
+            user_message=user + evidence_context(state.product_description),
+            output_model=self.get_output_model(),
+            validate_result=evidence_validator(
+                decision_field='selected_subposition',
+                descriptions={s['code']: s['name'] for s in subpositions_data},
+                source=state.product_description),
         )
 
         if result.backtrack_trigger:
+            return result
+
+        if pause_for_evidence(state, result):
             return result
 
         # Fallback: if LLM signals missing parameters but still picked a subposition,
@@ -159,6 +168,7 @@ class Level4Subposition(BaseCascadeLevel):
             reasoning=chosen.reasoning if chosen else "",
             rules_applied=result.applied_rules,
             confidence=result.confidence,
+            evidence_checks=evidence_records(result),
         ))
 
         return result

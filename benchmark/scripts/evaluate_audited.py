@@ -67,6 +67,7 @@ def main():
                                    'temperature': get_temperature(level)}
                        for level in range(6)},
         'cascade_max_backtrack': settings.CASCADE_MAX_BACKTRACK,
+        'evidence_policy': getattr(settings, 'SGR_EVIDENCE_POLICY', 'legacy'),
         'retry_errors': args.retry_errors,
         'retry_case_ids': sorted(args.retry_case_id),
         'concurrency': args.concurrency,
@@ -81,7 +82,7 @@ def main():
     if manifest_path.exists() and not args.no_resume:
         previous = json.loads(manifest_path.read_text(encoding='utf-8'))
         for key in ('dataset_sha256', 'models', 'source_sha256', 'reference_data',
-                    'generation', 'cascade_max_backtrack'):
+                    'generation', 'cascade_max_backtrack', 'evidence_policy'):
             if previous.get(key) != manifest[key]:
                 raise ValueError(f'Cannot resume with changed {key}; use a new run-id')
         manifest['previous_invocations'] = [

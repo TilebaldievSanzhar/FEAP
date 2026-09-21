@@ -1,0 +1,67 @@
+{
+  "name": "v32_final_smoke4 / v32_final_smoke",
+  "ran_at": "2026-09-21T10:59:21.296201+00:00",
+  "n_cases": 4,
+  "key_metrics": {
+    "heading_accuracy": 1.0,
+    "subheading_accuracy": 1.0,
+    "code_10_accuracy": 0.75,
+    "hierarchical_score": 0.9500000000000001,
+    "ece": 0.2875,
+    "duty_accuracy": 0.0
+  },
+  "behaviour": {
+    "completion_rate": 1.0,
+    "needs_input": 0,
+    "errors": 0,
+    "trap_hits": 0
+  },
+  "latency_ms": {
+    "mean": 21855.768524997984,
+    "p50": 22529.80740001658,
+    "p95": 22760.824400000274,
+    "p99": 22760.824400000274
+  },
+  "by_difficulty": {
+    "medium": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 0.75,
+      "n": 4
+    }
+  },
+  "by_section": {
+    "VI": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 1
+    },
+    "IX": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 0.5,
+      "n": 2
+    },
+    "XV": {
+      "heading_accuracy": 1.0,
+      "code_10_accuracy": 1.0,
+      "n": 1
+    }
+  },
+  "reliability_diagram": [
+    {
+      "bin_lower": 0.5,
+      "bin_upper": 0.6000000000000001,
+      "mean_confidence": 0.5,
+      "fraction_correct": 1.0,
+      "count": 2,
+      "gap": -0.5
+    },
+    {
+      "bin_lower": 0.9,
+      "bin_upper": 1.0,
+      "mean_confidence": 0.925,
+      "fraction_correct": 1.0,
+      "count": 2,
+      "gap": -0.07499999999999996
+    }
+  ]
+}

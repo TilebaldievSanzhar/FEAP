@@ -1,0 +1,259 @@
+{
+  "scope": "Only the 15 previously flagged cases were audited. Remaining labels are not certified. Four source-based corrections and eleven exclusions are not model improvements. This is a reproducible source review, not an expert customs ruling.",
+  "original_sha256": "809b9580355ea50ab5766c8928d240acd0f228c896f86bc7062ab34e4c19377c",
+  "reviewed_sha256": "2c25fab1941fc2a41b43c39827fe25bc542a32646ab8a8698245c028610a5df5",
+  "corrected": 4,
+  "quarantined": 11,
+  "remaining_cases": 89,
+  "reviews": [
+    {
+      "case_id": "BENCH-M04",
+      "old_code_10": "1006309809",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Нет отношения длины зерна к ширине; точный десятизначный вариант риса не обоснован.",
+      "source": {
+        "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.10_2022_25.04.2022.pdf",
+        "sha256": "22986cc7cbca59417296f14dbe5668dbcd10cf585ae9e9ad6dabad1eeaadc887",
+        "pages": 7,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-M06",
+      "old_code_10": "1602501000",
+      "replacement_code_10": "1602509501",
+      "disposition": "corrected",
+      "reason": "Стерилизованная тушёнка в банках не относится к сырым продуктам 1602501000; это готовое мясо в герметичной таре, не солонина.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.16_2022_10.09.2023.pdf",
+        "sha256": "15570c27486bbae4e5545cb2cc92eeb0775262c730c0622af03ce324e46a5061",
+        "pages": 11,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-M19",
+      "old_code_10": "4104115100",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Целая шкура не определяет, является ли кожа неспиленной лицевой, лицевым спилком или иным спилком.",
+      "source": {
+        "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.41_2022.pdf",
+        "sha256": "871219209cdca4e6b730b52d2e664ed85e09b5ad698fa2b3528ec88414ce3af7",
+        "pages": 11,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          8,
+          9
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-M20",
+      "old_code_10": "4407113409",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Обе версии 4407113409 и 4407113401 относятся к строганым лесоматериалам. Товар явно не строган. При сверке обнаружено потерянное родительское условие в name_full; исправлено отдельным патчем справочника после полных прогонов. Вероятная ветка 4407119401; карантин точного эталона до проверки отсутствия торцевых соединений. Вывод аудита v31 о достаточности замены влажности отозван.",
+      "source": {
+        "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.44_2022_16.06.2022.pdf",
+        "sha256": "1c7abb43e53bdc16f0b63d5d7db434c8cba137c5778ea89c0cb4f33e2a31e3ec",
+        "pages": 56,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          10,
+          11
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-M34",
+      "old_code_10": "8501522009",
+      "replacement_code_10": "8501522001",
+      "disposition": "corrected",
+      "reason": "Асинхронный трёхфазный двигатель 3 кВт относится к специальному листу асинхронных, не к остаточному 8501522009.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.85_2022_05.07.2026.pdf",
+        "sha256": "6d91d7ae3001af29623d74c2b758f3c8452f87716027378ee0889397b7806d3f",
+        "pages": 127,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          11
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-M36",
+      "old_code_10": "8528722001",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Smart TV сам по себе не задаёт наличие встроенной аппаратуры записи или воспроизведения видео в смысле различающих условий веток.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.85_2022_05.07.2026.pdf",
+        "sha256": "6d91d7ae3001af29623d74c2b758f3c8452f87716027378ee0889397b7806d3f",
+        "pages": 127,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          86,
+          87
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-M39",
+      "old_code_10": "8716400000",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Прицеп для перевозки грузов требует проверки 871639 вместо 871640; не указано состояние новый/бывший в эксплуатации для точного листа.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.87_2022_22.01.2026.pdf",
+        "sha256": "4c705ac9b62fd54b57ff40bb6aa88c17e2109a3bf3d00e706ded973e74071016",
+        "pages": 120,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          118,
+          119,
+          120
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-H02",
+      "old_code_10": "8443321009",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Комбинация печати, копирования и факса указывает на 844331 вместо 844332; основная функция цифрового копирования, отличающая 8443312000 от 8443318000, не установлена.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.84_2022_27.04.2026.pdf",
+        "sha256": "7ab67f603272daa3e4637c0daa98cf274059d18396145454e2b93f8a25dd16d3",
+        "pages": 143,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          77
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-H05",
+      "old_code_10": "0406907800",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Не подтверждены тип Гауда и необходимые параметры сыра. Жирность в сухом веществе не заменяет все условия точного листа.",
+      "source": {
+        "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.04_2022_25.04.2022.pdf",
+        "sha256": "5b94a99f1784e8f82d77883235360b96440781fab68c76c15bdb06a516584277",
+        "pages": 19,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          17,
+          18
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-H10",
+      "old_code_10": "9504500009",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Нужно подтвердить применение ветки консолей для внешнего экрана и исключение иных электронных игр; название PS5 не является достаточным документированным обоснованием исходного 9504500009.",
+      "source": {
+        "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.95_2022.pdf",
+        "sha256": "a1ed9abdcd300c8ea9fd6657ca332fa11d366cdca34ef25ac975f96bfa109f2c",
+        "pages": 10,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          6
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-H12",
+      "old_code_10": "8712003000",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Не указан тип подшипников, различающий листья велосипедов.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.87_2022_22.01.2026.pdf",
+        "sha256": "4c705ac9b62fd54b57ff40bb6aa88c17e2109a3bf3d00e706ded973e74071016",
+        "pages": 120,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          116
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-H13",
+      "old_code_10": "9403409000",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Нужно установить принадлежность к секционной кухонной мебели; комплект шкафов в разобранном виде сам по себе не обосновывает остаточный код.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.94_2022_08.03.2026.pdf",
+        "sha256": "e87d6249bc007ce274fe3d3ffe575559c65340393100bfdb1ef4ff12c9b232bd",
+        "pages": 20,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          7
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-H20",
+      "old_code_10": "8508110000",
+      "replacement_code_10": null,
+      "disposition": "quarantined_exact10",
+      "reason": "Давление всасывания 5000 Па не является мощностью электродвигателя в ваттах; также не указан объём пылесборника.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.85_2022_05.07.2026.pdf",
+        "sha256": "6d91d7ae3001af29623d74c2b758f3c8452f87716027378ee0889397b7806d3f",
+        "pages": 127,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          20
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-H29",
+      "old_code_10": "8704239809",
+      "replacement_code_10": "8704239209",
+      "disposition": "corrected",
+      "reason": "Новый дорожный дизельный самосвал полной массой 25.2 т не относится к бывшим в эксплуатации 8704239809.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.87_2022_22.01.2026.pdf",
+        "sha256": "4c705ac9b62fd54b57ff40bb6aa88c17e2109a3bf3d00e706ded973e74071016",
+        "pages": 120,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          75
+        ]
+      }
+    },
+    {
+      "case_id": "BENCH-H30",
+      "old_code_10": "8518210000",
+      "replacement_code_10": "8518220009",
+      "disposition": "corrected",
+      "reason": "Два динамика в одном корпусе: комплект громкоговорителей, а не одиночный громкоговоритель 8518210000; бытовое назначение.",
+      "source": {
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.85_2022_05.07.2026.pdf",
+        "sha256": "6d91d7ae3001af29623d74c2b758f3c8452f87716027378ee0889397b7806d3f",
+        "pages": 127,
+        "retrieved_on": "2026-09-21",
+        "pdf_pages_one_based": [
+          33
+        ]
+      }
+    }
+  ]
+}

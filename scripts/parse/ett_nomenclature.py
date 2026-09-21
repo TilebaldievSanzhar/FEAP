@@ -52,7 +52,7 @@ def _count_dashes(text: str) -> int:
     m = RE_DASHES.match(text.strip())
     if not m:
         return 0
-    return m.group(1).count("–") + m.group(1).count("\u2013")
+    return m.group(1).count("–")
 
 
 def _strip_dashes(text: str) -> str:
@@ -141,7 +141,7 @@ def _extract_table_lines(doc: fitz.Document) -> list[str]:
         text = page.get_text()
         page_lines = text.split("\n")
 
-        if not any("Наименование позиции" in l for l in page_lines):
+        if not any("Наименование позиции" in line for line in page_lines):
             continue
 
         past_header = False
@@ -222,18 +222,20 @@ def parse_group_pdf(pdf_path: Path, group_code: str) -> dict:
         if m and _code_in_group(m.group(1)):
             code = m.group(1) + m.group(2) + m.group(3) + m.group(4)
             name_on_line = m.group(5).strip()
-            dashes = _count_dashes(name_on_line) if name_on_line else 0
             name_parts = [name_on_line] if name_on_line else []
 
             j = i + 1
             while j < len(raw_lines) and _looks_like_text(clean(raw_lines[j])):
+                # An unnumbered parent after a leaf starts a new tariff row.
+                if name_parts and _count_dashes(clean(raw_lines[j])):
+                    break
                 name_parts.append(clean(raw_lines[j]).strip())
                 j += 1
 
             entries.append({
                 "type": "leaf",
                 "code": code,
-                "dash_level": dashes,
+                "dash_level": _count_dashes(" ".join(name_parts)),
                 "name": " ".join(name_parts).strip(),
             })
             i = j
@@ -342,11 +344,16 @@ def parse_group_pdf(pdf_path: Path, group_code: str) -> dict:
     subpositions: dict[str, dict] = {}
     leaves: dict[str, dict] = {}
     virtual_stack: list[tuple[int, str]] = []  # (dash_level, name)
+    current_position = None
 
     for entry in entries:
         etype = entry["type"]
         dash = entry["dash_level"]
         name_raw = entry["name"]
+        if entry['code'] and entry['code'][:4] != current_position:
+            # Some headings only have an implicit six-digit entry.
+            virtual_stack = []
+            current_position = entry['code'][:4]
 
         if etype == "position":
             virtual_stack = []
@@ -378,6 +385,9 @@ def parse_group_pdf(pdf_path: Path, group_code: str) -> dict:
                     "virtual_parents": list(vparents),
                     "full_name": full_name,
                 }
+            # Numbered intermediate rows carry conditions too. Previously only
+            # unnumbered rows survived, losing species, power bands, etc.
+            virtual_stack.append((dash, own_name))
 
         elif etype == "leaf":
             # Pop virtual parents at levels >= this leaf's dash level
@@ -391,6 +401,8 @@ def parse_group_pdf(pdf_path: Path, group_code: str) -> dict:
             leaves[code] = {
                 "subposition": subpos_code,
                 "name": own_name,
+                "parent_names": list(vparents),
+                "full_name": " > ".join(vparents + [own_name]),
             }
 
             # Create implicit subposition if needed
@@ -472,7 +484,6 @@ def print_stats(nom: dict) -> None:
     print(f"  Subpositions: {len(nom['subpositions'])}")
     print(f"  Leaves:       {len(nom['leaves'])}")
 
-    from collections import Counter
     by_position: dict[str, list[str]] = {}
     for code, sp in nom["subpositions"].items():
         pos = sp["position"]
