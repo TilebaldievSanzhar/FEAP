@@ -172,8 +172,8 @@ def main() -> None:
 
     db_url = os.environ.get(
         "DATABASE_URL",
-        "postgresql://feap:feap@localhost:5432/feap",
-    ).replace("+asyncpg", "")
+        "postgresql+psycopg2://feap:feap@localhost:5432/feap",
+    ).replace("+asyncpg", "+psycopg2")
 
     engine = create_engine(db_url)
 
@@ -284,6 +284,15 @@ def main() -> None:
     from classifiers import seed_classifiers
 
     seed_classifiers(force=False)
+
+    # Тарифные меры (миграция 012): все три загрузчика идемпотентны.
+    from trade_agreements import seed_trade_agreements
+    from trade_remedies import seed_trade_remedies
+    from vat_benefits import seed_vat_benefits
+
+    print(f"trade_agreements: {seed_trade_agreements()} rows")
+    print(f"trade_remedies: {seed_trade_remedies()} measures")
+    print(f"vat_exemptions (ставки 0%, ПКМ № 816/249/264): {seed_vat_benefits()} rows")
 
     engine.dispose()
 

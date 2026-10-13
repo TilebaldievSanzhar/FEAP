@@ -42,7 +42,7 @@ def main():
     parser.add_argument('--reverse', action='store_true')
     args = parser.parse_args()
     patch = json.loads(args.path.read_text(encoding='utf-8'))
-    with closing(psycopg2.connect(settings.database_url_sync)) as connection:
+    with closing(psycopg2.connect(settings.database_url_sync.replace("+psycopg2", ""))) as connection:
         count = apply_patch(connection, patch, apply=args.apply, reverse=args.reverse)
     print(f'{"Applied" if args.apply else "Validated"} {count} reference changes')
 

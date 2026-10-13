@@ -100,8 +100,8 @@ def write_to_db(chunks: list[dict]) -> None:
     from sqlalchemy import create_engine, text
 
     db_url = os.environ.get(
-        "DATABASE_URL", "postgresql://feap:feap@localhost:5432/feap"
-    ).replace("+asyncpg", "")
+        "DATABASE_URL", "postgresql+psycopg2://feap:feap@localhost:5432/feap"
+    ).replace("+asyncpg", "+psycopg2")
 
     engine = create_engine(db_url)
 

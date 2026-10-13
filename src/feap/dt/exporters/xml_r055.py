@@ -66,7 +66,7 @@ def _payment(parent: ET.Element, line: dict) -> None:
         parent, "Payment",
         kind=line.get("kind"), code=line.get("code"),
         basis=line.get("basis"), rate=line.get("rate"),
-        amount=line.get("amount"),
+        amount=line.get("amount"), ref=line.get("ref"),
     )
     for missing in line.get("missing") or []:
         _sub(el, "Missing", missing)
@@ -114,6 +114,7 @@ def _item(goods: ET.Element, item: dict) -> None:
     _opt(g31_el, "Qty", g31.get("qty"), unit=g31.get("qty_unit"))
     _opt(g31_el, "Packages", g31.get("packages"))
     _opt(g31_el, "Sku", g31.get("sku"))
+    _opt(g31_el, "Manufacturer", g31.get("manufacturer"))
     _opt(el, "G33", item.get("g33"))
     _opt(el, "G34", item.get("g34"))
     _opt(el, "G35", item.get("g35"))

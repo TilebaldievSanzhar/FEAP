@@ -1,10 +1,14 @@
-"""Графа 47: исчисление платежей (сбор, пошлина, акциз, НДС) для ИМ 40.
+"""Графа 47: исчисление платежей (сбор, пошлина, меры защиты рынка, акциз, НДС) для ИМ 40.
 
 Чистые функции на Decimal. Нехватка физической базы (вес/доп. единица)
 никогда не превращается в ноль — она возвращается в PaymentLine.missing
 и поднимается оркестратором как missing_parameters (механизм needs_input).
 
-НДС КР: база = таможенная стоимость + пошлина + акциз (НК КР).
+НДС КР (ст. 310 НК КР): база = таможенная стоимость + таможенные пошлины и
+налоги, кроме НДС. Включаются ли туда антидемпинговые/специальные/
+компенсационные пошлины, норма прямо не говорит (в КЗ — включаются явно,
+в РФ — нет) → решает настройка DT_VAT_INCLUDE_REMEDY_DUTIES, ФЛК
+предупреждает (W-REMEDY-VAT).
 """
 
 from __future__ import annotations
@@ -20,6 +24,8 @@ from feap.dt.duty_parser import (
     ParsedDuty,
 )
 from feap.dt.schemas import PAYMENT_CODES, PaymentLine
+from feap.tariff.fees import FeeRule, compute_percent_fee
+from feap.tariff.remedies import RateChoice, RemedyMeasure
 
 _PCT_RE = re.compile(r"^(\d+(?:\.\d+)?)\s*%$")
 
@@ -151,16 +157,20 @@ def compute_vat(
     vat_rate_str: str | None,
     exemption_note: str | None = None,
     excise_pending: bool = False,
+    extra_base: Decimal = Decimal(0),
+    extra_pending: bool = False,
+    ref: str | None = None,
 ) -> PaymentLine:
-    """НДС на импорт: база = ТС + пошлина + акциз. Ставка приходит строкой ('12%' / '0%').
+    """НДС на импорт: база = ТС + пошлина + акциз (+ extra_base: пошлины защиты
+    рынка, если настройка включает их в базу). Ставка строкой ('12%' / '0%').
 
-    Если пошлина/акциз ещё не рассчитаны (missing у их строк) — НДС тоже
+    Если пошлина/акциз/включаемые доп. пошлины ещё не рассчитаны — НДС тоже
     не считается: база была бы занижена.
     """
     pct = parse_pct(vat_rate_str)
     line = PaymentLine(
         kind="vat", code=PAYMENT_CODES["vat"],
-        basis=None, rate=vat_rate_str or "—", amount=None, note=exemption_note,
+        basis=None, rate=vat_rate_str or "—", amount=None, note=exemption_note, ref=ref,
     )
     if pct is None:
         return line.model_copy(update={"missing": [f"не удалось разобрать ставку НДС: {vat_rate_str!r}"]})
@@ -170,24 +180,65 @@ def compute_vat(
         missing.append("сумма пошлины (не рассчитана)")
     if excise_pending:
         missing.append("сумма акциза (не рассчитана)")
+    if extra_pending:
+        missing.append("сумма пошлины защиты рынка (не рассчитана)")
     if missing:
         return line.model_copy(update={"missing": missing})
 
-    base = customs_value + (duty_amount or Decimal(0)) + (excise_amount or Decimal(0))
+    base = (customs_value + (duty_amount or Decimal(0)) + (excise_amount or Decimal(0))
+            + extra_base)
     return line.model_copy(update={"basis": quantize_money(base), "amount": quantize_money(base * pct / 100)})
+
+
+# ── Меры защиты внутреннего рынка ЕАЭС ──────────────────────────────────────
+
+def compute_remedy(
+    measure: RemedyMeasure,
+    choice: RateChoice,
+    *,
+    customs_value: Decimal,
+) -> PaymentLine:
+    """Специальная/антидемпинговая/компенсационная пошлина: % от таможенной стоимости."""
+    kind = measure.kind if measure.kind in PAYMENT_CODES else "antidumping"
+    note = "; ".join(p for p in (f"мера {measure.measure_no}: {measure.title}", choice.note) if p)
+    line = PaymentLine(
+        kind=kind, code=PAYMENT_CODES[kind], basis=customs_value,
+        rate="—", amount=None, note=note, ref=measure.measure_no,
+    )
+    if choice.rate is None:
+        return line.model_copy(update={"missing": list(choice.missing)})
+    pct = choice.rate.rate_pct
+    return line.model_copy(update={
+        "rate": f"{format(pct, 'f')}%",
+        "amount": quantize_money(customs_value * pct / 100),
+    })
 
 
 # ── Сбор за таможенное оформление ───────────────────────────────────────────
 
 def compute_fee(fee_kgs: Decimal | None) -> PaymentLine | None:
-    """Сбор за оформление: пока фикс из настроек (TODO verify НПА КР).
+    """Сбор фиксированной суммой (режим DT_CUSTOMS_FEE_MODE=fixed).
 
-    None/не задан → строка сбора не формируется (ФЛК добавит warning W-FEE).
+    None/≤0 → строка сбора не формируется (ФЛК добавит info W-FEE).
     """
     if fee_kgs is None or fee_kgs <= 0:
         return None
     return PaymentLine(
         kind="fee", code=PAYMENT_CODES["fee"],
         basis=None, rate=f"{fee_kgs} сом (фикс.)", amount=quantize_money(fee_kgs),
-        note="ставка сбора задана настройкой DT_CUSTOMS_FEE_KGS — сверить с НПА КР",
+        note="сумма сбора задана вручную настройкой DT_CUSTOMS_FEE_KGS",
+    )
+
+
+def compute_percent_fee_line(total_customs_value: Decimal, rule: FeeRule) -> PaymentLine:
+    """Сбор за выпуск по п. 38 ПП КР № 79: 0,4% от ТС ДТ в пределах 5–2500 РП."""
+    result = compute_percent_fee(total_customs_value, rule)
+    note = rule.legal_ref
+    if result.bound == "min":
+        note = f"применён минимальный размер сбора; {note}"
+    elif result.bound == "max":
+        note = f"применён максимальный размер сбора; {note}"
+    return PaymentLine(
+        kind="fee", code=PAYMENT_CODES["fee"], basis=result.basis,
+        rate=result.rate_text, amount=result.amount, note=note,
     )

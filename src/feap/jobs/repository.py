@@ -35,8 +35,12 @@ async def create_job(
     params: dict | None = None,
     parent_ocr_job_id: uuid.UUID | None = None,
     initial_status: str = "pending",
+    org_id: uuid.UUID | None = None,
 ) -> ClassificationJob:
-    """Create a new job and its items in a single transaction."""
+    """Create a new job and its items in a single transaction.
+
+    org_id — владелец задачи (изоляция /jobs/* между организациями).
+    """
     now = dt.datetime.now(dt.timezone.utc)
     expires_at = now + dt.timedelta(hours=settings.JOB_RESULT_TTL_HOURS)
 
@@ -47,6 +51,7 @@ async def create_job(
         total_items=len(items),
         expires_at=expires_at,
         parent_ocr_job_id=parent_ocr_job_id,
+        org_id=org_id,
     )
     db.add(job)
     await db.flush()

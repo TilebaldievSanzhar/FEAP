@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.api.deps import get_db, get_job_backend
+from feap.auth.access import owner_matches
 from feap.auth.deps import AuthContext, get_auth_context
 from feap.config import settings
 from feap.db.models import OcrJob
@@ -129,7 +130,9 @@ async def submit_ocr_job(
     # Persist job first with empty files list, then write files on disk under
     # <ocr_upload_dir>/<job_id>/, update files metadata. This keeps the job
     # row visible even if disk write fails later — we can then mark failed.
-    job = await ocr_repo.create_job(db, files=[], auto_classify=auto_classify)
+    job = await ocr_repo.create_job(
+        db, files=[], auto_classify=auto_classify, org_id=ctx.org_id,
+    )
     try:
         files_meta = storage.save_files(job.id, raw_files)
     except OcrFileRejected as exc:
@@ -171,15 +174,21 @@ async def submit_ocr_job(
 
 # ── Inspect ─────────────────────────────────────────────────────────────────
 
+async def _owned_ocr_job(db: AsyncSession, ocr_job_id: uuid.UUID, ctx: AuthContext) -> OcrJob:
+    """OCR-задача текущей организации; чужая неотличима от несуществующей (404)."""
+    job = await ocr_repo.get_job(db, ocr_job_id)
+    if job is None or not owner_matches(job.org_id, ctx.org_id):
+        raise HTTPException(404, f"OCR job {ocr_job_id} not found")
+    return job
+
+
 @router.get("/ocr/jobs/{ocr_job_id}", name="get_ocr_job")
 async def get_ocr_job_endpoint(
     ocr_job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> OcrJobResponse:
-    job = await ocr_repo.get_job(db, ocr_job_id)
-    if job is None:
-        raise HTTPException(404, f"OCR job {ocr_job_id} not found")
-    return _job_to_response(job)
+    return _job_to_response(await _owned_ocr_job(db, ocr_job_id, ctx))
 
 
 # ── Cancel ──────────────────────────────────────────────────────────────────
@@ -188,7 +197,9 @@ async def get_ocr_job_endpoint(
 async def cancel_ocr_job_endpoint(
     ocr_job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> OcrJobResponse:
+    await _owned_ocr_job(db, ocr_job_id, ctx)
     job = await ocr_repo.cancel_job(db, ocr_job_id)
     if job is None:
         raise HTTPException(404, f"OCR job {ocr_job_id} not found")

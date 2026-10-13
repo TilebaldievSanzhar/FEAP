@@ -218,7 +218,7 @@ FEAP/
 │   ├── seed/                          #   4. Загрузка в БД
 │   └── rag/                           #   (опц.) Генерация эмбеддингов
 ├── migrations/                         # Alembic
-│   └── versions/                      #   001..008 (initial → NTM → drop verification_context → classification_jobs)
+│   └── versions/                      #   001..012 (initial → NTM → … → ДТ-ядро/auth → классификаторы → тарифные меры и org-скоуп)
 ├── tests/                              # pytest (включая tests/jobs/ — state machine, rate limiter, schemas)
 ├── data/
 │   ├── TWS_TNVED_2026-02-17.xlsx      # Excel со ставками от tws.by
@@ -565,11 +565,26 @@ OCR отдал mojibake) + `products` (извлечённые товарные �
 Полная справка по 10-значному коду без LLM:
 
 - `duty_rate` — ставка ЕТТ ЕАЭС
-- `vat` — ставка НДС КР с учётом освобождений (НК КР ст. 289),
-  по умолчанию `VAT_RATE_DEFAULT` (12%)
+- `vat` — ставка НДС КР с учётом безусловных льгот (НК КР ст. 289, ПКМ № 816
+  прил. 1), по умолчанию `VAT_RATE_DEFAULT` (12%); `vat.conditional` — льготы
+  0% при целевом назначении (ПКМ № 816 прил. 2, № 249, № 264) — применяются
+  только по выбору декларанта (`ShipmentItemIn.vat_benefit`)
 - `excise` — акциз КР (НК КР ст. 336), если применим
 - `unit_primary` / `unit_secondary` — единицы измерения
 - `ntm` — сводка мер НТР по совпадению кода (см. ниже)
+- `trade_remedies` — действующие меры защиты рынка ЕАЭС (антидемпинговые,
+  специальные, компенсационные) по коду, со ставками по странам/производителям;
+  статус всегда `may_apply` (товар должен подпадать под описание меры)
+- `customs_fee` — правило сбора за таможенные операции (п. 38 ПП КР № 79)
+
+Query-параметры: `origin` (ISO-2) — фильтр мер по стране происхождения,
+`on_date` — дата, на которую нужны ставки и льготы.
+
+### `GET /reference/trade-agreements`
+
+Торговые режимы ЕАЭС по странам происхождения (ЗСТ с Вьетнамом, Сербией,
+Ираном, ОАЭ; временное соглашение с Монголией; подписанные, но не действующие).
+Графики ставок не хранятся — преференциальную ставку вводит декларант.
 
 ### `GET /tnved/code/{code}`
 
@@ -727,8 +742,38 @@ Harness-контроли на каждом модуле (см. `docs/dt_core_dev
   кэшируется (`TULPAR_CACHE_HOURS`), пишется в `extracted.permit_check` и
   подхватывается графой 44 и W-TULPAR.
 
+### Тарифные меры и изоляция организаций (миграция 012)
+
+- **Сбор за таможенные операции** (`feap/tariff/fees.py`) — 0,4% от общей
+  таможенной стоимости ДТ, не менее 5 и не более 2500 расчётных показателей
+  (п. 38 ПП КР № 79 в ред. ПКМ № 349/406/444). Режим — `DT_CUSTOMS_FEE_MODE`.
+- **Меры защиты рынка ЕАЭС** (`feap/tariff/remedies.py`, таблица
+  `trade_remedies`) — снимок открытого реестра ЕЭК
+  (`scripts/fetch/eaeu_remedies.py` → `data/trade_remedies_seed.json` →
+  `scripts/seed/trade_remedies.py`). В проекте ДТ мера, совпавшая по коду и
+  стране происхождения, требует решения декларанта
+  (`ShipmentItemIn.remedy_decisions`: `applies | not_applicable | exempt`);
+  без решения — `needs_input`. Индивидуальная ставка подбирается по
+  `manufacturer`; строка графы 47 — код 2050 (антидемпинговая), 2040/2060.
+- **ЗСТ** (`feap/tariff/agreements.py`, таблица `trade_agreements`) —
+  преференциальная ставка (`preferential_duty_rate`) применяется только при
+  действующем соглашении, коде в графе 36 и сертификате происхождения.
+- **НДС 0% по ПКМ № 816/249/264** (`scripts/seed/vat_benefits.py`) —
+  безусловные ставки с сезонными окнами и условные льготы (`vat_benefit`).
+  Все ставки и льготы берутся на дату расчёта досье.
+- **ФЛК**: F-16 (ставка ЗСТ не применима), F-17 (неприменимая льгота НДС),
+  W-FTA, I-EAEU, W-REMEDY-EXEMPT, I-REMEDY-NA, W-REMEDY-VAT (учёт пошлин защиты
+  рынка в базе НДС — ст. 310 НК КР прямо их не называет), W-VAT-COND, I-VAT-COND.
+- **Изоляция организаций**: `org_id` у задач классификации, OCR-задач и
+  сессий уточнений; `/jobs/*`, `/ocr/jobs/*`, `/classify/{session}/answer` и
+  привязка OCR-документа к досье для чужой организации отвечают 404. SSE
+  (`/jobs/{id}/events`) принимает `?access_token=` — `EventSource` не умеет
+  заголовки.
+
 Документы: [`docs/dt_core_dev_plan.md`](docs/dt_core_dev_plan.md) (план и
-архитектура), [`docs/dt_draft_spec.md`](docs/dt_draft_spec.md) (спецификация).
+архитектура), [`docs/dt_draft_spec.md`](docs/dt_draft_spec.md) (спецификация),
+[`docs/product_vision_v3.md`](docs/product_vision_v3.md) (видение v3),
+[`docs/frontend_spec_v3_ia.md`](docs/frontend_spec_v3_ia.md) (дельта-спека UI).
 
 ## Локальная разработка (без Docker)
 
@@ -747,9 +792,12 @@ python scripts/parse/excel.py
 python scripts/parse/opi.py
 python scripts/parse/units.py
 python scripts/build/tree.py
-python scripts/seed/db.py
+python scripts/seed/db.py               # + классификаторы, соглашения, меры, НДС 0%
 python scripts/seed/vat_exemptions.py
 python scripts/seed/excise_rates.py
+
+# Обновление мер защиты рынка ЕАЭС (реестр ЕЭК, раз в неделю):
+python scripts/fetch/eaeu_remedies.py && python scripts/seed/trade_remedies.py
 
 # Сервер (single-product /classify работает сразу)
 uvicorn feap.main:app --reload
@@ -791,7 +839,13 @@ download/  →  parse/  →  build/  →  seed/
 | `seed/`     | `ntm_types.py`                  | 13 справочных типов НТР (используется `db.py` через импорт)        |
 | `seed/`     | `ntm_data.py`                   | 36 мер НТР из `data/ntm_seed.json` (используется `db.py`)          |
 | `seed/`     | `vat_exemptions.py`             | Освобождения от НДС КР (НК КР ст. 289)                            |
+| `seed/`     | `vat_benefits.py`               | НДС 0% по ПКМ № 816/249/264 (сезонные окна, условные льготы)      |
 | `seed/`     | `excise_rates.py`               | Ставки акциза КР (НК КР ст. 336)                                  |
+| `seed/`     | `classifiers.py`                | Классификаторы Решения 378 (upsert; виды платежей сверены)        |
+| `seed/`     | `trade_agreements.py`           | Торговые режимы ЕАЭС из `data/trade_agreements_seed.json`         |
+| `seed/`     | `trade_remedies.py`             | Меры защиты рынка из `data/trade_remedies_seed.json` (upsert)     |
+| `fetch/`    | `eaeu_remedies.py`              | Реестр мер ЕЭК (remedies.eaeunion.org) → `trade_remedies_seed.json` |
+| `fetch/`    | `nbkr_rates.py`                 | Ежедневные курсы НБКР → `exchange_rates`                          |
 | `rag/`      | `generate_embeddings.py`        | Voyage AI → колонка `embedding` (для будущих прецедентов)         |
 
 ## Переменные окружения
@@ -872,7 +926,10 @@ download/  →  parse/  →  build/  →  seed/
 | `AUTH_MODE`              | `optional` (dev: токен не обязателен) \| `required`                  | `optional`   |
 | `AUTH_SECRET`            | Секрет подписи JWT (HS256, ≥32 байт). Пусто в `required` — ошибка    | `""` (dev-секрет) |
 | `AUTH_TOKEN_TTL_MINUTES` | Время жизни access-токена                                            | `1440` (24 ч) |
-| `DT_CUSTOMS_FEE_KGS`     | Сбор за таможенное оформление, сом (пусто = строка не формируется)   | `""`         |
+| `DT_CUSTOMS_FEE_MODE`    | Сбор за таможенные операции: `percent` (0,4% ТС, 5–2500 РП) \| `fixed` \| `off` | `percent` |
+| `DT_CUSTOMS_FEE_KGS`     | Сумма сбора для режима `fixed`, сом                                  | `""`         |
+| `DT_CALC_INDEX_KGS`      | Расчётный показатель КР, сом (база мин./макс. сбора)                 | `100`        |
+| `DT_VAT_INCLUDE_REMEDY_DUTIES` | Включать антидемпинговые/спец./компенс. пошлины в базу НДС (ФЛК всегда предупреждает W-REMEDY-VAT) | `false` |
 | `NBKR_RATES_URL`         | Ежедневный XML курсов НБКР                                           | `https://www.nbkr.kg/XML/daily.xml` |
 | `DT_PDF_FONT_PATH`       | TTF с кириллицей для PDF (пусто = автопоиск Arial/DejaVu)            | `""`         |
 | `DT_PDF_FONT_BOLD_PATH`  | Жирное начертание (пусто = автопоиск / regular)                      | `""`         |

@@ -228,8 +228,8 @@ def main() -> None:
 
     db_url = os.environ.get(
         "DATABASE_URL",
-        "postgresql://feap:feap@localhost:5432/feap",
-    ).replace("+asyncpg", "")
+        "postgresql+psycopg2://feap:feap@localhost:5432/feap",
+    ).replace("+asyncpg", "+psycopg2")
 
     engine = create_engine(db_url)
 

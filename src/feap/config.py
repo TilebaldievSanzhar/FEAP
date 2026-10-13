@@ -84,9 +84,18 @@ class Settings(BaseSettings):
     SSE_HEARTBEAT_S: int = 15
 
     # --- DT core (проект декларации на товары) ---
-    # Сбор за таможенное оформление, сом. Пусто = строка сбора не формируется
-    # (ФЛК добавит warning W-FEE). TODO(verify): действующий НПА КР.
+    # Сбор за таможенные операции (ПП КР № 79 от 13.02.2020, п. 38):
+    #   percent — 0,4% от таможенной стоимости ДТ, не менее 5 и не более 2500 РП;
+    #   fixed   — фиксированная сумма DT_CUSTOMS_FEE_KGS (ручной режим);
+    #   off     — строка сбора не формируется (ФЛК: info W-FEE).
+    DT_CUSTOMS_FEE_MODE: Literal["percent", "fixed", "off"] = "percent"
     DT_CUSTOMS_FEE_KGS: str = ""
+    # Расчётный показатель КР, сом (база минимума/максимума сбора).
+    DT_CALC_INDEX_KGS: str = "100"
+    # База НДС на импорт (ст. 310 НК КР) — включать ли антидемпинговые,
+    # специальные и компенсационные пошлины. Норма прямо их не называет;
+    # ФЛК всегда предупреждает (W-REMEDY-VAT), когда такие пошлины есть.
+    DT_VAT_INCLUDE_REMEDY_DUTIES: bool = False
     # Официальные курсы НБКР (ежедневный XML)
     NBKR_RATES_URL: str = "https://www.nbkr.kg/XML/daily.xml"
     # PDF-экспорт: путь к TTF с кириллицей. Пусто = автопоиск
@@ -133,7 +142,7 @@ class Settings(BaseSettings):
     # Sync URL for Alembic / scripts
     @property
     def database_url_sync(self) -> str:
-        return self.DATABASE_URL.replace("+asyncpg", "")
+        return self.DATABASE_URL.replace("+asyncpg", "+psycopg2")
 
 
 settings = Settings()

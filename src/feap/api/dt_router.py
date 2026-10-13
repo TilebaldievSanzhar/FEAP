@@ -463,7 +463,9 @@ async def attach_shipment_document(
     require_role(ctx, "declarant")
     await _own_shipment(session, shipment_id, ctx)
     try:
-        row = await documents.attach_document(session, shipment_id, payload)
+        row = await documents.attach_document(
+            session, shipment_id, payload, org_id=ctx.org_id,
+        )
     except DocumentSourceError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     await session.commit()

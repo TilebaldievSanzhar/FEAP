@@ -26,7 +26,33 @@ _MoneyStr = Annotated[Decimal, Field(ge=0)]
 _DecimalAsStr = BaseModel
 
 
+#: Графа 36: значения «без льгот» (нули / буква О кириллицей и латиницей).
+NO_PREFERENCE = frozenset({"0000", "ОООО", "OOOO"})
+
+
 # ── Входные модели досье ────────────────────────────────────────────────────
+
+class RemedyDecision(_DecimalAsStr):
+    """Решение декларанта по мере защиты рынка, совпавшей по коду и стране.
+
+    Код определяет только «может применяться»: подпадает ли товар под
+    описание меры (диаметр, назначение и т.п.), решает человек.
+    """
+
+    decision: Literal["applies", "not_applicable", "exempt"] = Field(
+        description="applies — пошлина уплачивается; not_applicable — товар не подпадает "
+                    "под описание меры; exempt — освобождение (квота, целевое назначение, "
+                    "ценовые обязательства) с подтверждающим документом в графе 44",
+    )
+    variant: str | None = Field(
+        None, description="Вид товара, если ставки меры различаются по видам (AD-1 и т.п.)",
+    )
+    rate_pct: Decimal | None = Field(
+        None, ge=0, le=500,
+        description="Ставка вручную, % — только если ставку меры не удалось разобрать",
+    )
+    note: str | None = None
+
 
 class PartyIn(_DecimalAsStr):
     name: str = Field(min_length=1)
@@ -50,6 +76,26 @@ class ShipmentItemIn(_DecimalAsStr):
     preference: str | None = Field(
         None, max_length=4,
         description="Графа 36: код преференции (классификатор); None = без льгот",
+    )
+    preferential_duty_rate: str | None = Field(
+        None, max_length=200,
+        description="Ставка ввозной пошлины по графику ЗСТ (в формате ЕТТ: '0%', '5%'). "
+                    "Применяется только при действующем соглашении со страной "
+                    "происхождения и коде преференции в графе 36",
+    )
+    manufacturer: str | None = Field(
+        None, max_length=300,
+        description="Производитель товара (графа 31); нужен для индивидуальных "
+                    "ставок антидемпинговых мер",
+    )
+    remedy_decisions: dict[str, RemedyDecision] = Field(
+        default_factory=dict,
+        description="Решения по мерам защиты рынка: {'AD-32': {'decision': 'applies'}}",
+    )
+    vat_benefit: str | None = Field(
+        None, max_length=40,
+        description="Условная льгота по НДС, выбранная декларантом (source льготы, "
+                    "например 'pkm816_a2'); без выбора применяется общая ставка",
     )
     sku: str | None = Field(None, description="Артикул — связь с каталогом компании")
     classification_ref: str | None = Field(
@@ -102,13 +148,22 @@ class ShipmentIn(_DecimalAsStr):
 
 # ── Платежи (графа 47) ──────────────────────────────────────────────────────
 
-PaymentKind = Literal["fee", "duty", "excise", "vat"]
+PaymentKind = Literal[
+    "fee", "duty", "special", "antidumping", "countervailing", "excise", "vat",
+]
 
-#: Коды видов платежей для графы 47.
-#: TODO(verify): национальные коды КР снять с реальной ДТ (docs/dt_draft_spec.md §12.3).
+#: Виды «пошлин защиты рынка» (Протокол, прил. 8 к Договору о ЕАЭС).
+REMEDY_KINDS: frozenset[str] = frozenset({"special", "antidumping", "countervailing"})
+
+#: Коды видов платежей для графы 47 (Прил. 9 к Решению КТС № 378).
+#: 1010/2010/2040/2050/2060/5010 — раздел «на всей таможенной территории ЕАЭС»,
+#: сверено 2026-10-13. 4010 (акциз) — национальный раздел, TODO(verify) по ДТ КР.
 PAYMENT_CODES: dict[str, str] = {
     "fee": "1010",
     "duty": "2010",
+    "special": "2040",
+    "antidumping": "2050",
+    "countervailing": "2060",
     "excise": "4010",
     "vat": "5010",
 }
@@ -116,12 +171,13 @@ PAYMENT_CODES: dict[str, str] = {
 
 class PaymentLine(_DecimalAsStr):
     kind: PaymentKind
-    code: str = Field(description="Код вида платежа (классификатор; TODO verify КР)")
+    code: str = Field(description="Код вида платежа (Прил. 9 к Решению 378)")
     basis: Decimal | None = Field(None, description="Основа начисления")
     rate: str = Field(description="Ставка в человекочитаемом виде")
     amount: Decimal | None = Field(None, description="Сумма, сом; None если не рассчитано")
     missing: list[str] = Field(default_factory=list, description="Чего не хватило для расчёта")
     note: str | None = None
+    ref: str | None = Field(None, description="Мера/льгота, на которой основана строка (AD-32)")
 
 
 # ── Findings (ФЛК) ──────────────────────────────────────────────────────────

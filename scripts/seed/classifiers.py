@@ -3,7 +3,9 @@
 Usage:
     python scripts/seed/classifiers.py
 
-Idempotent: пропускает, если ref_classifiers уже наполнена.
+Idempotent: upsert по (classifier_code, item_code) — новые значения
+добавляются, имена и verified обновляются; лишние строки не удаляются
+(для полной пересборки — force=True).
 
 ВАЖНО про verified:
 - verified=True  — код из международного стандарта (Incoterms/ТК ЕАЭС),
@@ -99,17 +101,27 @@ CLASSIFIERS: list[dict] = [
             ("06011", "Сертификат о происхождении товара (общая форма)"),
         ]
     ],
-    # ── Виды платежей (графа 47) — TODO(verify), см. PAYMENT_CODES ──────────
+    # ── Виды платежей (графа 47), Прил. 9 к Решению 378, раздел «на всей
+    # таможенной территории ЕАЭС» — сверено 2026-10-13 (base.garant.ru) ─────
     *[
         {"classifier_code": "payment_kinds", "item_code": code,
-         "name_ru": name, "verified": False}
+         "name_ru": name, "verified": True}
         for code, name in [
             ("1010", "Таможенные сборы за совершение таможенных операций"),
+            ("1020", "Таможенные сборы за таможенное сопровождение"),
             ("2010", "Ввозная таможенная пошлина"),
-            ("4010", "Акциз"),
+            ("2040", "Специальная пошлина (Протокол, прил. 8 к Договору о ЕАЭС)"),
+            ("2050", "Антидемпинговая пошлина (Протокол, прил. 8 к Договору о ЕАЭС)"),
+            ("2060", "Компенсационная пошлина (Протокол, прил. 8 к Договору о ЕАЭС)"),
+            ("2140", "Предварительная специальная пошлина"),
+            ("2150", "Предварительная антидемпинговая пошлина"),
+            ("2160", "Предварительная компенсационная пошлина"),
             ("5010", "Налог на добавленную стоимость"),
         ]
     ],
+    # Акциз — национальный раздел классификатора; код КР не сверен (TODO-verify).
+    {"classifier_code": "payment_kinds", "item_code": "4010",
+     "name_ru": "Акциз", "verified": False},
 ]
 
 
@@ -118,20 +130,12 @@ def seed_classifiers(force: bool = False) -> None:
 
     db_url = os.environ.get(
         "DATABASE_URL",
-        "postgresql://feap:feap@localhost:5432/feap",
-    ).replace("+asyncpg", "")
+        "postgresql+psycopg2://feap:feap@localhost:5432/feap",
+    ).replace("+asyncpg", "+psycopg2")
 
     engine = create_engine(db_url)
 
-    with engine.connect() as conn:
-        count = conn.execute(text("SELECT COUNT(*) FROM ref_classifiers")).scalar()
-
-    if count and count > 0 and not force:
-        print(f"ref_classifiers already contains {count} rows — skipping.")
-        engine.dispose()
-        return
-
-    print(f"Seeding {len(CLASSIFIERS)} classifier values (Решение 378)...")
+    print(f"Upserting {len(CLASSIFIERS)} classifier values (Решение 378)...")
     with engine.begin() as conn:
         if force:
             conn.execute(text("DELETE FROM ref_classifiers"))
@@ -139,6 +143,9 @@ def seed_classifiers(force: bool = False) -> None:
             text("""
                 INSERT INTO ref_classifiers (classifier_code, item_code, name_ru, verified)
                 VALUES (:classifier_code, :item_code, :name_ru, :verified)
+                ON CONFLICT (classifier_code, item_code) DO UPDATE SET
+                    name_ru = EXCLUDED.name_ru, verified = EXCLUDED.verified,
+                    updated_at = now()
             """),
             CLASSIFIERS,
         )

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+import datetime as dt
+from decimal import Decimal, InvalidOperation
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +15,13 @@ from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
 from feap.config import settings
 from feap.usage import record_usage
 from feap.db.models import TnvedNode
-from feap.db.queries import get_excise_rate, get_ntm_measures_for_code, get_vat_exemption
+from feap.db.queries import (
+    get_excise_rate,
+    get_ntm_measures_for_code,
+    get_trade_agreements,
+    get_trade_remedies,
+    get_vat_rules,
+)
 from feap.ntm.schemas import NtmVerifyRequest, NtmVerifyResponse
 from feap.ntm.verifier import verify_ntm_measures
 from feap.schemas.api import (
@@ -25,9 +34,15 @@ from feap.schemas.api import (
     NtmResponse,
     NtmSummary,
     TnvedNodeResponse,
+    TradeAgreementInfo,
+    TradeRemedyInfo,
+    TradeRemedyRateInfo,
+    VatConditionalInfo,
     VatExemptionInfo,
     VatInfo,
 )
+from feap.tariff.fees import kg_release_fee_rule
+from feap.tariff.remedies import find_code_measures, origin_matches
 
 router = APIRouter(prefix="/api/v1")
 
@@ -103,6 +118,7 @@ async def classify_product(
         description=request.description,
         db=db,
         additional_info=request.additional_info or None,
+        org_id=ctx.org_id,
     )
     # Метеринг: одна классификация = одно событие; resume (answer) не тарифицируется.
     record_usage(
@@ -120,16 +136,19 @@ async def answer_question(
     request: AnswerRequest,
     db: AsyncSession = Depends(get_db),
     orchestrator: CascadeOrchestrator = Depends(get_orchestrator),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> ClassifyResponse:
     """Provide answers to clarifying questions from a previous classification.
 
     Resumes the cascade from the level where it stopped, using the saved state.
+    Сессия чужой организации неотличима от несуществующей (404).
     """
     try:
         return await orchestrator.resume(
             session_id=session_id,
             answers=request.answers,
             db=db,
+            org_id=ctx.org_id,
         )
     except SessionNotFound:
         raise HTTPException(
@@ -187,14 +206,32 @@ async def get_tree(
     return responses
 
 
+def _fee_rule_text() -> str | None:
+    if settings.DT_CUSTOMS_FEE_MODE != "percent":
+        return None
+    try:
+        rp = Decimal((settings.DT_CALC_INDEX_KGS or "100").strip())
+    except InvalidOperation:
+        rp = Decimal(100)
+    rule = kg_release_fee_rule(rp)
+    return (f"{rule.pct}% от таможенной стоимости ДТ, не менее {rule.min_kgs} сом и "
+            f"не более {rule.max_kgs} сом — {rule.legal_ref}")
+
+
 @router.get("/tnved/lookup/{code}", response_model=CodeLookupResponse)
 async def lookup_code(
     code: str,
+    origin: str | None = Query(
+        None, pattern=r"^[A-Za-z]{2}$",
+        description="Страна происхождения (ISO alpha-2) — фильтр мер защиты рынка",
+    ),
+    on_date: dt.date | None = Query(None, description="Дата, на которую нужны ставки"),
     db: AsyncSession = Depends(get_db),
 ) -> CodeLookupResponse:
-    """Справка по 10-значному коду ТН ВЭД: тариф, НДС, акциз и т.д."""
+    """Справка по 10-значному коду ТН ВЭД: тариф, НДС, акциз, меры защиты рынка, сбор."""
     if not code.isdigit() or len(code) != 10:
         raise HTTPException(400, "Код должен состоять ровно из 10 цифр.")
+    day = on_date or dt.date.today()
 
     result = await db.execute(
         select(TnvedNode).where(TnvedNode.code == code, TnvedNode.is_leaf.is_(True)).limit(1)
@@ -203,8 +240,8 @@ async def lookup_code(
     if not node:
         raise HTTPException(404, f"Код {code} не найден в номенклатуре.")
 
-    # Determine VAT rate and exemption
-    exemption = await get_vat_exemption(db, code)
+    # НДС: безусловная льгота применяется сама, условные — по выбору декларанта.
+    exemption, conditional = await get_vat_rules(db, code, day)
     if exemption:
         vat = VatInfo(
             rate=exemption.rate_override or "0%",
@@ -217,9 +254,41 @@ async def lookup_code(
         )
     else:
         vat = VatInfo(rate=settings.VAT_RATE_DEFAULT)
+    vat.conditional = [
+        VatConditionalInfo(
+            source=row.source or f"vat:{row.id}",
+            rate=row.rate_override or "0%",
+            condition=row.condition or "",
+            legal_ref=row.legal_ref,
+            note=row.note,
+            valid_to=row.valid_to.isoformat() if row.valid_to else None,
+        )
+        for row in conditional
+    ]
+
+    # Меры защиты рынка ЕАЭС: совпадение по коду (и стране, если указана).
+    measures = find_code_measures(await get_trade_remedies(db), code10=code, on_date=day)
+    if origin:
+        measures = [m for m in measures if origin_matches(m.countries, origin)]
+    trade_remedies = [
+        TradeRemedyInfo(
+            measure_no=m.measure_no, kind=m.kind, title=m.title,
+            product_description=m.product_description, countries=list(m.countries),
+            rates=[
+                TradeRemedyRateInfo(
+                    rate_pct=format(r.rate_pct, "f"), country=r.country,
+                    producers=list(r.producers), variant=r.variant,
+                )
+                for r in m.rates
+            ],
+            valid_to=m.valid_to.isoformat() if m.valid_to else None,
+            notes=m.notes, legal_basis=m.legal_basis, source_url=m.source_url,
+        )
+        for m in measures
+    ]
 
     # Determine excise
-    excise_row = await get_excise_rate(db, code)
+    excise_row = await get_excise_rate(db, code, day)
     if excise_row:
         excise = ExciseInfo(
             applicable=True,
@@ -245,7 +314,29 @@ async def lookup_code(
         unit_primary=node.unit_primary,
         unit_secondary=node.unit_secondary,
         ntm=ntm if ntm.total_count > 0 else None,
+        trade_remedies=trade_remedies,
+        customs_fee=_fee_rule_text(),
     )
+
+
+@router.get("/reference/trade-agreements", response_model=list[TradeAgreementInfo])
+async def list_trade_agreements(
+    db: AsyncSession = Depends(get_db),
+) -> list[TradeAgreementInfo]:
+    """Торговые режимы ЕАЭС по странам происхождения (ЗСТ, временные соглашения).
+
+    Члены ЕАЭС (AM, BY, KZ, KG, RU) — единая таможенная территория, в списке не
+    перечисляются. Графики ставок соглашений не хранятся: ставку по ЗСТ вводит
+    декларант (ShipmentItemIn.preferential_duty_rate).
+    """
+    return [
+        TradeAgreementInfo(
+            country=a.country, regime=a.regime, agreement=a.agreement, status=a.status,
+            in_force_from=a.in_force_from.isoformat() if a.in_force_from else None,
+            origin_proof=a.origin_proof, note=a.note, verified=a.verified,
+        )
+        for a in await get_trade_agreements(db)
+    ]
 
 
 @router.get("/ntm/{code}", response_model=NtmResponse)

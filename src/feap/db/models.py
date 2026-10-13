@@ -87,6 +87,12 @@ class VatExemption(Base):
     )
     legal_ref: Mapped[str] = mapped_column(Text, nullable=False)
     note: Mapped[str | None] = mapped_column(Text)
+    condition: Mapped[str | None] = mapped_column(
+        Text, comment="Условие применения (целевое назначение); NULL = безусловно",
+    )
+    source: Mapped[str | None] = mapped_column(
+        String(40), comment="nk289 | pkm816_a1 | pkm816_a2 | pkm249 | pkm264",
+    )
     valid_from: Mapped[dt.date | None] = mapped_column(Date)
     valid_to: Mapped[dt.date | None] = mapped_column(Date)
     updated_at: Mapped[dt.datetime] = mapped_column(
@@ -95,6 +101,7 @@ class VatExemption(Base):
 
     __table_args__ = (
         Index("idx_vat_exemption_code_pattern", "code_pattern"),
+        Index("idx_vat_exemption_source", "source"),
     )
 
     def __repr__(self) -> str:
@@ -134,6 +141,77 @@ class ExciseRate(Base):
 
     def __repr__(self) -> str:
         return f"<ExciseRate {self.code_pattern} {self.rate} {self.rate_unit}>"
+
+
+# ── Меры защиты внутреннего рынка ЕАЭС (реестр ЕЭК) ─────────────────────────
+
+class TradeRemedy(Base):
+    """Антидемпинговая / специальная / компенсационная мера ЕАЭС."""
+
+    __tablename__ = "trade_remedies"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    measure_no: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    kind: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="antidumping | special | countervailing",
+    )
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    product_description: Mapped[str | None] = mapped_column(Text)
+    countries: Mapped[list[str]] = mapped_column(ARRAY(String(3)), nullable=False)
+    codes: Mapped[list[str]] = mapped_column(ARRAY(String(10)), nullable=False)
+    rates: Mapped[list[dict]] = mapped_column(JSONB, nullable=False, default=list)
+    notes: Mapped[str | None] = mapped_column(Text)
+    legal_basis: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="applied | suspended | expired",
+    )
+    valid_from: Mapped[dt.date | None] = mapped_column(Date)
+    valid_to: Mapped[dt.date | None] = mapped_column(Date)
+    needs_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    source_url: Mapped[str | None] = mapped_column(Text)
+    source_modified: Mapped[str | None] = mapped_column(String(40))
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (Index("idx_trade_remedies_status", "status"),)
+
+    def __repr__(self) -> str:
+        return f"<TradeRemedy {self.measure_no} {self.kind} {self.status}>"
+
+
+class TradeAgreement(Base):
+    """Торговый режим по стране происхождения (ЗСТ ЕАЭС, члены ЕАЭС)."""
+
+    __tablename__ = "trade_agreements"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    country: Mapped[str] = mapped_column(String(2), nullable=False)
+    regime: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="eaeu_member | fta | fta_interim",
+    )
+    agreement: Mapped[str] = mapped_column(Text, nullable=False)
+    legal_ref: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="in_force | signed | terminated",
+    )
+    in_force_from: Mapped[dt.date | None] = mapped_column(Date)
+    in_force_to: Mapped[dt.date | None] = mapped_column(Date)
+    origin_proof: Mapped[str | None] = mapped_column(Text)
+    note: Mapped[str | None] = mapped_column(Text)
+    source_url: Mapped[str | None] = mapped_column(Text)
+    verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("country", "agreement", name="uq_trade_agreement_country"),
+        Index("idx_trade_agreements_country", "country"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<TradeAgreement {self.country} {self.regime} {self.status}>"
 
 
 # ── Примечания к разделам / группам ──────────────────────────────────────────
@@ -282,12 +360,16 @@ class ClassificationSession(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     session_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False, index=True)
     state: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    # Владелец сессии; NULL — сессии до миграции 012 и внутренние (воркер).
+    org_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
     updated_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    __table_args__ = (Index("idx_sessions_org", "org_id"),)
 
 
 # ── Async jobs (batch classification, OCR-derived) ────────────────────────────
@@ -303,6 +385,8 @@ class ClassificationJob(Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False)
 
     params: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    # Владелец задачи; NULL — задачи до миграции 012 (доступны как раньше).
+    org_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
 
     total_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     completed_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -328,6 +412,7 @@ class ClassificationJob(Base):
         Index("idx_jobs_status", "status"),
         Index("idx_jobs_expires", "expires_at"),
         Index("idx_jobs_parent_ocr", "parent_ocr_job_id"),
+        Index("idx_jobs_org", "org_id"),
     )
 
     def __repr__(self) -> str:
@@ -434,6 +519,8 @@ class OcrJob(Base):
     files: Mapped[list[dict]] = mapped_column(JSONB, nullable=False, default=list)
     auto_classify: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     params: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    # Владелец задачи; NULL — задачи до миграции 012 (доступны как раньше).
+    org_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
 
     # Extract stage
     extraction: Mapped[list[dict] | None] = mapped_column(JSONB)
@@ -462,6 +549,7 @@ class OcrJob(Base):
         Index("idx_ocr_jobs_status", "status"),
         Index("idx_ocr_jobs_expires", "expires_at"),
         Index("idx_ocr_jobs_linked_classify", "linked_classification_job_id"),
+        Index("idx_ocr_jobs_org", "org_id"),
     )
 
     def __repr__(self) -> str:

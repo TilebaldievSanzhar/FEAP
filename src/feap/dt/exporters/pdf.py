@@ -34,7 +34,7 @@ from reportlab.platypus import (
 )
 
 from feap.config import settings
-from feap.dt.exporters.xlsx import HEADER_LABELS, _fmt
+from feap.dt.exporters.xlsx import HEADER_LABELS, PAYMENT_KIND_RU, _fmt
 
 FONT = "DTSans"
 FONT_BOLD = "DTSans-Bold"
@@ -87,7 +87,7 @@ _WARN_BG = colors.Color(1.0, 0.95, 0.8)
 _ERR_BG = colors.Color(0.99, 0.89, 0.93)
 _MUTED = colors.Color(0.35, 0.35, 0.35)
 
-_KIND_RU = {"duty": "Пошлина", "excise": "Акциз", "vat": "НДС", "fee": "Сбор"}
+_KIND_RU = PAYMENT_KIND_RU
 _SEV_RU = {"error": "ОШИБКА", "warning": "Предупреждение", "info": "Инфо"}
 
 
@@ -203,6 +203,8 @@ def render_pdf(graphs: dict, findings: list[dict]) -> bytes:
                 st["h2"],
             ),
             _p(g31.get("description") or "—", st["cell"]),
+            *([_p(f"Производитель: {g31['manufacturer']}", st["cell"])]
+              if g31.get("manufacturer") else []),
             Spacer(0, 1.5 * mm),
             _table(
                 [

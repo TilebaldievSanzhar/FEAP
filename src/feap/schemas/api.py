@@ -40,10 +40,21 @@ class TnvedNodeResponse(BaseModel):
 class VatExemptionInfo(BaseModel):
     """Информация об освобождении от НДС."""
 
-    type: str = Field(description="full | reduced")
+    type: str = Field(description="full | reduced | zero")
     legal_ref: str = Field(description="Ссылка на НПА")
     note: str | None = None
     valid_to: str | None = Field(default=None, description="Дата окончания действия")
+
+
+class VatConditionalInfo(BaseModel):
+    """Условная льгота по НДС: применяется только при целевом назначении."""
+
+    source: str = Field(description="Ключ льготы для ShipmentItemIn.vat_benefit")
+    rate: str
+    condition: str
+    legal_ref: str
+    note: str | None = None
+    valid_to: str | None = None
 
 
 class VatInfo(BaseModel):
@@ -51,6 +62,48 @@ class VatInfo(BaseModel):
 
     rate: str = Field(description="Ставка НДС, e.g. '12%' или '0%'")
     exemption: VatExemptionInfo | None = None
+    conditional: list[VatConditionalInfo] = Field(
+        default_factory=list,
+        description="Льготы, доступные при условии (ставка rate применяется без выбора)",
+    )
+
+
+class TradeRemedyRateInfo(BaseModel):
+    rate_pct: str
+    country: str | None = None
+    producers: list[str] = Field(default_factory=list,
+                                 description="Пусто = единая ставка / прочие производители")
+    variant: str | None = None
+
+
+class TradeRemedyInfo(BaseModel):
+    """Мера защиты рынка ЕАЭС, совпавшая по коду (может применяться)."""
+
+    measure_no: str = Field(description="Номер в реестре ЕЭК, например AD-32")
+    kind: str = Field(description="antidumping | special | countervailing")
+    title: str
+    product_description: str | None = None
+    countries: list[str]
+    rates: list[TradeRemedyRateInfo]
+    valid_to: str | None = None
+    notes: str | None = None
+    legal_basis: str | None = None
+    source_url: str | None = None
+    status: str = Field(
+        default="may_apply",
+        description="may_apply — совпадение по коду; товар должен подпадать под описание меры",
+    )
+
+
+class TradeAgreementInfo(BaseModel):
+    country: str
+    regime: str = Field(description="fta | fta_interim | eaeu_member")
+    agreement: str
+    status: str = Field(description="in_force | signed | terminated")
+    in_force_from: str | None = None
+    origin_proof: str | None = None
+    note: str | None = None
+    verified: bool = False
 
 
 class ExciseInfo(BaseModel):
@@ -127,3 +180,11 @@ class CodeLookupResponse(BaseModel):
     unit_primary: str | None = None
     unit_secondary: str | None = None
     ntm: NtmSummary | None = None
+    trade_remedies: list[TradeRemedyInfo] = Field(
+        default_factory=list,
+        description="Действующие меры защиты рынка ЕАЭС по коду (антидемпинг и др.)",
+    )
+    customs_fee: str | None = Field(
+        default=None,
+        description="Правило сбора за таможенные операции КР (п. 38 ПП КР № 79)",
+    )

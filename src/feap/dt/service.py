@@ -34,6 +34,7 @@ from feap.dt.schemas import (
     ShipmentOut,
 )
 from feap.orgs import DEFAULT_ORG_NAME, resolve_org
+from feap.tariff.fees import FeeRule, kg_release_fee_rule
 from feap.usage import record_usage
 
 # Реэкспорт для обратной совместимости: исторические точки входа модуля.
@@ -219,13 +220,24 @@ async def latest_draft(
 # ── Генерация драфта ─────────────────────────────────────────────────────────
 
 def _configured_fee() -> Decimal | None:
+    """Фиксированный сбор (режим fixed); None — сбор считается правилом или выключен."""
+    if settings.DT_CUSTOMS_FEE_MODE != "fixed":
+        return None
     raw = (settings.DT_CUSTOMS_FEE_KGS or "").strip()
-    if not raw:
+    try:
+        return Decimal(raw) if raw else Decimal(0)
+    except InvalidOperation:
+        return Decimal(0)
+
+
+def _configured_fee_rule() -> FeeRule | None:
+    if settings.DT_CUSTOMS_FEE_MODE != "percent":
         return None
     try:
-        return Decimal(raw)
+        rp = Decimal((settings.DT_CALC_INDEX_KGS or "100").strip())
     except InvalidOperation:
-        return None
+        rp = Decimal(100)
+    return kg_release_fee_rule(rp)
 
 
 async def assemble_and_validate(
@@ -254,8 +266,12 @@ async def assemble_and_validate(
     assembled = assemble(
         model, snapshot.item_refs, snapshot.rates,
         fee_kgs=_configured_fee(),
+        fee_rule=_configured_fee_rule(),
         shipment_ref=shipment_ref,
         documents=documents_g44,
+        remedies=snapshot.remedies,
+        agreements=snapshot.agreements,
+        vat_includes_remedies=settings.DT_VAT_INCLUDE_REMEDY_DUTIES,
     )
     findings = validate_draft(assembled.graphs, model, snapshot)
     if doc_payloads:

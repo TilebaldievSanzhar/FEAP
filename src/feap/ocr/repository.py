@@ -21,6 +21,7 @@ async def create_job(
     files: list[dict],
     auto_classify: bool,
     params: dict | None = None,
+    org_id: uuid.UUID | None = None,
 ) -> OcrJob:
     now = dt.datetime.now(dt.timezone.utc)
     expires_at = now + dt.timedelta(hours=settings.OCR_RESULT_TTL_HOURS)
@@ -31,6 +32,7 @@ async def create_job(
         auto_classify=auto_classify,
         params=params or {},
         expires_at=expires_at,
+        org_id=org_id,
     )
     db.add(job)
     await db.commit()

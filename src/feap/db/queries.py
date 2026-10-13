@@ -17,8 +17,12 @@ from feap.db.models import (
     OpiRule,
     TnvedNode,
     TnvedNote,
+    TradeAgreement,
+    TradeRemedy,
     VatExemption,
 )
+from feap.tariff.agreements import TradeAgreementRef, agreement_from_row
+from feap.tariff.remedies import RemedyMeasure, measure_from_row
 
 
 # ── Tree navigation ──────────────────────────────────────────────────────────
@@ -285,33 +289,75 @@ async def get_explanations_for_position(
 
 # ── VAT exemptions ──────────────────────────────────────────────────────────
 
-async def get_vat_exemption(
+async def get_vat_rules(
     session: AsyncSession,
     code: str,
-) -> VatExemption | None:
-    """Find the best matching VAT exemption for a 10-digit code.
+    on_date: dt.date | None = None,
+) -> tuple[VatExemption | None, list[VatExemption]]:
+    """Льготы НДС для 10-значного кода на дату.
 
-    Tries prefixes from longest (exact match) to shortest.
-    Only returns exemptions with valid date range (or no dates set).
+    Возвращает (безусловная льгота с самым длинным префиксом | None,
+    условные льготы — от самой специфичной). Условные (condition IS NOT NULL)
+    применяются только по выбору декларанта (ShipmentItemIn.vat_benefit).
     """
-    today = dt.date.today()
+    day = on_date or dt.date.today()
     # Generate prefixes: '3004201000', '300420100', ..., '30', '3'
     prefixes = [code[:i] for i in range(len(code), 0, -1)]
 
     result = await session.execute(
         select(VatExemption).where(
             VatExemption.code_pattern.in_(prefixes),
-            (VatExemption.valid_from.is_(None)) | (VatExemption.valid_from <= today),
-            (VatExemption.valid_to.is_(None)) | (VatExemption.valid_to >= today),
+            (VatExemption.valid_from.is_(None)) | (VatExemption.valid_from <= day),
+            (VatExemption.valid_to.is_(None)) | (VatExemption.valid_to >= day),
         )
     )
-    rows = list(result.scalars().all())
-    if not rows:
-        return None
+    rows = sorted(result.scalars().all(), key=lambda r: len(r.code_pattern), reverse=True)
+    unconditional = next((r for r in rows if not r.condition), None)
+    conditional = [r for r in rows if r.condition]
+    return unconditional, conditional
 
-    # Return the most specific match (longest code_pattern)
-    rows.sort(key=lambda r: len(r.code_pattern), reverse=True)
-    return rows[0]
+
+async def get_vat_exemption(
+    session: AsyncSession,
+    code: str,
+    on_date: dt.date | None = None,
+) -> VatExemption | None:
+    """Безусловная льгота НДС с самым длинным совпавшим префиксом (или None)."""
+    unconditional, _ = await get_vat_rules(session, code, on_date)
+    return unconditional
+
+
+# ── Тарифные меры: защита рынка ЕАЭС и торговые режимы ─────────────────────
+
+async def get_trade_remedies(session: AsyncSession) -> list[RemedyMeasure]:
+    """Все не истёкшие меры защиты рынка (таблица — десятки строк)."""
+    result = await session.execute(
+        select(TradeRemedy).where(TradeRemedy.status != "expired")
+    )
+    return [
+        measure_from_row({
+            "measure_no": r.measure_no, "kind": r.kind, "title": r.title,
+            "countries": r.countries, "codes": r.codes, "rates": r.rates,
+            "status": r.status, "valid_from": r.valid_from, "valid_to": r.valid_to,
+            "product_description": r.product_description, "notes": r.notes,
+            "legal_basis": r.legal_basis, "needs_review": r.needs_review,
+            "source_url": r.source_url,
+        })
+        for r in result.scalars().all()
+    ]
+
+
+async def get_trade_agreements(session: AsyncSession) -> list[TradeAgreementRef]:
+    result = await session.execute(select(TradeAgreement).order_by(TradeAgreement.country))
+    return [
+        agreement_from_row({
+            "country": r.country, "regime": r.regime, "agreement": r.agreement,
+            "status": r.status, "in_force_from": r.in_force_from,
+            "in_force_to": r.in_force_to, "origin_proof": r.origin_proof,
+            "legal_ref": r.legal_ref, "note": r.note, "verified": r.verified,
+        })
+        for r in result.scalars().all()
+    ]
 
 
 # ── Excise rates ────────────────────────────────────────────────────────────
@@ -319,13 +365,14 @@ async def get_vat_exemption(
 async def get_excise_rate(
     session: AsyncSession,
     code: str,
+    on_date: dt.date | None = None,
 ) -> ExciseRate | None:
     """Find the best matching excise rate for a 10-digit code.
 
     Same prefix-match logic as get_vat_exemption: longest matching pattern wins.
     Returns None if the product is not subject to excise tax.
     """
-    today = dt.date.today()
+    today = on_date or dt.date.today()
     prefixes = [code[:i] for i in range(len(code), 0, -1)]
 
     result = await session.execute(
@@ -403,8 +450,13 @@ async def save_session(
     session: AsyncSession,
     session_id: str,
     state_dict: dict,
+    org_id=None,
 ) -> None:
-    """Upsert a classification session state."""
+    """Upsert a classification session state.
+
+    org_id — владелец сессии; при обновлении существующей сессии не меняется
+    (продолжение не может «переписать» владельца).
+    """
     result = await session.execute(
         select(ClassificationSession).where(
             ClassificationSession.session_id == session_id
@@ -413,9 +465,25 @@ async def save_session(
     existing = result.scalar_one_or_none()
     if existing:
         existing.state = state_dict
+        if existing.org_id is None and org_id is not None:
+            existing.org_id = org_id
     else:
-        session.add(ClassificationSession(session_id=session_id, state=state_dict))
+        session.add(ClassificationSession(
+            session_id=session_id, state=state_dict, org_id=org_id,
+        ))
     await session.commit()
+
+
+async def load_session_row(
+    session: AsyncSession,
+    session_id: str,
+) -> ClassificationSession | None:
+    result = await session.execute(
+        select(ClassificationSession).where(
+            ClassificationSession.session_id == session_id
+        )
+    )
+    return result.scalar_one_or_none()
 
 
 async def load_session(
@@ -423,12 +491,7 @@ async def load_session(
     session_id: str,
 ) -> dict | None:
     """Load a classification session state. Returns None if not found."""
-    result = await session.execute(
-        select(ClassificationSession).where(
-            ClassificationSession.session_id == session_id
-        )
-    )
-    row = result.scalar_one_or_none()
+    row = await load_session_row(session, session_id)
     return row.state if row else None
 
 

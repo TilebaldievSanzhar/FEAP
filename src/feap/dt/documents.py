@@ -47,14 +47,18 @@ class DocumentSourceError(ValueError):
 
 
 async def _resolve_text(
-    session: AsyncSession, payload: DocumentIn
+    session: AsyncSession, payload: DocumentIn, org_id: uuid.UUID | None = None,
 ) -> tuple[str, dict]:
-    """Достать текст из payload или из завершённого OCR-job'а."""
+    """Достать текст из payload или из завершённого OCR-job'а.
+
+    OCR-задача чужой организации неотличима от несуществующей.
+    """
     if payload.text is not None:
         return payload.text, {"origin": "text"}
 
     job = await session.get(OcrJob, payload.ocr_job_id)
-    if job is None:
+    owner = getattr(job, "org_id", None) if job is not None else None
+    if job is None or (org_id is not None and owner is not None and owner != org_id):
         raise DocumentSourceError(f"OCR-задача {payload.ocr_job_id} не найдена")
     extraction = list(job.extraction or [])
     if not extraction:
@@ -82,9 +86,10 @@ async def _resolve_text(
 
 
 async def attach_document(
-    session: AsyncSession, shipment_id: uuid.UUID, payload: DocumentIn
+    session: AsyncSession, shipment_id: uuid.UUID, payload: DocumentIn,
+    org_id: uuid.UUID | None = None,
 ) -> ShipmentDocumentRow:
-    text, source = await _resolve_text(session, payload)
+    text, source = await _resolve_text(session, payload, org_id)
     source["text"] = text
     row = ShipmentDocumentRow(
         shipment_id=shipment_id,

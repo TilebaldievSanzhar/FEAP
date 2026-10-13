@@ -3,11 +3,15 @@
 Выход — JSON-safe словарь `graphs` (Decimal уже строками) вида:
 
     {
-      "meta":   {procedure, structure_version, rate_date, generated_at},
+      "meta":   {procedure, structure_version, rate_date, generated_at, ...},
       "header": {"g01": ..., "g02": ..., ..., "g25": ...},
-      "items":  [{"g32": 1, "g31": {...}, "g33": ..., ..., "g47": [...]}, ...],
+      "items":  [{"g32": 1, "g31": {...}, "g33": ..., ..., "g47": [...],
+                  "tariff": {...}}, ...],
       "totals": {"g05", "g03_sheets", "g12", "invoice_total", "payments": {...}}
     }
+
+items[i].tariff — не графа, а след тарифных проверок для ФЛК и UI: режим
+страны происхождения, меры защиты рынка и решения по ним, условные льготы НДС.
 
 Нехватка данных для платежей/графы 46 собирается в missing_parameters
 (единый механизм needs_input) — суммы никогда не занижаются молча.
@@ -26,15 +30,43 @@ from feap.dt.customs_value import (
     statistical_value_usd,
 )
 from feap.dt.duty_parser import DutyParseError, parse_duty_rate
-from feap.dt.payments import compute_duty, compute_excise, compute_fee, compute_vat
+from feap.dt.payments import (
+    compute_duty,
+    compute_excise,
+    compute_fee,
+    compute_percent_fee_line,
+    compute_remedy,
+    compute_vat,
+)
 from feap.dt.schemas import (
+    NO_PREFERENCE,
     AssembledDraft,
     PaymentLine,
     PartyIn,
     ShipmentIn,
 )
+from feap.tariff.agreements import PREFERENTIAL_REGIMES, TradeAgreementRef, regime_for_origin
+from feap.tariff.fees import FeeRule
+from feap.tariff.remedies import RateChoice, RemedyMeasure, RemedyRate, find_measures, select_rate
 
 STRUCTURE_VERSION = "257-print/1"  # печатная структура по Решению 257; XML R.055 — M3
+
+_REMEDY_KIND_RU = {
+    "antidumping": "антидемпинговая мера",
+    "special": "специальная защитная мера",
+    "countervailing": "компенсационная мера",
+}
+
+
+@dataclass(frozen=True)
+class VatOption:
+    """Условная льгота по НДС: применяется только по выбору декларанта."""
+
+    source: str
+    rate: str
+    condition: str
+    legal_ref: str
+    note: str | None = None
 
 
 @dataclass(frozen=True)
@@ -44,11 +76,12 @@ class ItemRef:
     code_exists: bool = False
     is_leaf: bool = False
     duty_raw: str | None = None
-    vat_rate: str | None = None          # '12%' / '0%'
-    vat_note: str | None = None          # ссылка на освобождение (ст. 289 НК КР)
+    vat_rate: str | None = None          # '12%' / '0%' — применяется без выбора
+    vat_note: str | None = None          # ссылка на безусловную льготу (ст. 289 НК КР, ПКМ)
     excise_amount: Decimal | None = None
     excise_unit: str | None = None       # 'сом/литр' и т.п.
     unit_secondary: str | None = None    # требуемая доп. единица (графа 41)
+    vat_options: tuple[VatOption, ...] = ()  # условные льготы (ПКМ № 816 прил. 2 и др.)
 
 
 @dataclass(frozen=True)
@@ -106,20 +139,43 @@ def _doc_dump(doc: DocEntry) -> dict:
     return entry
 
 
+def _regime_dump(regime: TradeAgreementRef | None) -> dict | None:
+    if regime is None:
+        return None
+    return {
+        "country": regime.country,
+        "regime": regime.regime,
+        "agreement": regime.agreement,
+        "in_force_from": regime.in_force_from.isoformat() if regime.in_force_from else None,
+        "origin_proof": regime.origin_proof,
+    }
+
+
+def _has_preference_code(preference: str | None) -> bool:
+    return bool(preference) and preference.strip().upper() not in NO_PREFERENCE
+
+
 def assemble(
     shipment: ShipmentIn,
     item_refs: list[ItemRef],
     rates: Rates,
     *,
     fee_kgs: Decimal | None = None,
+    fee_rule: FeeRule | None = None,
     shipment_ref: str | None = None,
     documents: list[DocEntry] | None = None,
+    remedies: list[RemedyMeasure] | None = None,
+    agreements: list[TradeAgreementRef] | None = None,
+    vat_includes_remedies: bool = False,
 ) -> AssembledDraft:
     """Собрать графы проекта ДТ. len(item_refs) должен совпадать с len(items).
 
+    fee_kgs — фиксированный сбор (ручной режим); иначе fee_rule — процентный
+    сбор по п. 38 ПП КР № 79 от общей таможенной стоимости (графа 12).
     documents — документы досье для графы 44; в v1 они общие для поставки,
     поэтому один и тот же список кладётся в g44 каждого товара (практика
     заполнения общих документов ДТ).
+    remedies/agreements — меры защиты рынка и торговые режимы (снапшот БД).
     """
     items = shipment.items
     if len(item_refs) != len(items):
@@ -153,15 +209,23 @@ def assemble(
     usd_missing_reported = False
 
     item_graphs: list[dict] = []
-    totals = {"duty": Decimal(0), "excise": Decimal(0), "vat": Decimal(0)}
+    totals: dict[str, Decimal] = {"duty": Decimal(0), "excise": Decimal(0), "vat": Decimal(0)}
 
     for idx, (item, ref) in enumerate(zip(items, item_refs), start=1):
         cv_i = cv.customs_values[idx - 1]
         prefix = f"Товар {idx} ({(item.hs_code or 'без кода')})"
+        origin = (item.origin_country or "").strip().upper() or None
+        regime = regime_for_origin(agreements or [], origin, rates.rate_date)
 
-        # ── пошлина ────────────────────────────────────────────────────────
+        # ── пошлина (ЕТТ или преференциальная ставка ЗСТ) ──────────────────
+        pref_raw = (item.preferential_duty_rate or "").strip()
+        pref_applied = bool(
+            pref_raw and _has_preference_code(item.preference)
+            and regime is not None and regime.regime in PREFERENTIAL_REGIMES
+        )
+        duty_raw = pref_raw if pref_applied else ref.duty_raw
         try:
-            parsed = parse_duty_rate(ref.duty_raw)
+            parsed = parse_duty_rate(duty_raw)
             duty = compute_duty(
                 parsed, customs_value=cv_i,
                 net_kg=item.net_kg, supp_qty=item.supp_qty, fx=fx,
@@ -169,9 +233,51 @@ def assemble(
         except DutyParseError as exc:
             duty = PaymentLine(
                 kind="duty", code="2010", basis=cv_i,
-                rate=ref.duty_raw or "—", amount=None,
-                missing=[f"нестандартная ставка ЕТТ: {exc}"],
+                rate=duty_raw or "—", amount=None,
+                missing=[f"нестандартная ставка {'ЗСТ' if pref_applied else 'ЕТТ'}: {exc}"],
             )
+        if pref_applied and regime is not None:
+            pref_note = f"преференциальная ставка: {regime.agreement}"
+            duty = duty.model_copy(update={
+                "note": f"{pref_note}; {duty.note}" if duty.note else pref_note,
+            })
+
+        # ── меры защиты рынка (антидемпинг / спец. / компенс.) ─────────────
+        remedy_lines: list[PaymentLine] = []
+        remedies_info: list[dict] = []
+        matched = find_measures(
+            remedies or [], code10=item.hs_code, origin=origin, on_date=rates.rate_date,
+        ) if item.hs_code else []
+        for measure in matched:
+            decision = item.remedy_decisions.get(measure.measure_no)
+            info: dict = {
+                "measure_no": measure.measure_no,
+                "kind": measure.kind,
+                "title": measure.title,
+                "decision": decision.decision if decision else None,
+                "notes": measure.notes,
+            }
+            if decision is None:
+                missing.append(
+                    f"{prefix}: {_REMEDY_KIND_RU.get(measure.kind, 'мера защиты рынка')} "
+                    f"{measure.measure_no} «{measure.title}» ({origin}) совпадает по коду — "
+                    f"подтвердите, подпадает ли товар под описание меры "
+                    f"(remedy_decisions['{measure.measure_no}']: applies / not_applicable / exempt)"
+                )
+            elif decision.decision == "applies":
+                if decision.rate_pct is not None:
+                    choice = RateChoice(
+                        RemedyRate(decision.rate_pct), note="ставка введена декларантом вручную",
+                    )
+                else:
+                    choice = select_rate(
+                        measure, origin=origin,
+                        manufacturer=item.manufacturer, variant=decision.variant,
+                    )
+                line = compute_remedy(measure, choice, customs_value=cv_i)
+                remedy_lines.append(line)
+                info["rate"] = line.rate
+            remedies_info.append(info)
 
         # ── акциз ──────────────────────────────────────────────────────────
         excise: PaymentLine | None = None
@@ -181,18 +287,32 @@ def assemble(
                 net_kg=item.net_kg, supp_qty=item.supp_qty,
             )
 
-        # ── НДС ────────────────────────────────────────────────────────────
+        # ── НДС (с условной льготой по выбору декларанта) ──────────────────
+        vat_rate, vat_note, vat_ref = ref.vat_rate, ref.vat_note, None
+        chosen = None
+        if item.vat_benefit:
+            chosen = next((o for o in ref.vat_options if o.source == item.vat_benefit), None)
+        if chosen is not None:
+            vat_rate = chosen.rate
+            vat_note = f"{chosen.legal_ref}; условие подтверждено декларантом: {chosen.condition}"
+            vat_ref = chosen.source
+
+        remedy_total = sum((ln.amount for ln in remedy_lines if ln.amount is not None), Decimal(0))
+        remedy_pending = any(ln.amount is None for ln in remedy_lines)
         excise_pending = excise is not None and excise.amount is None
         vat = compute_vat(
             customs_value=cv_i,
             duty_amount=duty.amount,
             excise_amount=excise.amount if excise is not None else Decimal(0),
-            vat_rate_str=ref.vat_rate,
-            exemption_note=ref.vat_note,
+            vat_rate_str=vat_rate,
+            exemption_note=vat_note,
             excise_pending=excise_pending,
+            extra_base=remedy_total if vat_includes_remedies else Decimal(0),
+            extra_pending=remedy_pending and vat_includes_remedies,
+            ref=vat_ref,
         )
 
-        payment_lines = [duty] + ([excise] if excise else []) + [vat]
+        payment_lines = [duty, *remedy_lines] + ([excise] if excise else []) + [vat]
         for line in payment_lines:
             for m in line.missing:
                 missing.append(f"{prefix}: {m}")
@@ -218,6 +338,7 @@ def assemble(
                 "qty_unit": item.qty_unit,
                 "packages": item.packages,
                 "sku": item.sku,
+                "manufacturer": item.manufacturer,
             },
             "g33": item.hs_code,
             "g34": item.origin_country,
@@ -232,15 +353,33 @@ def assemble(
             "g45": _s(cv_i),
             "g46": _s(g46),
             "g47": [_payment_dump(line) for line in payment_lines],
+            "tariff": {
+                "origin_regime": _regime_dump(regime),
+                "preferential_duty_rate": pref_raw or None,
+                "preferential_rate_applied": pref_applied,
+                "remedies": remedies_info,
+                "vat_options": [
+                    {"source": o.source, "rate": o.rate, "condition": o.condition,
+                     "legal_ref": o.legal_ref}
+                    for o in ref.vat_options
+                ],
+                "vat_benefit": item.vat_benefit,
+                "vat_benefit_applied": chosen is not None,
+            },
         })
-
-    # ── сбор за оформление (одна строка на ДТ) ──────────────────────────────
-    fee_line = compute_fee(fee_kgs)
-    if fee_line is not None and fee_line.amount is not None:
-        totals["fee"] = fee_line.amount
 
     invoice_total = quantize_money(sum((i.price for i in items), Decimal(0)))
     g12_total = quantize_money(sum(cv.customs_values, Decimal(0))) if n else Decimal("0.00")
+
+    # ── сбор за оформление (одна строка на ДТ) ──────────────────────────────
+    fee_line: PaymentLine | None = None
+    if fee_kgs is not None:
+        fee_line = compute_fee(fee_kgs)
+    elif fee_rule is not None and n and rates.contract is not None:
+        fee_line = compute_percent_fee_line(g12_total, fee_rule)
+    if fee_line is not None and fee_line.amount is not None:
+        totals["fee"] = fee_line.amount
+
     declarant = shipment.declarant or shipment.buyer
     places_total = shipment.places_total
     if places_total is None:
@@ -278,6 +417,8 @@ def assemble(
             "structure_version": STRUCTURE_VERSION,
             "rate_date": rates.rate_date.isoformat(),
             "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "vat_base_includes_remedies": vat_includes_remedies,
+            "fee_mode": "fixed" if fee_kgs is not None else ("percent" if fee_rule else "off"),
         },
         "header": header,
         "items": item_graphs,

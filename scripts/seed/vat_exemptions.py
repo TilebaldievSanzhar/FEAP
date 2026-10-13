@@ -92,16 +92,20 @@ def main() -> None:
 
     db_url = os.environ.get(
         "DATABASE_URL",
-        "postgresql://feap:feap@localhost:5432/feap",
-    ).replace("+asyncpg", "")
+        "postgresql+psycopg2://feap:feap@localhost:5432/feap",
+    ).replace("+asyncpg", "+psycopg2")
 
     engine = create_engine(db_url)
 
+    # Временные ставки 0% (ПКМ № 816 и др.) живут в той же таблице, но с другим
+    # source (scripts/seed/vat_benefits.py) — считаем только строки ст. 289.
     with engine.connect() as conn:
-        count = conn.execute(text("SELECT COUNT(*) FROM vat_exemptions")).scalar()
+        count = conn.execute(text(
+            "SELECT COUNT(*) FROM vat_exemptions WHERE source = 'nk289' OR source IS NULL"
+        )).scalar()
 
     if count and count > 0:
-        print(f"vat_exemptions already contains {count} rows — skipping.")
+        print(f"vat_exemptions already contains {count} ст. 289 rows — skipping.")
         engine.dispose()
         return
 
@@ -110,9 +114,9 @@ def main() -> None:
         conn.execute(
             text("""
                 INSERT INTO vat_exemptions
-                    (code_pattern, exemption_type, rate_override, legal_ref, note)
+                    (code_pattern, exemption_type, rate_override, legal_ref, note, source)
                 VALUES
-                    (:code_pattern, :exemption_type, :rate_override, :legal_ref, :note)
+                    (:code_pattern, :exemption_type, :rate_override, :legal_ref, :note, 'nk289')
             """),
             EXEMPTIONS,
         )

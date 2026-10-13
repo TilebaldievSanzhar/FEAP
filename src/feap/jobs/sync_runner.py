@@ -12,6 +12,7 @@ semaphore, so even an unrestricted gather() here can't overrun the LLM.
 from __future__ import annotations
 
 import asyncio
+import uuid
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -26,6 +27,7 @@ async def _run_one(
     session_factory: async_sessionmaker,
     position: int,
     item: BatchItemInput,
+    org_id: uuid.UUID | None = None,
 ) -> BatchSyncItemResult:
     """Run a single item, swallowing exceptions into a `failed` result."""
     async with session_factory() as db:
@@ -34,6 +36,7 @@ async def _run_one(
                 description=item.description,
                 additional_info=item.additional_info or None,
                 db=db,
+                org_id=org_id,
             )
         except Exception as exc:  # noqa: BLE001
             return BatchSyncItemResult(
@@ -56,12 +59,20 @@ async def _run_one(
     )
 
 
-async def run_batch_sync(items: list[BatchItemInput]) -> BatchSyncResponse:
-    """Run all items concurrently and return their per-item results."""
+async def run_batch_sync(
+    items: list[BatchItemInput], org_id: uuid.UUID | None = None,
+) -> BatchSyncResponse:
+    """Run all items concurrently and return their per-item results.
+
+    org_id — владелец сессий needs_input (продолжить сможет только он).
+    """
     orchestrator = CascadeOrchestrator()
     # Each cascade gets its own AsyncSession; we share the engine pool.
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    coros = [_run_one(orchestrator, session_factory, i, it) for i, it in enumerate(items)]
+    coros = [
+        _run_one(orchestrator, session_factory, i, it, org_id)
+        for i, it in enumerate(items)
+    ]
     results = await asyncio.gather(*coros)
     return BatchSyncResponse(results=results)

@@ -112,3 +112,13 @@ def test_doc_kind_codes_consistent_with_seed():
     # и сам сид не содержит дублей (classifier, item)
     pairs = [(r["classifier_code"], r["item_code"]) for r in module.CLASSIFIERS]
     assert len(pairs) == len(set(pairs))
+
+    # коды видов платежей графы 47 (вкл. 2050 антидемпинг) — тоже в сиде,
+    # иначе F-09 пометит каждую строку пошлин защиты рынка
+    from feap.dt.schemas import PAYMENT_CODES
+
+    seeded_payments = {
+        row["item_code"] for row in module.CLASSIFIERS
+        if row["classifier_code"] == "payment_kinds"
+    }
+    assert set(PAYMENT_CODES.values()) <= seeded_payments

@@ -18,7 +18,7 @@ from feap.cascade.levels.level4 import Level4Subposition
 from feap.cascade.levels.level5 import Level5Subsubposition
 from feap.cascade.validator import validate_and_build_result
 from feap.config import settings
-from feap.db.queries import delete_session, load_session, save_session
+from feap.db.queries import delete_session, load_session_row, save_session
 from feap.schemas.api import ClassifyResponse
 from feap.schemas.validation import ClassificationResult, PartialResult
 
@@ -62,7 +62,9 @@ class CascadeOrchestrator:
         description: str,
         db: AsyncSession,
         additional_info: dict[str, str] | None = None,
+        org_id: uuid.UUID | None = None,
     ) -> ClassifyResponse:
+        """org_id — владелец сессии needs_input (продолжить сможет только он)."""
         session_id = str(uuid.uuid4())
         state = CascadeState(description)
 
@@ -80,7 +82,7 @@ class CascadeOrchestrator:
             )
         except _NeedsInput as e:
             state.stopped_at_level = e.partial.determined_to_level
-            await save_session(db, session_id, state.to_dict())
+            await save_session(db, session_id, state.to_dict(), org_id=org_id)
             return ClassifyResponse(
                 session_id=session_id,
                 status="needs_input",
@@ -105,13 +107,21 @@ class CascadeOrchestrator:
         session_id: str,
         answers: dict[str, str],
         db: AsyncSession,
+        org_id: uuid.UUID | None = None,
     ) -> ClassifyResponse:
-        """Resume a paused classification with user-provided answers."""
-        state_dict = await load_session(db, session_id)
-        if state_dict is None:
+        """Resume a paused classification with user-provided answers.
+
+        org_id — организация вызывающего. Сессия другой организации
+        неотличима от несуществующей (SessionNotFound). None — внутренний
+        вызов (воркер), доступ проверен по задаче.
+        """
+        row = await load_session_row(db, session_id)
+        if row is None:
+            raise SessionNotFound(session_id)
+        if org_id is not None and row.org_id is not None and row.org_id != org_id:
             raise SessionNotFound(session_id)
 
-        state = CascadeState.from_dict(state_dict)
+        state = CascadeState.from_dict(row.state)
 
         # Check answer iteration limit
         state.answer_count += 1

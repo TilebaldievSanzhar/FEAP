@@ -117,6 +117,7 @@ async def start_classification(
             "shipment_id": str(shipment_id),
             "org_id": str(shipment.org_id) if shipment.org_id else None,
         },
+        org_id=shipment.org_id,
     )
 
     shipment.status = "classifying"

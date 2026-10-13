@@ -23,9 +23,11 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.api.deps import get_db, get_job_backend
+from feap.auth.access import job_owner, owner_matches
 from feap.auth.deps import AuthContext, get_auth_context
 from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
 from feap.config import settings
@@ -55,6 +57,16 @@ logger = logging.getLogger(__name__)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
+async def _owned_job(
+    db: AsyncSession, job_id: uuid.UUID, ctx: AuthContext,
+) -> ClassificationJob:
+    """Задача текущей организации; чужая неотличима от несуществующей (404)."""
+    job = await repo.get_job(db, job_id)
+    if job is None or not owner_matches(job_owner(job), ctx.org_id):
+        raise HTTPException(404, f"Job {job_id} not found")
+    return job
+
 
 def _job_to_response(job: ClassificationJob, counts: dict[str, int] | None = None) -> JobResponse:
     counts = counts or {
@@ -146,7 +158,7 @@ async def classify_batch(
         )
 
     if use_sync:
-        result = await run_batch_sync(request.items)
+        result = await run_batch_sync(request.items, org_id=ctx.org_id)
         record_usage(
             db, org_id=ctx.org_id, kind="classification", quantity=n,
             ref_type="classify_batch_sync", meta={"mode": "sync"},
@@ -158,6 +170,7 @@ async def classify_batch(
     job = await repo.create_job(
         db, job_type="classify_batch", items=request.items,
         params={"org_id": str(ctx.org_id)},
+        org_id=ctx.org_id,
     )
     try:
         await backend.enqueue_batch(job.id)
@@ -190,10 +203,9 @@ async def classify_batch(
 async def get_job_endpoint(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> JobResponse:
-    job = await repo.get_job(db, job_id)
-    if job is None:
-        raise HTTPException(404, f"Job {job_id} not found")
+    job = await _owned_job(db, job_id, ctx)
     counts = await repo.recount_items(db, job_id)
     return _job_to_response(job, counts)
 
@@ -205,10 +217,9 @@ async def list_job_items(
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> JobItemsResponse:
-    job = await repo.get_job(db, job_id)
-    if job is None:
-        raise HTTPException(404, f"Job {job_id} not found")
+    await _owned_job(db, job_id, ctx)
     items = await repo.list_items(db, job_id, status=status, limit=limit, offset=offset)
     next_cursor = str(offset + limit) if len(items) == limit else None
     return JobItemsResponse(
@@ -287,7 +298,9 @@ async def answer_job_item(
     item_id: uuid.UUID,
     request: JobAnswerRequest,
     db: AsyncSession = Depends(get_db),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> JobItemAnswerResponse:
+    await _owned_job(db, job_id, ctx)
     item = await repo.get_item(db, item_id)
     if item is None or item.job_id != job_id:
         raise HTTPException(404, f"Item {item_id} not found in job {job_id}")
@@ -299,7 +312,9 @@ async def answer_job_items_batch(
     job_id: uuid.UUID,
     request: JobAnswersBatchRequest,
     db: AsyncSession = Depends(get_db),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> JobAnswersBatchResponse:
+    await _owned_job(db, job_id, ctx)
     answered: list[JobItemAnswerResponse] = []
     for entry in request.answers:
         item = await repo.get_item(db, entry.item_id)
@@ -324,7 +339,9 @@ async def answer_job_items_batch(
 async def cancel_job_endpoint(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    ctx: AuthContext = Depends(get_auth_context),
 ) -> JobResponse:
+    await _owned_job(db, job_id, ctx)
     job = await repo.cancel_job(db, job_id)
     if job is None:
         raise HTTPException(404, f"Job {job_id} not found")
@@ -426,11 +443,26 @@ async def _sse_polling_fallback(request: Request, job_id: uuid.UUID, db_factory:
 async def stream_job_events(
     job_id: uuid.UUID,
     request: Request,
+    access_token: str | None = Query(
+        None, description="JWT для EventSource (браузерный EventSource не умеет заголовки)",
+    ),
+    db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
-    """Server-Sent Events stream for live job progress."""
+    """Server-Sent Events stream for live job progress.
+
+    Идентичность — Bearer-заголовок или ?access_token=. С токеном (или в
+    AUTH_MODE=required) владелец задачи проверяется до открытия потока;
+    анонимный запрос в optional-режиме работает как раньше (dev).
+    """
     from feap.api.deps import get_redis_client
     from feap.db.engine import async_session
 
+    header = request.headers.get("authorization") or ""
+    token = access_token or (header[7:].strip() if header.lower().startswith("bearer ") else None)
+    if token or settings.AUTH_MODE == "required":
+        creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token) if token else None
+        ctx = await get_auth_context(db, creds, request.headers.get("X-Org-Id"))
+        await _owned_job(db, job_id, ctx)
     redis = get_redis_client(request.app)
     return StreamingResponse(
         _sse_event_stream(request, job_id, redis, async_session),

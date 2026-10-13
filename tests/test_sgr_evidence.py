@@ -129,11 +129,12 @@ async def test_clarification_survives_session_and_answer_reaches_prompt(monkeypa
     monkeypatch.setattr(settings, 'SGR_EVIDENCE_POLICY', 'clarify')
     stored = {}
 
-    async def save(db, sid, value):
+    async def save(db, sid, value, org_id=None):
         stored[sid] = value
 
     async def load(db, sid):
-        return stored.get(sid)
+        value = stored.get(sid)
+        return None if value is None else SimpleNamespace(state=value, org_id=None)
 
     async def delete(db, sid):
         stored.pop(sid)
@@ -154,7 +155,7 @@ async def test_clarification_survives_session_and_answer_reaches_prompt(monkeypa
         return r
 
     monkeypatch.setattr(module, 'save_session', save)
-    monkeypatch.setattr(module, 'load_session', load)
+    monkeypatch.setattr(module, 'load_session_row', load)
     monkeypatch.setattr(module, 'delete_session', delete)
     monkeypatch.setattr(module, 'LEVELS', [SimpleNamespace(level=5, run=leaf)])
     monkeypatch.setattr(module, 'validate_and_build_result', AsyncMock(

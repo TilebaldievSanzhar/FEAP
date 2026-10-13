@@ -22,6 +22,7 @@ import logging
 import uuid
 from typing import Any
 
+from feap.auth.access import job_owner
 from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
 from feap.jobs import repository as repo
 from feap.jobs.events import publish
@@ -124,10 +125,12 @@ async def run_classify_item(ctx: dict, item_id_str: str) -> None:
         job_id = item.job_id
         description = item.product_description
         additional_info = item.additional_info or None
+        org_id = job_owner(job) if job is not None else None
 
     try:
         response = await _orchestrate(
-            ctx, description=description, additional_info=additional_info
+            ctx, description=description, additional_info=additional_info,
+            org_id=org_id,
         )
     except Exception as exc:  # noqa: BLE001 — terminal item failure
         logger.exception("Cascade crashed for item %s", item_id)
@@ -403,6 +406,8 @@ async def run_ocr_split_and_enqueue(ctx: dict, ocr_job_id_str: str) -> None:
             job_type="ocr_classify",
             items=items,
             parent_ocr_job_id=ocr_job_id,
+            params={"org_id": str(job.org_id)} if job.org_id else None,
+            org_id=job.org_id,
         )
         await ocr_repo.link_classification_job(
             db, ocr_job_id, classification_job_id=cls_job.id,

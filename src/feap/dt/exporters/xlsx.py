@@ -17,6 +17,19 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
+from feap.dt.schemas import REMEDY_KINDS
+
+#: Вид платежа графы 47 → подпись для экспортов (XLSX/PDF).
+PAYMENT_KIND_RU: dict[str, str] = {
+    "fee": "Сбор",
+    "duty": "Пошлина",
+    "special": "Специальная пошлина",
+    "antidumping": "Антидемпинговая пошлина",
+    "countervailing": "Компенсационная пошлина",
+    "excise": "Акциз",
+    "vat": "НДС",
+}
+
 HEADER_LABELS: list[tuple[str, str]] = [
     ("g01", "1. Декларация"),
     ("g02", "2. Отправитель / Экспортёр"),
@@ -134,7 +147,7 @@ def render_xlsx(graphs: dict, findings: list[dict]) -> bytes:
         "№ (32)", "Код ТН ВЭД (33)", "Описание (31)", "Происх. (34)",
         "Брутто, кг (35)", "Нетто, кг (38)", "Доп. ед. (41)",
         "Цена (42)", "Тамож. стоимость, сом (45)", "Стат. стоимость, USD (46)",
-        "Пошлина, сом", "Акциз, сом", "НДС, сом",
+        "Пошлина, сом", "Акциз, сом", "НДС, сом", "Меры защиты рынка, сом",
     ]
     _head_row(ws2, 3, cols)
     for i, item in enumerate(items):
@@ -142,12 +155,20 @@ def render_xlsx(graphs: dict, findings: list[dict]) -> bytes:
         g31 = item.get("g31") or {}
         g41 = item.get("g41") or {}
         payments = {p.get("kind"): p for p in item.get("g47", [])}
+        remedy_lines = [p for p in item.get("g47", []) if p.get("kind") in REMEDY_KINDS]
 
         def pay_amount(kind: str) -> Any:
             p = payments.get(kind)
             if not p:
                 return ""
             return _num(p.get("amount")) if p.get("amount") is not None else "⚠ не рассчитано"
+
+        if not remedy_lines:
+            remedy_value: Any = ""
+        elif any(p.get("amount") is None for p in remedy_lines):
+            remedy_value = "⚠ не рассчитано"
+        else:
+            remedy_value = _num(str(sum(Decimal(str(p["amount"])) for p in remedy_lines)))
 
         supp = ""
         if g41.get("qty"):
@@ -159,7 +180,7 @@ def render_xlsx(graphs: dict, findings: list[dict]) -> bytes:
             item.get("g32"), item.get("g33") or "⚠ нет кода", g31.get("description"),
             item.get("g34"), _num(item.get("g35")), _num(item.get("g38")), supp,
             _num(item.get("g42")), _num(item.get("g45")), _num(item.get("g46")),
-            pay_amount("duty"), pay_amount("excise"), pay_amount("vat"),
+            pay_amount("duty"), pay_amount("excise"), pay_amount("vat"), remedy_value,
         ]
         for col, value in enumerate(values, start=1):
             cell = ws2.cell(row=row, column=col, value=value)
@@ -168,7 +189,7 @@ def render_xlsx(graphs: dict, findings: list[dict]) -> bytes:
             if isinstance(value, float):
                 cell.number_format = "#,##0.00"
     _autosize(ws2, {1: 7, 2: 15, 3: 50, 4: 9, 5: 12, 6: 12, 7: 18,
-                    8: 12, 9: 18, 10: 18, 11: 14, 12: 12, 13: 14})
+                    8: 12, 9: 18, 10: 18, 11: 14, 12: 12, 13: 14, 14: 18})
     ws2.freeze_panes = "A4"
 
     # ── Лист 3: платежи (графа 47) ──────────────────────────────────────────
@@ -176,7 +197,7 @@ def render_xlsx(graphs: dict, findings: list[dict]) -> bytes:
     ws3.cell(row=1, column=1, value="ПРОЕКТ · Исчисление платежей").font = _TITLE_FONT
     _head_row(ws3, 3, ["Товар №", "Вид", "Код", "Основа", "Ставка", "Сумма, сом", "Примечание"])
     r = 4
-    kind_ru = {"duty": "Пошлина", "excise": "Акциз", "vat": "НДС", "fee": "Сбор"}
+    kind_ru = PAYMENT_KIND_RU
     for item in items:
         for p in item.get("g47", []):
             note = p.get("note") or ""

@@ -5,7 +5,10 @@
 
 Severity: error блокирует статус ready; warning/info — нет.
 Коды правил — docs/dt_draft_spec.md §7, слой 1 полностью (Фаза 3):
-F-01..F-15 + W-xx. Отступления от спеки:
+F-01..F-15 + W-xx. Тарифные меры (миграция 012, product_vision_v3.md §8):
+F-16 (ставка ЗСТ не применима), F-17 (неприменимая льгота НДС), W-FTA, I-EAEU,
+W-REMEDY-EXEMPT, I-REMEDY-NA, W-REMEDY-VAT, W-VAT-COND, I-VAT-COND — читают
+items[i].tariff (след сборки). Отступления от спеки:
 - F-14 — warning, а не error: спека требует документ для «applies
   (verified)» меры НТР, но верификация применимости (/ntm/verify — LLM)
   на досье не сохраняется, поэтому предикат срабатывает по may_apply;
@@ -23,7 +26,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Protocol
 
 from feap.dt.customs_value import FREIGHT_EXPECTED
-from feap.dt.schemas import Finding, ShipmentIn
+from feap.dt.schemas import NO_PREFERENCE, REMEDY_KINDS, Finding, ShipmentIn
 
 _INN_KG_RE = re.compile(r"^\d{14}$")
 _TOLERANCE_PCT = Decimal("0.5")   # F-04: допуск расхождения счёта, %
@@ -31,7 +34,12 @@ _ADVALOREM_RE = re.compile(r"^(\d+(?:[.,]\d+)?)\s*%$")   # F-10: «10%», «12 %
 _MONEY_EPS = Decimal("0.01")      # F-10: допуск на квантование одной строки
 
 #: Графа 36: значения «без льгот» (нули / буква О кириллицей и латиницей).
-_NO_PREFERENCE = {"0000", "ОООО", "OOOO"}
+_NO_PREFERENCE = NO_PREFERENCE
+
+_PREFERENTIAL_REGIMES = {"fta", "fta_interim"}
+_REMEDY_KIND_RU = {
+    "antidumping": "антидемпинговой", "special": "специальной", "countervailing": "компенсационной",
+}
 
 #: Статусы TULPAR-проверки, требующие внимания (W-TULPAR / спека R-05).
 _PERMIT_BAD_STATUSES = {
@@ -195,11 +203,12 @@ def validate_draft(
             f"Базис {shipment.incoterms} предполагает добавление фрахта до границы ЕАЭС, "
             "но фрахт не указан — таможенная стоимость может быть занижена (риск КТС)")
 
-    # ── W-FEE: сбор за оформление не настроен ──────────────────────────────
+    # ── W-FEE: сбор за таможенные операции не рассчитан ────────────────────
     if not (totals.get("payments") or {}).get("fee"):
         add("W-FEE", "info", None,
-            "Сбор за таможенное оформление не рассчитан (DT_CUSTOMS_FEE_KGS не задан) — "
-            "добавьте вручную по действующему НПА КР")
+            "Сбор за таможенные операции не рассчитан (нет таможенной стоимости или "
+            "расчёт сбора отключён настройкой DT_CUSTOMS_FEE_MODE) — по п. 38 ПП КР № 79 "
+            "это 0,4% от таможенной стоимости, не менее 5 и не более 2500 РП")
 
     # ── F-09: коды по классификаторам Решения 378 ──────────────────────────
     checks: list[tuple[str, str, object]] = [
@@ -233,10 +242,12 @@ def validate_draft(
             "(наполнение: python scripts/seed/classifiers.py)")
 
     # ── F-10: арифметика графы 47 (самопроверка расчёта) ────────────────────
+    vat_includes_remedies = bool((graphs.get("meta") or {}).get("vat_base_includes_remedies"))
     sums: dict[str, Decimal] = {}
     for i, item in enumerate(items):
-        lines = {line.get("kind"): line for line in item.get("g47") or []}
-        for kind, line in lines.items():
+        g47 = item.get("g47") or []
+        for line in g47:
+            kind = line.get("kind")
             amount = _dec(line.get("amount"))
             if amount is not None:
                 sums[kind] = sums.get(kind, Decimal(0)) + amount
@@ -250,7 +261,8 @@ def validate_draft(
                 add("F-10", "error", f"items[{i}].g47",
                     f"Товар {i + 1}: {kind} {line.get('rate')} от {basis} даёт "
                     f"{expected.quantize(_MONEY_EPS)}, в графе — {amount}")
-        # база НДС = ТС + пошлина + акциз
+        # база НДС = ТС + пошлина + акциз (+ пошлины защиты рынка по настройке)
+        lines = {line.get("kind"): line for line in g47}
         vat, duty_line = lines.get("vat"), lines.get("duty")
         excise_line = lines.get("excise")
         vat_basis = _dec(vat.get("basis")) if vat else None
@@ -258,11 +270,18 @@ def validate_draft(
         if vat_basis is not None and cv is not None:
             duty_amount = _dec(duty_line.get("amount")) if duty_line else Decimal(0)
             excise_amount = _dec(excise_line.get("amount")) if excise_line else Decimal(0)
+            remedy_amount = Decimal(0)
+            if vat_includes_remedies:
+                for line in g47:
+                    if line.get("kind") in REMEDY_KINDS:
+                        remedy_amount += _dec(line.get("amount")) or Decimal(0)
             if duty_amount is not None and excise_amount is not None:
-                expected_base = cv + duty_amount + excise_amount
+                expected_base = cv + duty_amount + excise_amount + remedy_amount
                 if abs(vat_basis - expected_base) > _MONEY_EPS:
+                    label = "ТС + пошлина + акциз" + (
+                        " + пошлины защиты рынка" if vat_includes_remedies else "")
                     add("F-10", "error", f"items[{i}].g47",
-                        f"Товар {i + 1}: база НДС ({vat_basis}) ≠ ТС + пошлина + акциз "
+                        f"Товар {i + 1}: база НДС ({vat_basis}) ≠ {label} "
                         f"({expected_base})")
     for kind, total in sums.items():
         stated = _dec((totals.get("payments") or {}).get(kind))
@@ -295,6 +314,9 @@ def validate_draft(
                 f"Товар {i + 1}: для кода {code} зарегистрированы меры нетарифного "
                 "регулирования — может требоваться разрешительный документ в графе 44 "
                 f"(проверьте GET /ntm/{code} и POST /ntm/verify)")
+
+    # ── Тарифные меры (items[i].tariff — след сборки, см. assembler) ─────────
+    _tariff_rules(items, add)
 
     # ── F-15: даты документов ────────────────────────────────────────────────
     reference_date = _reference_date(graphs)
@@ -332,6 +354,98 @@ def validate_draft(
                 "документ требует ручной проверки")
 
     return findings
+
+
+def _tariff_rules(items: list[dict], add) -> None:  # noqa: C901 — плоский перечень правил
+    """F-16/F-17 и предупреждения по ЗСТ, мерам защиты рынка и условному НДС."""
+    for i, item in enumerate(items):
+        tariff = item.get("tariff") or {}
+        n = i + 1
+        regime = tariff.get("origin_regime") or {}
+        docs44 = item.get("g44") or []
+        has_origin_doc = any(d.get("kind") in ("cert_origin", "permit") for d in docs44)
+
+        # F-16: ставка ЗСТ заявлена, но не применена — объясняем почему.
+        pref_rate = tariff.get("preferential_duty_rate")
+        if pref_rate and not tariff.get("preferential_rate_applied"):
+            preference = str(item.get("g36") or "").strip().upper()
+            if regime.get("regime") not in _PREFERENTIAL_REGIMES:
+                reason = (f"для страны происхождения {item.get('g34') or '—'} нет действующего "
+                          "соглашения о свободной торговле на дату расчёта")
+            elif not preference or preference in _NO_PREFERENCE:
+                reason = "в графе 36 не указан код преференции"
+            else:
+                reason = "условия применения не выполнены"
+            add("F-16", "error", f"items[{i}].g36",
+                f"Товар {n}: заявлена ставка по ЗСТ «{pref_rate}», но она не применена — "
+                f"{reason}. Пошлина рассчитана по ставке ЕТТ")
+
+        # W-FTA: у страны есть действующий преференциальный режим, ставка ЕТТ.
+        if (regime.get("regime") in _PREFERENTIAL_REGIMES
+                and not tariff.get("preferential_rate_applied") and not pref_rate):
+            proof = regime.get("origin_proof") or "сертификат о происхождении"
+            add("W-FTA", "info", f"items[{i}].g36",
+                f"Товар {n}: страна происхождения {regime.get('country')} — "
+                f"{regime.get('agreement')}. При наличии документа о происхождении ({proof}) "
+                "возможна преференциальная ставка по графику соглашения; сейчас применена "
+                "ставка ЕТТ")
+
+        # I-EAEU: происхождение из государства — члена ЕАЭС.
+        if regime.get("regime") == "eaeu_member":
+            add("I-EAEU", "info", f"items[{i}].g34",
+                f"Товар {n}: страна происхождения {regime.get('country')} — член ЕАЭС. "
+                "Товары ЕАЭС, ввозимые из государств-членов, таможенному декларированию не "
+                "подлежат (НДС — через налоговую, форма STI-136); проверьте статус товара")
+
+        # Меры защиты рынка: решения декларанта.
+        for remedy in tariff.get("remedies") or []:
+            decision = remedy.get("decision")
+            label = f"{remedy.get('measure_no')} «{remedy.get('title')}»"
+            kind_ru = _REMEDY_KIND_RU.get(remedy.get("kind"), "")
+            if decision == "exempt" and not has_origin_doc:
+                add("W-REMEDY-EXEMPT", "warning", f"items[{i}].g44",
+                    f"Товар {n}: заявлено освобождение от {kind_ru} меры {label}, но в графе 44 "
+                    "нет подтверждающего документа (целевое назначение/квота/ценовые "
+                    "обязательства/сертификат производителя)")
+            elif decision == "not_applicable":
+                add("I-REMEDY-NA", "info", f"items[{i}].g33",
+                    f"Товар {n}: декларант указал, что товар не подпадает под меру {label} — "
+                    "сохраните обоснование (технические характеристики) на случай проверки")
+
+        # W-REMEDY-VAT: пошлины защиты рынка есть — способ учёта в базе НДС не сверен.
+        remedy_lines = [
+            ln for ln in item.get("g47") or []
+            if ln.get("kind") in REMEDY_KINDS and _dec(ln.get("amount"))
+        ]
+        if remedy_lines:
+            add("W-REMEDY-VAT", "warning", f"items[{i}].g47",
+                f"Товар {n}: начислена пошлина защиты рынка "
+                f"({', '.join(ln.get('ref') or ln.get('kind') for ln in remedy_lines)}). "
+                "Ст. 310 НК КР включает в базу НДС «таможенные пошлины и налоги» и прямо не "
+                "называет антидемпинговые пошлины (в РК — включаются явно) — сверьте практику "
+                "ГТС; учёт в базе задаёт настройка DT_VAT_INCLUDE_REMEDY_DUTIES")
+
+        # Условный НДС: льгота доступна / выбрана / выбрана неприменимая.
+        options = tariff.get("vat_options") or []
+        chosen = tariff.get("vat_benefit")
+        if chosen and not tariff.get("vat_benefit_applied"):
+            add("F-17", "error", f"items[{i}].g47",
+                f"Товар {n}: выбрана льгота по НДС «{chosen}», но для кода "
+                f"{item.get('g33')} на дату расчёта она не действует — применена общая ставка")
+        elif chosen:
+            opt = next((o for o in options if o.get("source") == chosen), {})
+            add("I-VAT-COND", "info", f"items[{i}].g47",
+                f"Товар {n}: НДС {opt.get('rate', '0%')} по {opt.get('legal_ref', chosen)} "
+                f"при условии «{opt.get('condition', '')}» — приложите документы, "
+                "подтверждающие целевое назначение")
+        elif options:
+            variants = "; ".join(
+                f"{o.get('rate')} — {o.get('legal_ref')} ({o.get('condition')})" for o in options
+            )
+            add("W-VAT-COND", "warning", f"items[{i}].g47",
+                f"Товар {n}: по коду возможна льготная ставка НДС при условии целевого "
+                f"назначения: {variants}. Применена общая ставка; если условие выполняется — "
+                "выберите льготу (vat_benefit)")
 
 
 def _date(value: object) -> _dt.date | None:

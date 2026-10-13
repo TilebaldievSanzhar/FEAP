@@ -1,7 +1,8 @@
 """Справочный снапшот для сборки/проверки ДТ: коды, ставки, курсы — из PostgreSQL.
 
 Снапшот собирается один раз на генерацию драфта (assemble и ФЛК — чистые
-и синхронные), реализует протокол flk.RefContext.
+и синхронные), реализует протокол flk.RefContext. Все ставки, льготы и меры
+берутся на дату расчёта досье (rate_date), а не на «сегодня».
 """
 
 from __future__ import annotations
@@ -18,10 +19,14 @@ from feap.db.models import ExchangeRate, RefClassifier, TnvedNode
 from feap.db.queries import (
     get_excise_rate,
     get_ntm_measures_for_code,
-    get_vat_exemption,
+    get_trade_agreements,
+    get_trade_remedies,
+    get_vat_rules,
 )
-from feap.dt.assembler import ItemRef, Rates
+from feap.dt.assembler import ItemRef, Rates, VatOption
 from feap.dt.flk import CodeInfo
+from feap.tariff.agreements import TradeAgreementRef
+from feap.tariff.remedies import RemedyMeasure
 
 
 @dataclass
@@ -33,6 +38,8 @@ class RefSnapshot:
     rates: Rates | None = None
     classifiers: dict[str, set[str]] = field(default_factory=dict)
     ntm_flags: dict[str, bool] = field(default_factory=dict)
+    remedies: list[RemedyMeasure] = field(default_factory=list)
+    agreements: list[TradeAgreementRef] = field(default_factory=list)
 
     def code_info(self, code10: str) -> CodeInfo | None:
         return self.codes.get(code10)
@@ -98,14 +105,24 @@ async def build_ref_snapshot(
         )
 
         vat_rate, vat_note = vat_default, None
-        exemption = await get_vat_exemption(session, code)
-        if exemption is not None:
-            vat_rate = exemption.rate_override or "0%"
-            vat_note = exemption.legal_ref
+        unconditional, conditional = await get_vat_rules(session, code, rate_date)
+        if unconditional is not None:
+            vat_rate = unconditional.rate_override or "0%"
+            vat_note = unconditional.legal_ref
+        vat_options = tuple(
+            VatOption(
+                source=row.source or f"vat:{row.id}",
+                rate=row.rate_override or "0%",
+                condition=row.condition or "",
+                legal_ref=row.legal_ref,
+                note=row.note,
+            )
+            for row in conditional
+        )
 
         excise_amount: Decimal | None = None
         excise_unit: str | None = None
-        excise = await get_excise_rate(session, code)
+        excise = await get_excise_rate(session, code, rate_date)
         if excise is not None:
             try:
                 excise_amount = Decimal(excise.rate)
@@ -119,6 +136,7 @@ async def build_ref_snapshot(
             vat_rate=vat_rate, vat_note=vat_note,
             excise_amount=excise_amount, excise_unit=excise_unit,
             unit_secondary=node.unit_secondary,
+            vat_options=vat_options,
         )
 
     for code in hs_codes:
@@ -140,6 +158,10 @@ async def build_ref_snapshot(
     for code in unique_codes:
         rows = await get_ntm_measures_for_code(session, code)
         snapshot.ntm_flags[code] = bool(rows)
+
+    # Меры защиты рынка и торговые режимы — небольшие таблицы, целиком.
+    snapshot.remedies = await get_trade_remedies(session)
+    snapshot.agreements = await get_trade_agreements(session)
 
     snapshot.rates = Rates(
         rate_date=rate_date,

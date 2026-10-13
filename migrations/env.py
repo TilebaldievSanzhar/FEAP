@@ -20,7 +20,7 @@ def _get_url() -> str:
     if cmd_url:
         url = cmd_url
     elif os.environ.get("DATABASE_URL"):
-        url = os.environ["DATABASE_URL"].replace("+asyncpg", "")
+        url = os.environ["DATABASE_URL"].replace("+asyncpg", "+psycopg2")
     return url
 
 
