@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import logging
+import re
 import uuid
 from typing import Any
 
@@ -35,3 +37,25 @@ def job_owner(job: Any) -> uuid.UUID | None:
         return uuid.UUID(str(raw))
     except ValueError:
         return None
+
+
+_QUERY_TOKEN = re.compile(r"(access_token=)[^&\s\"]+")
+_MASK = r"\1***"
+
+
+class RedactQueryTokenFilter(logging.Filter):
+    """Маскирует ?access_token= в access-логе.
+
+    SSE /jobs/{id}/events получает JWT в query-строке (EventSource не умеет
+    заголовки), а uvicorn пишет путь целиком — без фильтра токен оседает в логах.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.args, tuple):
+            record.args = tuple(
+                _QUERY_TOKEN.sub(_MASK, a) if isinstance(a, str) else a
+                for a in record.args
+            )
+        elif isinstance(record.msg, str):
+            record.msg = _QUERY_TOKEN.sub(_MASK, record.msg)
+        return True

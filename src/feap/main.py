@@ -12,11 +12,13 @@ from feap.api.dt_router import router as dt_router
 from feap.api.jobs_router import router as jobs_router
 from feap.api.ocr_router import router as ocr_router
 from feap.api.router import router
+from feap.auth.access import RedactQueryTokenFilter
 from feap.config import settings
 from feap.llm.client import get_provider
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
+logging.getLogger("uvicorn.access").addFilter(RedactQueryTokenFilter())
 
 
 @asynccontextmanager
