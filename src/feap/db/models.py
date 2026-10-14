@@ -16,6 +16,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -603,6 +604,10 @@ class ProductCatalogItem(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     hs_code: Mapped[str | None] = mapped_column(String(10))
     attributes: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    passport: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"),
+        comment="Паспорт товара: параметры партии и обоснование кода (calc.schemas.PassportIn)",
+    )
     usage_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     approved_by: Mapped[str | None] = mapped_column(String(100))
     approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))

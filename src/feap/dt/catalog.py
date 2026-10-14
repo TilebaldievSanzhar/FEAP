@@ -163,6 +163,7 @@ async def upsert_item(
             description=payload.description,
             hs_code=payload.hs_code,
             attributes=payload.attributes,
+            passport=payload.passport or {},
             approved_by=payload.approved_by,
             approved_at=now if payload.hs_code else None,
         )
@@ -174,6 +175,8 @@ async def upsert_item(
     row.description = payload.description
     if payload.attributes:  # пустой dict не затирает накопленные атрибуты
         row.attributes = payload.attributes
+    if payload.passport is not None:  # паспорт заменяется целиком; None — не трогать
+        row.passport = payload.passport
     if payload.hs_code is not None:
         row.hs_code = payload.hs_code
     if code_changed:

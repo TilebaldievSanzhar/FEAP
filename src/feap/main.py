@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from feap.api.auth_router import router as auth_router
+from feap.api.calc_router import router as calc_router
 from feap.api.dt_router import router as dt_router
 from feap.api.jobs_router import router as jobs_router
 from feap.api.ocr_router import router as ocr_router
@@ -76,6 +77,7 @@ app.include_router(auth_router)
 app.include_router(jobs_router)
 app.include_router(ocr_router)
 app.include_router(dt_router)
+app.include_router(calc_router)
 
 
 @app.get("/health")

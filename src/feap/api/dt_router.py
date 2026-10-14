@@ -39,10 +39,13 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.api.deps import get_db, get_job_backend
 from feap.auth.deps import AuthContext, get_auth_context, require_role
+from feap.calc.schemas import PassportIn
 from feap.db.models import ProductCatalogItem
 from feap.dt import (
     advisor,
@@ -344,6 +347,7 @@ def _catalog_out(row: ProductCatalogItem) -> CatalogItemOut:
     return CatalogItemOut(
         id=row.id, org_id=row.org_id, sku=row.sku, description=row.description,
         hs_code=row.hs_code, attributes=row.attributes or {},
+        passport=row.passport or {},
         usage_count=row.usage_count, approved_by=row.approved_by,
         approved_at=row.approved_at, created_at=row.created_at,
         updated_at=row.updated_at,
@@ -382,6 +386,16 @@ async def upsert_catalog_item(
     ctx: AuthContext = Depends(get_auth_context),
 ) -> CatalogItemOut:
     require_role(ctx, "declarant")
+    if payload.passport is not None:
+        # Схема паспорта живёт в feap.calc (циклический импорт из dt.schemas) —
+        # валидируем и нормализуем здесь, в БД попадает только PassportIn.
+        try:
+            passport = PassportIn.model_validate(payload.passport)
+        except ValidationError as exc:
+            raise HTTPException(status_code=422, detail=jsonable_encoder(exc.errors())) from exc
+        payload = payload.model_copy(
+            update={"passport": passport.model_dump(mode="json", exclude_none=True)},
+        )
     row, _created = await catalog.upsert_item(session, ctx.org_id, payload)
     await session.commit()
     await session.refresh(row)

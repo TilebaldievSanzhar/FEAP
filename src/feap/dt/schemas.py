@@ -258,6 +258,11 @@ class CatalogItemIn(_DecimalAsStr):
     hs_code: str | None = Field(None, pattern=r"^\d{10}$")
     attributes: dict[str, Any] = Field(default_factory=dict)
     approved_by: str | None = Field(None, description="Кто утвердил код (аудит)")
+    passport: dict[str, Any] | None = Field(
+        None,
+        description="Паспорт товара (calc.schemas.PassportIn: calc + classification); "
+                    "None — не менять сохранённый",
+    )
 
 
 class CatalogItemOut(_DecimalAsStr):
@@ -267,6 +272,7 @@ class CatalogItemOut(_DecimalAsStr):
     description: str
     hs_code: str | None
     attributes: dict[str, Any]
+    passport: dict[str, Any] = Field(default_factory=dict)
     usage_count: int
     approved_by: str | None
     approved_at: dt.datetime | None
