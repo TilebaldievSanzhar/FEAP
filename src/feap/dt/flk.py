@@ -313,10 +313,13 @@ def validate_draft(
             add("F-14", "warning", f"items[{i}].g44",
                 f"Товар {i + 1}: для кода {code} зарегистрированы меры нетарифного "
                 "регулирования — может требоваться разрешительный документ в графе 44 "
-                f"(проверьте GET /ntm/{code} и POST /ntm/verify)")
+                "(проверьте применимость в справочнике «Меры НТР»)")
 
     # ── Тарифные меры (items[i].tariff — след сборки, см. assembler) ─────────
-    _tariff_rules(items, add)
+    _tariff_rules(
+        items, add,
+        vat_includes_remedies=bool((graphs.get("meta") or {}).get("vat_base_includes_remedies")),
+    )
 
     # ── F-15: даты документов ────────────────────────────────────────────────
     reference_date = _reference_date(graphs)
@@ -356,7 +359,9 @@ def validate_draft(
     return findings
 
 
-def _tariff_rules(items: list[dict], add) -> None:  # noqa: C901 — плоский перечень правил
+def _tariff_rules(  # noqa: C901 — плоский перечень правил
+    items: list[dict], add, *, vat_includes_remedies: bool = False,
+) -> None:
     """F-16/F-17 и предупреждения по ЗСТ, мерам защиты рынка и условному НДС."""
     for i, item in enumerate(items):
         tariff = item.get("tariff") or {}
@@ -418,12 +423,15 @@ def _tariff_rules(items: list[dict], add) -> None:  # noqa: C901 — плоск�
             if ln.get("kind") in REMEDY_KINDS and _dec(ln.get("amount"))
         ]
         if remedy_lines:
+            # Флаг в meta (DT_VAT_INCLUDE_REMEDY_DUTIES); имя настройки декларанту
+            # ничего не говорит — в сообщении только текущий способ учёта.
+            in_base = "включены в базу НДС" if vat_includes_remedies else "в базу НДС не включены"
             add("W-REMEDY-VAT", "warning", f"items[{i}].g47",
                 f"Товар {n}: начислена пошлина защиты рынка "
                 f"({', '.join(ln.get('ref') or ln.get('kind') for ln in remedy_lines)}). "
                 "Ст. 310 НК КР включает в базу НДС «таможенные пошлины и налоги» и прямо не "
-                "называет антидемпинговые пошлины (в РК — включаются явно) — сверьте практику "
-                "ГТС; учёт в базе задаёт настройка DT_VAT_INCLUDE_REMEDY_DUTIES")
+                "называет антидемпинговые пошлины (в РК — включаются явно). Сейчас пошлины "
+                f"защиты рынка {in_base} (настройка системы) — сверьте с практикой ГТС")
 
         # Условный НДС: льгота доступна / выбрана / выбрана неприменимая.
         options = tariff.get("vat_options") or []

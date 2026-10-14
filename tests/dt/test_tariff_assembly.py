@@ -108,6 +108,9 @@ class TestRemedies:
         findings = validate_draft(result.graphs, ship, FakeCtx())
         assert not [f for f in findings if f.severity == "error"], findings
         assert "W-REMEDY-VAT" in rules(findings)
+        vat_note = next(f for f in findings if f.rule == "W-REMEDY-VAT").message
+        assert "в базу НДС не включены" in vat_note
+        assert "DT_VAT_INCLUDE" not in vat_note       # имя настройки декларанту не показываем
 
     def test_vat_base_can_include_remedy_duties(self):
         item = cookware_item(remedy_decisions={"AD-32": RemedyDecision(decision="applies")})
@@ -120,6 +123,8 @@ class TestRemedies:
         assert Decimal(lines(result, "vat")[0]["basis"]) == expected
         findings = validate_draft(result.graphs, ship, FakeCtx())
         assert not [f for f in findings if f.rule == "F-10"], findings
+        vat_note = next(f for f in findings if f.rule == "W-REMEDY-VAT").message
+        assert "включены в базу НДС" in vat_note
 
     def test_not_applicable_is_recorded(self):
         item = cookware_item(remedy_decisions={

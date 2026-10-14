@@ -101,6 +101,10 @@ async def update_shipment(
     await catalog.apply_catalog_codes(session, shipment.org_id, payload)
     shipment.procedure = payload.procedure
     shipment.data = payload.model_dump(mode="json", exclude={"items"})
+    # Позиции живут в shipment_items: PUT только позиций не трогает строку
+    # shipments, и onupdate не срабатывает. Двигаем явно — на updated_at
+    # опираются сортировка списка и «проект ДТ устарел» на фронте.
+    shipment.updated_at = func.now()
     # Позиции заменяются целиком (простая и предсказуемая семантика PUT).
     for row in await get_shipment_items(session, shipment_id):
         await session.delete(row)
@@ -108,6 +112,7 @@ async def update_shipment(
     for row in _shipment_rows(payload, shipment):
         session.add(row)
     await session.flush()
+    await session.refresh(shipment, attribute_names=["updated_at"])
     return shipment
 
 
