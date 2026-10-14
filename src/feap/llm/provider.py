@@ -22,6 +22,7 @@ class LLMProvider(ABC):
         user_message: str,
         output_model: type[T],
         model_override: str | None = None,
+        images: list[str] | None = None,
     ) -> T:
         """Generate a structured response matching the Pydantic output_model."""
         ...

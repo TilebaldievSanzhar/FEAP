@@ -33,13 +33,20 @@ async def classify(
     user_message: str,
     output_model: type[T],
     model_override: str | None = None,
+    images: list[str] | None = None,
 ) -> T:
-    """Backward-compatible entry point — all cascade levels import this."""
+    """Backward-compatible entry point — all cascade levels import this.
+
+    images — data URI картинок (нужна vision-модель уровня); без них
+    провайдер получает прежний вызов, тестовые провайдеры не ломаются.
+    """
     model = model_override or resolve_model(level)
+    extra = {"images": images} if images else {}
     return await get_provider().classify(
         level=level,
         system_prompt=system_prompt,
         user_message=user_message,
         output_model=output_model,
         model_override=model,
+        **extra,
     )

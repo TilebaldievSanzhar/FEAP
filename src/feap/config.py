@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     LEVEL93_MODEL: str = ""  # DT: генератор графы 31
     LEVEL94_MODEL: str = ""  # DT: риск-советник
     LEVEL95_MODEL: str = ""  # DT: findings-fixer
+    LEVEL97_MODEL: str = ""  # Фото/скриншот товара → карточка товара (нужна vision-модель)
     LEVEL98_MODEL: str = ""  # OCR raw-text → ProductCard[] structurer
     LEVEL99_MODEL: str = ""  # NTM verification
 

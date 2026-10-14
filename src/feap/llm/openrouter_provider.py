@@ -161,6 +161,13 @@ def _prepare_schema(schema: dict[str, Any]) -> dict[str, Any]:
     return schema
 
 
+def _with_images(text: str, images: list[str]) -> list[dict[str, Any]]:
+    """OpenAI-совместимое мультимодальное сообщение: текст + картинки (data URI)."""
+    return [{"type": "text", "text": text}] + [
+        {"type": "image_url", "image_url": {"url": url}} for url in images
+    ]
+
+
 def _extract_json(text: str) -> str:
     """Extract JSON from possibly markdown-fenced or mixed-content response.
 
@@ -301,8 +308,14 @@ class OpenRouterProvider(LLMProvider):
         user_message: str,
         output_model: type[T],
         model_override: str | None = None,
+        images: list[str] | None = None,
     ) -> T:
         client = self._get_client()
+        # С изображениями user-сообщение — список частей (текст + image_url);
+        # стратегии кладут его в content как есть.
+        user_content: str | list[dict[str, Any]] = (
+            _with_images(user_message, images) if images else user_message
+        )
         model = model_override or get_model(level)
         max_tokens = get_max_tokens(level)
         temperature = get_temperature(level)
@@ -330,7 +343,7 @@ class OpenRouterProvider(LLMProvider):
                 model=model,
                 level=level,
                 system_prompt=system_prompt,
-                user_message=user_message,
+                user_message=user_content,
                 output_model=output_model,
                 schema=schema,
                 max_tokens=max_tokens,
@@ -343,7 +356,7 @@ class OpenRouterProvider(LLMProvider):
                 model=model,
                 level=level,
                 system_prompt=system_prompt,
-                user_message=user_message,
+                user_message=user_content,
                 output_model=output_model,
                 schema=schema,
                 max_tokens=max_tokens,
@@ -355,7 +368,7 @@ class OpenRouterProvider(LLMProvider):
             model=model,
             level=level,
             system_prompt=system_prompt,
-            user_message=user_message,
+            user_message=user_content,
             output_model=output_model,
             schema=schema,
             max_tokens=max_tokens,
@@ -369,7 +382,7 @@ class OpenRouterProvider(LLMProvider):
         model: str,
         level: int,
         system_prompt: str,
-        user_message: str,
+        user_message: str | list[dict[str, Any]],
         output_model: type[T],
         schema: dict[str, Any],
         max_tokens: int,
@@ -416,7 +429,7 @@ class OpenRouterProvider(LLMProvider):
         model: str,
         level: int,
         system_prompt: str,
-        user_message: str,
+        user_message: str | list[dict[str, Any]],
         output_model: type[T],
         schema: dict[str, Any],
         max_tokens: int,
@@ -544,7 +557,7 @@ class OpenRouterProvider(LLMProvider):
         model: str,
         level: int,
         system_prompt: str,
-        user_message: str,
+        user_message: str | list[dict[str, Any]],
         output_model: type[T],
         schema: dict[str, Any],
         max_tokens: int,

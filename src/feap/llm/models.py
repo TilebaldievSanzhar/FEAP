@@ -18,6 +18,7 @@ LEVEL_TIER: dict[int, str] = {
     93: "medium", # DT: генератор описания графы 31
     94: "medium", # DT: риск-советник
     95: "medium", # DT: findings-fixer
+    97: "medium", # Фото/скриншот товара → карточка (vision)
     98: "medium", # OCR raw-text → ProductCard[] structurer
     99: "light",  # NTM verification (dual matching)
 }
@@ -36,6 +37,7 @@ LEVEL_MAX_TOKENS: dict[int, int] = {
     93: 4096,
     94: 8192,
     95: 8192,
+    97: 4096,  # карточка товара по изображению
     98: 8192,  # OCR structurer — invoices can list many products
     99: 2048,  # NTM verification
 }
@@ -54,6 +56,7 @@ LEVEL_TEMPERATURE: dict[int, float | None] = {
     93: 0.0,
     94: 0.0,
     95: 0.0,
+    97: 0.0,
     98: 0.0,
     99: 0.0,
 }
@@ -72,6 +75,7 @@ _LEVEL_MODEL_SETTINGS: dict[int, str] = {
     93: "LEVEL93_MODEL",
     94: "LEVEL94_MODEL",
     95: "LEVEL95_MODEL",
+    97: "LEVEL97_MODEL",
     98: "LEVEL98_MODEL",
     99: "LEVEL99_MODEL",
 }

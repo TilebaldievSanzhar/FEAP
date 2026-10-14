@@ -71,6 +71,7 @@ services:
       OCR_RESULT_TTL_HOURS: ${OCR_RESULT_TTL_HOURS:-72}
       OCR_UPLOAD_DIR: /app/data/ocr_uploads
       OCR_ALLOWED_MIME: ${OCR_ALLOWED_MIME:-application/pdf,image/jpeg,image/png,image/tiff,image/webp}
+      LEVEL97_MODEL: ${LEVEL97_MODEL:-}
       LEVEL98_MODEL: ${LEVEL98_MODEL:-}
       AUTH_MODE: ${AUTH_MODE:-optional}
       AUTH_SECRET: ${AUTH_SECRET:-}
