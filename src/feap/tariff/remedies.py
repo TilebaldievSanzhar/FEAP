@@ -153,6 +153,41 @@ def find_code_measures(
     return [m for m in measures if is_in_force(m, on_date) and code_matches(code10, m.codes)]
 
 
+def _registry_order(m: RemedyMeasure) -> tuple[str, int, str]:
+    prefix, _, num = m.measure_no.partition("-")
+    return (prefix, int(num) if num.isdigit() else 0, m.measure_no)
+
+
+def registry_measures(
+    measures: list[RemedyMeasure],
+    *,
+    code: str | None,
+    origin: str | None,
+    on_date: dt.date,
+) -> list[RemedyMeasure]:
+    """Реестр для справочника: применяемые и приостановленные меры, не истёкшие на дату.
+
+    code — префикс кода любой длины: «7615» находит меру на 7615101000, а
+    10-значный код товара находит меру уровня позиции («7210»). Без кода и
+    страны — весь реестр, по порядку номеров (AD-1, AD-3 … AD-41).
+    """
+    prefix = normalize_code(code or "")
+    out = []
+    for m in measures:
+        if m.status not in ("applied", "suspended"):
+            continue
+        if m.valid_to and m.valid_to < on_date:
+            continue
+        if m.status == "applied" and m.valid_from and m.valid_from > on_date:
+            continue
+        if prefix and not any(c.startswith(prefix) or prefix.startswith(c) for c in m.codes if c):
+            continue
+        if origin and not origin_matches(m.countries, origin):
+            continue
+        out.append(m)
+    return sorted(out, key=_registry_order)
+
+
 def normalize_company(name: str) -> str:
     text = name.lower().replace("ё", "е")
     text = re.sub(r"[«»\"'`.,()\[\]/\\:;*&+-]", " ", text)

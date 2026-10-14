@@ -18,6 +18,7 @@ from feap.tariff.remedies import (
     parse_rate_lines,
     producer_matches,
     record_to_seed,
+    registry_measures,
     select_rate,
     split_producers,
 )
@@ -238,6 +239,36 @@ def test_select_rate_only_named_producers_requires_manufacturer():
     m = _measure(rates=(RemedyRate(Decimal("10"), producers=("Acme Steel Co., Ltd.",)),))
     choice = select_rate(m, origin="CN", manufacturer="Unknown Works")
     assert choice.rate is None and choice.missing
+
+
+def test_registry_lists_applied_and_suspended_in_number_order():
+    measures = [
+        _measure(measure_no="AD-41"),
+        _measure(measure_no="AD-3"),
+        _measure(measure_no="AD-38", status="suspended"),
+        _measure(measure_no="AD-2", status="expired"),
+        _measure(measure_no="AD-5", valid_to=dt.date(2026, 1, 1)),        # истекла по дате
+        _measure(measure_no="AD-6", valid_from=dt.date(2027, 1, 1)),      # ещё не действует
+    ]
+    got = registry_measures(measures, code=None, origin=None, on_date=DAY)
+    assert [m.measure_no for m in got] == ["AD-3", "AD-38", "AD-41"]
+
+
+def test_registry_code_prefix_both_ways():
+    heading = _measure(measure_no="AD-8", codes=("7210", "7212"))
+    full = _measure(measure_no="AD-32", codes=("7615101000",))
+    both = [heading, full]
+    assert registry_measures(both, code="7615", origin=None, on_date=DAY) == [full]
+    assert registry_measures(both, code="7210490001", origin=None, on_date=DAY) == [heading]
+    assert registry_measures(both, code="72", origin=None, on_date=DAY) == [heading]
+    assert registry_measures(both, code="8429", origin=None, on_date=DAY) == []
+
+
+def test_registry_origin_filter():
+    cn = _measure(measure_no="AD-17", countries=("CN",))
+    eu = _measure(measure_no="AD-50", countries=("EU",))
+    assert registry_measures([cn, eu], code=None, origin="cn", on_date=DAY) == [cn]
+    assert registry_measures([cn, eu], code=None, origin="DE", on_date=DAY) == [eu]
 
 
 def test_company_normalization():

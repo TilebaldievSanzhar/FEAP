@@ -95,6 +95,27 @@ class TradeRemedyInfo(BaseModel):
     )
 
 
+class TradeRemedyRegistryInfo(BaseModel):
+    """Мера защиты рынка ЕАЭС в реестре (справочник /reference/trade-remedies)."""
+
+    measure_no: str = Field(description="Номер в реестре ЕЭК, например AD-32")
+    kind: str = Field(description="antidumping | special | countervailing")
+    title: str
+    product_description: str | None = None
+    countries: list[str]
+    codes: list[str] = Field(description="Коды ТН ВЭД меры: 10 знаков или префиксы позиций")
+    rates: list[TradeRemedyRateInfo]
+    valid_from: str | None = None
+    valid_to: str | None = None
+    notes: str | None = None
+    legal_basis: str | None = None
+    source_url: str | None = None
+    needs_review: bool = Field(
+        default=False, description="Ставку из текста реестра не удалось разобрать",
+    )
+    status: str = Field(description="applied — применяется | suspended — временно не применяется")
+
+
 class TradeAgreementInfo(BaseModel):
     country: str
     regime: str = Field(description="fta | fta_interim | eaeu_member")

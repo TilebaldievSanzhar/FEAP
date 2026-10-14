@@ -37,12 +37,18 @@ from feap.schemas.api import (
     TradeAgreementInfo,
     TradeRemedyInfo,
     TradeRemedyRateInfo,
+    TradeRemedyRegistryInfo,
     VatConditionalInfo,
     VatExemptionInfo,
     VatInfo,
 )
 from feap.tariff.fees import kg_release_fee_rule
-from feap.tariff.remedies import find_code_measures, origin_matches
+from feap.tariff.remedies import (
+    RemedyMeasure,
+    find_code_measures,
+    origin_matches,
+    registry_measures,
+)
 
 router = APIRouter(prefix="/api/v1")
 
@@ -206,6 +212,16 @@ async def get_tree(
     return responses
 
 
+def _rate_infos(m: RemedyMeasure) -> list[TradeRemedyRateInfo]:
+    return [
+        TradeRemedyRateInfo(
+            rate_pct=format(r.rate_pct, "f"), country=r.country,
+            producers=list(r.producers), variant=r.variant,
+        )
+        for r in m.rates
+    ]
+
+
 def _fee_rule_text() -> str | None:
     if settings.DT_CUSTOMS_FEE_MODE != "percent":
         return None
@@ -274,13 +290,7 @@ async def lookup_code(
         TradeRemedyInfo(
             measure_no=m.measure_no, kind=m.kind, title=m.title,
             product_description=m.product_description, countries=list(m.countries),
-            rates=[
-                TradeRemedyRateInfo(
-                    rate_pct=format(r.rate_pct, "f"), country=r.country,
-                    producers=list(r.producers), variant=r.variant,
-                )
-                for r in m.rates
-            ],
+            rates=_rate_infos(m),
             valid_to=m.valid_to.isoformat() if m.valid_to else None,
             notes=m.notes, legal_basis=m.legal_basis, source_url=m.source_url,
         )
@@ -317,6 +327,41 @@ async def lookup_code(
         trade_remedies=trade_remedies,
         customs_fee=_fee_rule_text(),
     )
+
+
+@router.get("/reference/trade-remedies", response_model=list[TradeRemedyRegistryInfo])
+async def list_trade_remedies(
+    code: str | None = Query(
+        None, pattern=r"^\d{2,10}$",
+        description="Префикс кода ТН ВЭД, 2–10 цифр (7615 — все меры на позицию)",
+    ),
+    origin: str | None = Query(
+        None, pattern=r"^[A-Za-z]{2}$", description="Страна происхождения (ISO alpha-2)",
+    ),
+    on_date: dt.date | None = Query(None, description="Дата; по умолчанию сегодня"),
+    db: AsyncSession = Depends(get_db),
+) -> list[TradeRemedyRegistryInfo]:
+    """Реестр мер защиты рынка ЕАЭС: применяемые и приостановленные, не истёкшие.
+
+    Справочник, а не проверка товара: подпадание под меру решает декларант в
+    позиции досье (remedy_decisions).
+    """
+    day = on_date or dt.date.today()
+    measures = registry_measures(
+        await get_trade_remedies(db), code=code, origin=origin, on_date=day,
+    )
+    return [
+        TradeRemedyRegistryInfo(
+            measure_no=m.measure_no, kind=m.kind, title=m.title,
+            product_description=m.product_description, countries=list(m.countries),
+            codes=list(m.codes), rates=_rate_infos(m),
+            valid_from=m.valid_from.isoformat() if m.valid_from else None,
+            valid_to=m.valid_to.isoformat() if m.valid_to else None,
+            notes=m.notes, legal_basis=m.legal_basis, source_url=m.source_url,
+            needs_review=m.needs_review, status=m.status,
+        )
+        for m in measures
+    ]
 
 
 @router.get("/reference/trade-agreements", response_model=list[TradeAgreementInfo])
