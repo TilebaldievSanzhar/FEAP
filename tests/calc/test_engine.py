@@ -184,3 +184,19 @@ def test_passport_roundtrip_keeps_calc_params():
     assert again.calc.origin_country == "CN"
     assert again.calc.costs[0].amount == Decimal("15000")
     assert again.classification.steps[0].code == "7615"
+
+
+def test_lot_price_from_unit_price_and_qty():
+    calc = CalcIn(hs_code="7615101000", unit_price=Decimal("38.50"), qty=Decimal("100"),
+                  currency="CNY")
+    assert calc.price == Decimal("3850.00")
+    explicit = CalcIn(hs_code="7615101000", price=Decimal("4000"), unit_price=Decimal("38.50"),
+                      qty=Decimal("100"))
+    assert explicit.price == Decimal("4000")          # стоимость по счёту важнее
+
+
+def test_lot_price_required():
+    with pytest.raises(ValidationError):
+        CalcIn(hs_code="7615101000", unit_price=Decimal("38.50"))   # нет количества
+    with pytest.raises(ValidationError):
+        CalcIn(hs_code="7615101000")

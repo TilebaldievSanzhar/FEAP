@@ -85,7 +85,7 @@ async def _passport_pdf(
     chain = [(n.level, n.code_formatted or n.code, n.name) for n in await get_ancestors(db, node)]
 
     calc_out: CalcOut | None = None
-    if params is not None and params.price:
+    if params is not None and (params.price or (params.unit_price and params.qty)):
         calc_in = CalcIn(
             **params.model_dump(), hs_code=hs_code, description=description, rate_date=day,
         )
@@ -94,6 +94,7 @@ async def _passport_pdf(
         return render_passport_pdf(
             title=title, sku=sku, lookup=lookup, tree_chain=chain,
             classification=classification, params=params, calc=calc_out, on_date=day,
+            description=description,
         )
     except PdfFontError as exc:
         raise HTTPException(status_code=501, detail=str(exc)) from exc

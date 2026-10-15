@@ -7,10 +7,10 @@
 from __future__ import annotations
 
 import datetime as dt
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from feap.dt.schemas import DraftStatus, Finding, Incoterms, PaymentLine, RemedyDecision
 
@@ -48,6 +48,9 @@ class CalcParams(BaseModel):
         None, max_length=300, description="Производитель — индивидуальные ставки антидемпинга",
     )
     price: _Money | None = Field(None, description="Стоимость партии по счёту, в валюте currency")
+    unit_price: _Money | None = Field(
+        None, description="Цена за единицу; без price стоимость партии = unit_price × qty",
+    )
     currency: str = Field("USD", pattern=r"^[A-Z]{3}$")
     incoterms: Incoterms = Field("FOB", description="Базис поставки — что уже входит в цену")
     freight_to_border: _Money = Field(
@@ -86,8 +89,18 @@ class CalcIn(CalcParams):
 
     hs_code: str = Field(pattern=r"^\d{10}$")
     description: str | None = Field(None, max_length=2000, description="Описание товара (для паспорта)")
-    price: Annotated[Decimal, Field(gt=0)] = Field(description="Стоимость партии по счёту")
     rate_date: dt.date | None = Field(None, description="Дата курсов и ставок; по умолчанию сегодня")
+
+    @model_validator(mode="after")
+    def _lot_price(self) -> CalcIn:
+        """Стоимость партии считает бэкенд: price или unit_price × qty (не клиент)."""
+        if self.price is None and self.unit_price is not None and self.qty is not None:
+            self.price = (self.unit_price * self.qty).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP,
+            )
+        if self.price is None or self.price <= 0:
+            raise ValueError("Укажите стоимость партии (price) или цену за единицу и количество")
+        return self
 
 
 class LandedCostLine(BaseModel):

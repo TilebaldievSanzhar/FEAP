@@ -64,6 +64,15 @@ def _qty(value: Decimal) -> str:
     return f"{whole},{frac}" if frac else whole
 
 
+def _lot_value(params: CalcParams, calc: CalcOut) -> str:
+    """«3 850.00 CNY (38.50 × 100 шт), EXW» — стоимость партии уже посчитана бэкендом."""
+    lot = calc.landed_cost.lines[0].source_amount if calc.landed_cost else params.price
+    text = f"{_money(lot)} {params.currency}"
+    if params.unit_price is not None and params.qty is not None:
+        text += f" ({_money(params.unit_price)} × {_qty(params.qty)} {params.qty_unit or 'ед.'})"
+    return f"{text}, {params.incoterms}"
+
+
 def _remedy_rates(rates: list) -> str:
     nums = sorted({Decimal(r.rate_pct) for r in rates})
     if not nums:
@@ -95,8 +104,13 @@ def render_passport_pdf(
     params: CalcParams | None,
     calc: CalcOut | None,
     on_date: dt.date,
+    description: str | None = None,
 ) -> bytes:
-    """tree_chain — [(level, code_formatted, name)] от раздела до листа."""
+    """tree_chain — [(level, code_formatted, name)] от раздела до листа.
+
+    title — короткое наименование в шапке; description — полное описание товара
+    (печатается под шапкой, если отличается от title).
+    """
     ensure_fonts()
     st = _styles()
     width = A4[0] - 30 * mm
@@ -109,6 +123,8 @@ def render_passport_pdf(
     meta.append(f"сформирован {_date_ru(dt.date.today())}")
     story.append(_p(" · ".join(meta), st["meta"]))
     story.append(_p(title, st["h2"]))
+    if description and description.strip() != title.strip():
+        story.append(_p(description.strip()[:2000], st["cell"]))
 
     # ── Код и обоснование ───────────────────────────────────────────────────
     story.append(_p(f"Код ТН ВЭД ЕАЭС {lookup.code_formatted}", st["h2"]))
@@ -187,7 +203,7 @@ def render_passport_pdf(
     if calc is not None and params is not None:
         story.append(_p("Расчёт для партии", st["h2"]))
         lot = [
-            ["Стоимость по счёту", f"{_money(params.price)} {params.currency}, {params.incoterms}"],
+            ["Стоимость по счёту", _lot_value(params, calc)],
             ["Курс НБКР", f"{_qty(calc.fx_rate)} сом за 1 {params.currency}" if calc.fx_rate else "—"],
             ["Страна происхождения", params.origin_country or "не указана"],
         ]
