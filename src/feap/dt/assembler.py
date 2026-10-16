@@ -21,7 +21,8 @@ from __future__ import annotations
 
 import datetime as dt
 import math
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from decimal import Decimal
 
 from feap.dt.customs_value import (
@@ -82,16 +83,24 @@ class ItemRef:
     excise_unit: str | None = None       # 'сом/литр' и т.п.
     unit_secondary: str | None = None    # требуемая доп. единица (графа 41)
     vat_options: tuple[VatOption, ...] = ()  # условные льготы (ПКМ № 816 прил. 2 и др.)
+    duty_trace: dict | None = None       # откуда ставка пошлины (tariff.ett.resolve_duty)
+    duty_issue: str | None = None        # ставку нельзя взять (код исключён из ЕТТ и т.п.)
 
 
 @dataclass(frozen=True)
 class Rates:
-    """Курсы НБКР на дату расчёта (сом за единицу валюты)."""
+    """Курсы НБКР на дату расчёта (сом за единицу валюты).
+
+    None — курс на дату не подтверждён (refsync.fx): issues объясняет почему,
+    сумма тогда не считается (needs_input). provenance — след для графов и UI.
+    """
 
     rate_date: dt.date
     contract: Decimal | None             # курс валюты контракта
     usd: Decimal | None = None
     eur: Decimal | None = None
+    issues: Mapping[str, str] = field(default_factory=dict)       # валюта → причина
+    provenance: Mapping[str, dict] = field(default_factory=dict)  # валюта → FxQuote.to_json()
 
 
 @dataclass(frozen=True)
@@ -155,6 +164,18 @@ def _has_preference_code(preference: str | None) -> bool:
     return bool(preference) and preference.strip().upper() not in NO_PREFERENCE
 
 
+class _DutyBlocked(Exception):
+    """Ставку пошлины нельзя применить (код исключён из ЕТТ, примечание не разобрано)."""
+
+
+def _with_fx_reason(message: str, rates: Rates) -> str:
+    """«курс EUR на дату расчёта» (специфическая ставка) + почему курса нет."""
+    for currency, reason in rates.issues.items():
+        if message.startswith(f"курс {currency} "):
+            return f"{message}: {reason}"
+    return message
+
+
 def assemble(
     shipment: ShipmentIn,
     item_refs: list[ItemRef],
@@ -167,6 +188,7 @@ def assemble(
     remedies: list[RemedyMeasure] | None = None,
     agreements: list[TradeAgreementRef] | None = None,
     vat_includes_remedies: bool = False,
+    refdata: dict | None = None,
 ) -> AssembledDraft:
     """Собрать графы проекта ДТ. len(item_refs) должен совпадать с len(items).
 
@@ -176,6 +198,7 @@ def assemble(
     поэтому один и тот же список кладётся в g44 каждого товара (практика
     заполнения общих документов ДТ).
     remedies/agreements — меры защиты рынка и торговые режимы (снапшот БД).
+    refdata — след справочников (проверки гарантий, ручные курсы) → meta.refdata.
     """
     items = shipment.items
     if len(item_refs) != len(items):
@@ -185,10 +208,15 @@ def assemble(
 
     missing: list[str] = []
     n = len(items)
+    # Без курса графы 23 таможенная стоимость неизвестна: суммы не считаются
+    # вовсе (никаких молчаливых нулей), причина — в missing_parameters.
+    rate_missing = rates.contract is None
 
     if rates.contract is None:
+        reason = rates.issues.get(shipment.contract_currency.upper())
         missing.append(
             f"курс {shipment.contract_currency} НБКР на {rates.rate_date.isoformat()} (графа 23)"
+            + (f": {reason}" if reason else "")
         )
         contract_rate = Decimal(0)
     else:
@@ -225,10 +253,17 @@ def assemble(
         )
         duty_raw = pref_raw if pref_applied else ref.duty_raw
         try:
+            if ref.duty_issue and not pref_applied:
+                raise _DutyBlocked(ref.duty_issue)
             parsed = parse_duty_rate(duty_raw)
             duty = compute_duty(
                 parsed, customs_value=cv_i,
                 net_kg=item.net_kg, supp_qty=item.supp_qty, fx=fx,
+            )
+        except _DutyBlocked as exc:
+            duty = PaymentLine(
+                kind="duty", code="2010", basis=cv_i, rate=duty_raw or "—", amount=None,
+                missing=[str(exc)],
             )
         except DutyParseError as exc:
             duty = PaymentLine(
@@ -313,20 +348,28 @@ def assemble(
         )
 
         payment_lines = [duty, *remedy_lines] + ([excise] if excise else []) + [vat]
+        if rate_missing:
+            payment_lines = [
+                ln.model_copy(update={"amount": None, "basis": None}) for ln in payment_lines
+            ]
         for line in payment_lines:
             for m in line.missing:
-                missing.append(f"{prefix}: {m}")
+                missing.append(f"{prefix}: {_with_fx_reason(m, rates)}")
             if line.amount is not None:
                 totals[line.kind] = totals.get(line.kind, Decimal(0)) + line.amount
 
         # ── графа 46 ───────────────────────────────────────────────────────
-        if rates.usd is not None:
+        if rate_missing:
+            g46 = None
+        elif rates.usd is not None:
             g46 = statistical_value_usd(cv_i, rates.usd)
         else:
             g46 = None
             if not usd_missing_reported:
+                reason = rates.issues.get("USD")
                 missing.append(
                     f"курс USD НБКР на {rates.rate_date.isoformat()} (графа 46)"
+                    + (f": {reason}" if reason else "")
                 )
                 usd_missing_reported = True
 
@@ -350,10 +393,11 @@ def assemble(
             "g42": _s(item.price),
             "g43": "1",
             "g44": g44_docs,
-            "g45": _s(cv_i),
+            "g45": None if rate_missing else _s(cv_i),
             "g46": _s(g46),
             "g47": [_payment_dump(line) for line in payment_lines],
             "tariff": {
+                "duty": ref.duty_trace,
                 "origin_regime": _regime_dump(regime),
                 "preferential_duty_rate": pref_raw or None,
                 "preferential_rate_applied": pref_applied,
@@ -396,7 +440,7 @@ def assemble(
         "g08": _party(shipment.buyer),
         "g09": _party(shipment.buyer),
         "g11": shipment.trading_country,
-        "g12": _s(g12_total),
+        "g12": None if rate_missing else _s(g12_total),
         "g14": _party(declarant),
         "g15": shipment.dispatch_country,
         "g17": shipment.destination_country,
@@ -419,16 +463,20 @@ def assemble(
             "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
             "vat_base_includes_remedies": vat_includes_remedies,
             "fee_mode": "fixed" if fee_kgs is not None else ("percent" if fee_rule else "off"),
+            "fx": {cur: dict(p) for cur, p in rates.provenance.items()},
+            "refdata": refdata or {},
         },
         "header": header,
         "items": item_graphs,
         "totals": {
             "g05": n,
             "g03_sheets": sheets_count(n),
-            "g12": _s(g12_total),
+            "g12": None if rate_missing else _s(g12_total),
             "invoice_total": _s(invoice_total),
-            "additions_total": _s(cv.additions_total),
-            "payments": {k: _s(quantize_money(v)) for k, v in totals.items()},
+            "additions_total": None if rate_missing else _s(cv.additions_total),
+            "payments": {} if rate_missing else {
+                k: _s(quantize_money(v)) for k, v in totals.items()
+            },
             "fee_line": _payment_dump(fee_line) if fee_line else None,
         },
     }

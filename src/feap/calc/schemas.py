@@ -13,6 +13,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from feap.dt.schemas import DraftStatus, Finding, Incoterms, PaymentLine, RemedyDecision
+from feap.refsync.schemas import RefdataOut
 
 _Money = Annotated[Decimal, Field(ge=0)]
 
@@ -143,6 +144,10 @@ class CalcOut(BaseModel):
     landed_cost: LandedCost | None = Field(None, description="None, пока не хватает данных")
     findings: list[Finding]
     missing_parameters: list[str]
+    refdata: RefdataOut = Field(
+        default_factory=RefdataOut,
+        description="Источник и дата сверки: курсы на день и гарантии справочников",
+    )
 
 
 # ── Паспорт товара ───────────────────────────────────────────────────────────

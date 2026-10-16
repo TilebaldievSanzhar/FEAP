@@ -97,8 +97,35 @@ class Settings(BaseSettings):
     # специальные и компенсационные пошлины. Норма прямо их не называет;
     # ФЛК всегда предупреждает (W-REMEDY-VAT), когда такие пошлины есть.
     DT_VAT_INCLUDE_REMEDY_DUTIES: bool = False
-    # Официальные курсы НБКР (ежедневный XML)
+    # Официальные курсы НБКР: ежедневный и еженедельный XML, архив по дням
     NBKR_RATES_URL: str = "https://www.nbkr.kg/XML/daily.xml"
+    NBKR_WEEKLY_URL: str = "https://www.nbkr.kg/XML/weekly.xml"
+    NBKR_ARCHIVE_URL: str = "https://www.nbkr.kg/index1.jsp"
+    # Сводная редакция ЕТТ ЕАЭС на сайте ЕЭК (PDF по группам + примечания к ЕТТ)
+    EEC_ETT_PAGE_URL: str = "https://eec.eaeunion.org/comission/department/catr/ett/"
+    # Реестр мер защиты рынка ЕАЭС (публичный эндпоинт портала ЕЭК)
+    EAEU_REMEDIES_URL: str = "https://remedies.eaeunion.org/spd2/find?collection=zvr.v_actionsregistry"
+
+    # --- Обновление справочников (docs/refdata_sync.md) ---
+    # enforce — нет гарантии свежести справочника → needs_input (боевой режим);
+    # warn — только предупреждение (локальная разработка без интернета).
+    REFDATA_GUARD: Literal["enforce", "warn"] = "enforce"
+    # Курс на сегодня/завтра не найден, а последняя сверка с НБКР старше —
+    # опросить НБКР прямо во время расчёта.
+    REFDATA_FX_ON_DEMAND_AFTER_S: int = 600
+    REFDATA_HTTP_TIMEOUT_S: float = 30.0
+    REFDATA_ON_DEMAND_TIMEOUT_S: float = 4.0
+    # Решения ЕЭК вступают в силу ≥10 дней после опубликования; 7 — с запасом.
+    REFDATA_EEC_GUARANTEE_DAYS: int = 7
+    # ЕТТ сверяется со сводной редакцией ЕЭК, которая выходит к дате вступления
+    # решения в силу (без 10-дневного запаса) — гарантия короче.
+    REFDATA_ETT_GUARANTEE_DAYS: int = 3
+    # Подпись эксперта для ручных справочников (акты КР) старше — предупреждение.
+    REFDATA_ATTESTATION_MAX_AGE_DAYS: int = 45
+    # Оповещения о сбоях: лог всегда, Telegram — если заданы оба значения.
+    REFDATA_ALERT_TELEGRAM_BOT_TOKEN: str = ""
+    REFDATA_ALERT_TELEGRAM_CHAT_ID: str = ""
+    REFDATA_ALERT_REPEAT_HOURS: int = 6
     # PDF-экспорт: путь к TTF с кириллицей. Пусто = автопоиск
     # (Arial на Windows, DejaVu Sans на Linux) — см. exporters/pdf.py.
     DT_PDF_FONT_PATH: str = ""

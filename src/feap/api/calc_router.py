@@ -41,6 +41,7 @@ from feap.calc.schemas import (
     PassportIn,
     PassportPdfIn,
 )
+from feap.clock import today_bishkek
 from feap.db.models import ProductCatalogItem
 from feap.db.queries import get_ancestors, get_leaf_by_code
 from feap.dt.exporters.pdf import PdfFontError
@@ -78,7 +79,7 @@ async def _passport_pdf(
     node = await get_leaf_by_code(db, hs_code)
     if node is None:
         raise HTTPException(status_code=404, detail=f"Код {hs_code} не найден в номенклатуре")
-    day = on_date or dt.date.today()
+    day = on_date or today_bishkek()
     origin = params.origin_country if params else None
     lookup = await build_code_lookup(db, hs_code, origin=origin, on_date=day)
     assert lookup is not None  # лист уже найден выше

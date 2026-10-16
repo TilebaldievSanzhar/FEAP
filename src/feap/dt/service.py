@@ -6,13 +6,13 @@
 
 from __future__ import annotations
 
-import datetime as dt
 import uuid
 from decimal import Decimal, InvalidOperation
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from feap.clock import today_bishkek
 from feap.config import settings
 from feap.db.models import (
     DtDraftRow,
@@ -259,15 +259,18 @@ async def assemble_and_validate(
     предложение исправления проверяется ровно тем же прогоном.
     documents_g44 — list[assembler.DocEntry] для графы 44.
     """
-    rate_date = model.rate_date or dt.date.today()
+    rate_date = model.rate_date or today_bishkek()
     snapshot = await build_ref_snapshot(
         session,
         hs_codes=[i.hs_code for i in model.items],
         contract_currency=model.contract_currency,
         rate_date=rate_date,
+        manual_rates=model.manual_fx_rates,
     )
     assert snapshot.rates is not None
 
+    refdata = snapshot.refdata_meta()
+    refdata["guard_mode"] = settings.REFDATA_GUARD
     assembled = assemble(
         model, snapshot.item_refs, snapshot.rates,
         fee_kgs=_configured_fee(),
@@ -277,7 +280,13 @@ async def assemble_and_validate(
         remedies=snapshot.remedies,
         agreements=snapshot.agreements,
         vat_includes_remedies=settings.DT_VAT_INCLUDE_REMEDY_DUTIES,
+        refdata=refdata,
     )
+    # Нет гарантии свежести справочника (сверка с ЕЭК просрочена) — суммы не
+    # отдаются: то же needs_input, что и при нехватке данных досье. В режиме
+    # warn (локальная разработка) — предупреждение W-REF-GUARD в ФЛК.
+    if settings.REFDATA_GUARD == "enforce":
+        assembled.missing_parameters.extend(refdata["blocking"])
     findings = validate_draft(assembled.graphs, model, snapshot)
     if doc_payloads:
         # Извлечённые документы — уже данные (JSONB), сверка детерминирована.

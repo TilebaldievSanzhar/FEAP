@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import datetime as dt
 
+from feap.clock import today_bishkek
 from feap.db.models import (
     ClassificationSession,
     ExciseRate,
@@ -300,7 +301,7 @@ async def get_vat_rules(
     условные льготы — от самой специфичной). Условные (condition IS NOT NULL)
     применяются только по выбору декларанта (ShipmentItemIn.vat_benefit).
     """
-    day = on_date or dt.date.today()
+    day = on_date or today_bishkek()
     # Generate prefixes: '3004201000', '300420100', ..., '30', '3'
     prefixes = [code[:i] for i in range(len(code), 0, -1)]
 
@@ -372,7 +373,7 @@ async def get_excise_rate(
     Same prefix-match logic as get_vat_exemption: longest matching pattern wins.
     Returns None if the product is not subject to excise tax.
     """
-    today = on_date or dt.date.today()
+    today = on_date or today_bishkek()
     prefixes = [code[:i] for i in range(len(code), 0, -1)]
 
     result = await session.execute(
@@ -401,7 +402,7 @@ async def get_ntm_measures_for_code(
     Checks exact match + all parent prefixes (8, 6, 4, 2 digits) with
     applies_to_children=True. Filters by valid date range.
     """
-    today = dt.date.today()
+    today = today_bishkek()
 
     # Build prefix list: '8509800000', '85098000', '850980', '8509', '85'
     prefixes = []

@@ -5,6 +5,10 @@ Usage:
 
 Идемпотентен: upsert по measure_no; меры, пропавшие из снимка, помечаются
 status='expired' (не удаляются — нужны для аудита старых драфтов).
+
+Только для первичного наполнения: после первой ежедневной сверки с реестром ЕЭК
+(refsync, справочник eaeu_remedies) снимок старее базы и откатил бы её — скрипт
+отказывается без --force. Актуализация: `python -m feap.refsync sync remedies`.
 """
 
 from __future__ import annotations
@@ -20,7 +24,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 SEED_PATH = PROJECT_ROOT / "data" / "trade_remedies_seed.json"
 
 
-def seed_trade_remedies(path: Path = SEED_PATH) -> int:
+def seed_trade_remedies(path: Path = SEED_PATH, *, force: bool = False) -> int:
     from sqlalchemy import create_engine, text
 
     if not path.exists():
@@ -34,6 +38,16 @@ def seed_trade_remedies(path: Path = SEED_PATH) -> int:
     ).replace("+asyncpg", "+psycopg2")
     engine = create_engine(db_url)
     with engine.begin() as conn:
+        synced = conn.execute(text(
+            "SELECT last_success_at FROM ref_datasets WHERE dataset = 'eaeu_remedies'"
+        )).scalar_one_or_none() if conn.execute(text(
+            "SELECT to_regclass('public.ref_datasets')"
+        )).scalar() else None
+        if synced is not None and not force:
+            print(f"trade_remedies уже сверяется с реестром ЕЭК (последняя сверка {synced}) — "
+                  "снимок не применён. Нужно принудительно: --force")
+            engine.dispose()
+            return 0
         for m in measures:
             conn.execute(
                 text("""
@@ -78,5 +92,5 @@ def seed_trade_remedies(path: Path = SEED_PATH) -> int:
 
 
 if __name__ == "__main__":
-    n = seed_trade_remedies()
+    n = seed_trade_remedies(force="--force" in sys.argv)
     print(f"trade_remedies: {n} measures upserted")

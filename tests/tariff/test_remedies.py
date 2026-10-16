@@ -291,3 +291,14 @@ def test_seed_snapshot_is_consistent():
     cookware = next(m for m in measures if m.measure_no == "AD-32")
     assert cookware.rates[0].rate_pct == Decimal("21.89")
     assert "7615101000" in cookware.codes
+
+
+def test_select_rate_needs_review_requires_manual_rate_with_hint():
+    """Ставки не проверены человеком (refsync) — ставку вводит декларант; разбор — подсказка."""
+    choice = select_rate(_measure(needs_review=True), origin="CN",
+                         manufacturer="SHANTUI CONSTRUCTION MACHINERY CO LTD")
+    assert choice.rate is None
+    [message] = choice.missing
+    assert "не проверены по тексту решения" in message
+    assert "remedy_decisions['AD-17'].rate_pct" in message
+    assert "11.31% (Shantui Construction Machinery Co., Ltd.)" in message and "44.65%" in message

@@ -80,6 +80,35 @@ def test_passport_rates_only_without_calculation():
         title="Кастрюли", sku=None, lookup=LOOKUP, tree_chain=CHAIN, classification=None,
         params=None, calc=None, on_date=dt.date(2026, 10, 14),
     )
-    text = _text(content)
+    # Перенос строк в ячейке зависит от шрифта (Arial на Windows, DejaVu в Docker).
+    text = " ".join(_text(content).split())
     assert "Ставки и меры" in text and "может применяться" in text
     assert "Себестоимость ввоза" not in text
+
+
+def test_provenance_lines_from_refdata():
+    from feap.calc.passport_pdf import provenance_lines
+    from feap.refsync.schemas import RefdataOut
+
+    out = run(calc_in(remedy_decisions={"AD-32": RemedyDecision(decision="applies")}))
+    out = out.model_copy(update={"refdata": RefdataOut.model_validate({
+        "fx": [
+            {"currency": "USD", "day": "2026-10-16", "rate": "87.450000", "source": "nbkr_daily",
+             "fetched_at": "2026-10-15T10:05:00+00:00"},
+            {"currency": "KGS", "day": "2026-10-16", "rate": "1", "source": "kgs"},
+        ],
+        "datasets": [
+            {"dataset": "eaeu_remedies", "title": "Меры защиты рынка ЕАЭС", "guarantee": "eec",
+             "checked_at": "2026-10-16T00:40:00+00:00", "guaranteed_until": "2026-10-23", "ok": True},
+            {"dataset": "ett_rates", "title": "Ставки ЕТТ", "guarantee": "attestation",
+             "checked_at": None, "ok": False, "message": "Ставки ЕТТ — не подтверждено экспертом"},
+            {"dataset": "vat_benefits", "title": "Льготы НДС", "guarantee": "attestation",
+             "checked_at": "2026-10-13T06:00:00+00:00", "checked_by": "эксперт", "ok": True},
+        ],
+    })})
+    assert provenance_lines(out) == [
+        "Курс USD на 16.10.2026: 87.45 сом — ежедневный курс НБКР, получен 15.10.2026 16:05",
+        "Меры защиты рынка ЕАЭС: сверено с ЕЭК 16.10.2026 06:40, гарантия до 23.10.2026",
+        "Ставки ЕТТ — не подтверждено экспертом",
+        "Льготы НДС: подтверждено экспертом 13.10.2026 12:00 (эксперт)",
+    ]

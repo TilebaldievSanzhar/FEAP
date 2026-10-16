@@ -100,6 +100,17 @@ def compute_duty(
 
     if parsed.kind is DutyKind.SPECIFIC:
         return line.model_copy(update={"amount": specific})
+    if parsed.kind is DutyKind.ALTERNATIVE_MIN:
+        # «p1, либо p2, но не менее a за единицу — какая из сумм ниже».
+        assert advalorem is not None and specific is not None and parsed.alternative_pct is not None
+        alternative = quantize_money(customs_value * parsed.alternative_pct / 100)
+        floor = max(advalorem, specific)
+        if alternative <= floor:
+            note = f"применена ставка {parsed.alternative_pct}% (ниже второго варианта)"
+        else:
+            part = "адвалорная" if advalorem >= specific else "специфическая (не менее)"
+            note = f"применён второй вариант ставки ({part} часть) — он ниже {parsed.alternative_pct}%"
+        return line.model_copy(update={"amount": min(alternative, floor), "note": note})
     if parsed.kind is DutyKind.COMBINED_MIN:
         assert advalorem is not None and specific is not None
         applied = "адвалорная" if advalorem >= specific else "специфическая (не менее)"

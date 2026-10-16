@@ -13,6 +13,7 @@ from decimal import Decimal, InvalidOperation
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from feap.clock import today_bishkek
 from feap.config import settings
 from feap.db.models import TnvedNode
 from feap.db.queries import (
@@ -21,8 +22,10 @@ from feap.db.queries import (
     get_trade_remedies,
     get_vat_rules,
 )
+from feap.refsync.ett_sync import ett_snapshot
 from feap.schemas.api import (
     CodeLookupResponse,
+    DutyRateInfo,
     ExciseInfo,
     NtmMeasureInfo,
     NtmSummary,
@@ -32,6 +35,7 @@ from feap.schemas.api import (
     VatExemptionInfo,
     VatInfo,
 )
+from feap.tariff.ett import resolve_duty
 from feap.tariff.fees import kg_release_fee_rule
 from feap.tariff.remedies import RemedyMeasure, find_code_measures, origin_matches
 
@@ -120,7 +124,7 @@ async def build_code_lookup(
     on_date: dt.date | None = None,
 ) -> CodeLookupResponse | None:
     """Справка по листовому коду на дату; None — кода нет в номенклатуре."""
-    day = on_date or dt.date.today()
+    day = on_date or today_bishkek()
 
     result = await db.execute(
         select(TnvedNode).where(TnvedNode.code == code, TnvedNode.is_leaf.is_(True)).limit(1)
@@ -185,11 +189,24 @@ async def build_code_lookup(
 
     ntm = await build_ntm_summary(db, code)
 
+    # Ставка ЕТТ на дату — та же, что в расчёте и проекте ДТ (refdata).
+    ett_rows, ett_notes, ett_groups = await ett_snapshot(db, [code])
+    duty = resolve_duty(code, fallback_rate=node.duty_rate, rows=ett_rows, notes=ett_notes,
+                        group_versions=ett_groups, day=day)
+    trace = duty.trace
+    duty_info = DutyRateInfo(
+        source=trace.get("source", "fallback"), version=trace.get("version"),
+        base_rate=trace.get("base_rate"), note_id=trace.get("note_id"),
+        valid_to=trace.get("valid_to"), from_decision=trace.get("from_decision"),
+        issue=duty.issue,
+    )
+
     return CodeLookupResponse(
         code=node.code,
         code_formatted=node.code_formatted or code,
         name=node.name,
-        duty_rate=node.duty_rate,
+        duty_rate=duty.rate,
+        duty_info=duty_info,
         vat=vat,
         excise=excise,
         unit_primary=node.unit_primary,

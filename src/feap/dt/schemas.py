@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 import uuid
 from decimal import Decimal
 from typing import Annotated, Any, Literal
@@ -129,7 +130,14 @@ class ShipmentIn(_DecimalAsStr):
     other_charges: _MoneyStr = Field(Decimal(0), description="Погрузка/лицензионные и пр. до границы")
     allocation_method: AllocationMethod = "gross_weight"
 
-    rate_date: dt.date | None = Field(None, description="Дата курса НБКР (графа 23); None = сегодня")
+    rate_date: dt.date | None = Field(
+        None, description="Дата курса НБКР (графа 23) — день регистрации ДТ; None = сегодня по Бишкеку",
+    )
+    manual_fx_rates: dict[str, Decimal] = Field(
+        default_factory=dict,
+        description="Курс НБКР, введённый декларантом (сом за единицу валюты). Применяется, "
+                    "только если официальный курс на дату ДТ не подтверждён (W-RATE-MANUAL)",
+    )
 
     transport_at_border_type: str | None = Field(None, description="Графа 25: код вида транспорта")
     transport_ids: str | None = Field(None, description="Графы 18/21: номера ТС")
@@ -137,6 +145,19 @@ class ShipmentIn(_DecimalAsStr):
     places_total: int | None = Field(None, ge=0, description="Графа 6")
 
     items: list[ShipmentItemIn] = Field(default_factory=list, max_length=999)
+
+    @field_validator("manual_fx_rates")
+    @classmethod
+    def _manual_fx(cls, v: dict[str, Decimal]) -> dict[str, Decimal]:
+        out: dict[str, Decimal] = {}
+        for raw_code, rate in v.items():
+            code = raw_code.strip().upper()
+            if not re.fullmatch(r"[A-Z]{3}", code) or code == "KGS":
+                raise ValueError(f"Курс вручную: код валюты ISO 4217, кроме KGS — {raw_code!r}")
+            if not rate.is_finite() or rate <= 0 or rate > 1_000_000:
+                raise ValueError(f"Курс вручную {code}: положительное число сом за единицу")
+            out[code] = rate
+        return out
 
     @field_validator("items")
     @classmethod

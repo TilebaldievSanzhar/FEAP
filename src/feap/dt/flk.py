@@ -319,6 +319,7 @@ def validate_draft(
     _tariff_rules(
         items, add,
         vat_includes_remedies=bool((graphs.get("meta") or {}).get("vat_base_includes_remedies")),
+        rate_date=_date((graphs.get("meta") or {}).get("rate_date")),
     )
 
     # ── F-15: даты документов ────────────────────────────────────────────────
@@ -356,16 +357,68 @@ def validate_draft(
                 f"проверка по реестрам TULPAR дала статус «{status}» — "
                 "документ требует ручной проверки")
 
+    # ── Курсы и справочники (refsync, docs/refdata_sync.md) ─────────────────
+    _refdata_rules(graphs.get("meta") or {}, add)
+
     return findings
+
+
+def _refdata_rules(meta: dict, add) -> None:
+    """W-RATE-MANUAL / W-RATE-MANUAL-IGNORED / W-REF-ATTEST / W-REF-GUARD."""
+    for currency, fx in (meta.get("fx") or {}).items():
+        if fx.get("source") != "manual":
+            continue
+        add("W-RATE-MANUAL", "warning", "g23",
+            f"Курс {currency} на {fx.get('day')} введён вручную ({fx.get('rate')}): "
+            "официальный курс НБКР на эту дату не подтверждён"
+            + (f" — {fx['issue']}" if fx.get("issue") else "")
+            + ". Сверьте курс с nbkr.kg перед подачей",
+            currency=currency)
+    refdata = meta.get("refdata") or {}
+    for entry in refdata.get("manual_fx_ignored") or []:
+        add("W-RATE-MANUAL-IGNORED", "info", "g23",
+            f"Курс {entry.get('currency')} введён вручную ({entry.get('manual')}), но на "
+            f"{entry.get('day')} есть официальный курс НБКР {entry.get('official')} — "
+            "применён официальный",
+            currency=entry.get("currency"))
+    if refdata.get("attestation_warning"):
+        add("W-REF-ATTEST", "warning", None, refdata["attestation_warning"])
+    if refdata.get("guard_mode") == "warn":
+        for message in refdata.get("blocking") or []:
+            add("W-REF-GUARD", "warning", None,
+                f"{message}. Режим разработки: расчёт выполнен без гарантии свежести")
+
+
+#: За сколько дней до конца временной ставки ЕТТ предупреждать (а не информировать).
+_ETT_NOTE_END_WARN_DAYS = 60
 
 
 def _tariff_rules(  # noqa: C901 — плоский перечень правил
     items: list[dict], add, *, vat_includes_remedies: bool = False,
+    rate_date: _dt.date | None = None,
 ) -> None:
-    """F-16/F-17 и предупреждения по ЗСТ, мерам защиты рынка и условному НДС."""
+    """F-16/F-17 и предупреждения по ЗСТ, мерам защиты рынка, условному НДС, ЕТТ."""
     for i, item in enumerate(items):
         tariff = item.get("tariff") or {}
         n = i + 1
+
+        # I-ETT-NOTE / W-ETT-NOTE-END: временная ставка по примечанию к ЕТТ.
+        duty = tariff.get("duty") or {}
+        if duty.get("source") == "ett_note":
+            until = _date(duty.get("valid_to"))
+            basis = f" ({duty['from_decision']})" if duty.get("from_decision") else ""
+            text = (f"Товар {n}: ставка пошлины {duty.get('rate')} — временная, по примечанию "
+                    f"{duty.get('note_id')}) к ЕТТ{basis}"
+                    + (f", действует до {until:%d.%m.%Y}" if until else "")
+                    + f"; базовая ставка ЕТТ — {duty.get('base_rate')}")
+            ending = (until is not None and rate_date is not None
+                      and (until - rate_date).days <= _ETT_NOTE_END_WARN_DAYS)
+            if ending:
+                add("W-ETT-NOTE-END", "warning", f"items[{i}].g47",
+                    text + ". Если ДТ будет зарегистрирована после окончания срока, "
+                    "пошлина считается по базовой ставке")
+            else:
+                add("I-ETT-NOTE", "info", f"items[{i}].g47", text)
         regime = tariff.get("origin_regime") or {}
         docs44 = item.get("g44") or []
         has_origin_doc = any(d.get("kind") in ("cert_origin", "permit") for d in docs44)

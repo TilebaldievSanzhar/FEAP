@@ -3,6 +3,11 @@
 Снапшот собирается один раз на генерацию драфта (assemble и ФЛК — чистые
 и синхронные), реализует протокол flk.RefContext. Все ставки, льготы и меры
 берутся на дату расчёта досье (rate_date), а не на «сегодня».
+
+Курсы — только подтверждённые на день (refsync.fx): нет курса → None с
+причиной в Rates.issues (needs_input), старый курс не подставляется. Гарантии
+остальных справочников (refsync.guard) — в checks: блокирующие уходят в
+missing_parameters, предупреждения — в ФЛК (W-REF-ATTEST).
 """
 
 from __future__ import annotations
@@ -15,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from feap.config import settings
-from feap.db.models import ExchangeRate, RefClassifier, TnvedNode
+from feap.db.models import RefClassifier, TnvedNode
 from feap.db.queries import (
     get_excise_rate,
     get_ntm_measures_for_code,
@@ -25,7 +30,11 @@ from feap.db.queries import (
 )
 from feap.dt.assembler import ItemRef, Rates, VatOption
 from feap.dt.flk import CodeInfo
+from feap.refsync.ett_sync import ett_snapshot
+from feap.refsync.fx import FxResolution, resolve_fx
+from feap.refsync.guard import DatasetCheck, attestation_warning, check_datasets
 from feap.tariff.agreements import TradeAgreementRef
+from feap.tariff.ett import resolve_duty
 from feap.tariff.remedies import RemedyMeasure
 
 
@@ -40,6 +49,9 @@ class RefSnapshot:
     ntm_flags: dict[str, bool] = field(default_factory=dict)
     remedies: list[RemedyMeasure] = field(default_factory=list)
     agreements: list[TradeAgreementRef] = field(default_factory=list)
+    checks: list[DatasetCheck] = field(default_factory=list)
+    #: Ручной курс введён, но официальный есть и расходится — использован официальный.
+    manual_ignored: list[dict] = field(default_factory=list)
 
     def code_info(self, code10: str) -> CodeInfo | None:
         return self.codes.get(code10)
@@ -50,21 +62,54 @@ class RefSnapshot:
     def has_ntm_measures(self, code10: str) -> bool:
         return self.ntm_flags.get(code10, False)
 
+    def refdata_meta(self) -> dict:
+        """След справочников для graphs.meta.refdata (ФЛК, интерфейс, PDF)."""
+        return {
+            "datasets": [c.to_json() for c in self.checks],
+            "blocking": [c.blocking for c in self.checks if c.blocking],
+            "attestation_warning": attestation_warning(self.checks),
+            "manual_fx_ignored": self.manual_ignored,
+        }
 
-async def get_fx_rate(
-    session: AsyncSession, currency: str, on_date: dt.date
-) -> Decimal | None:
-    """Курс НБКР: последняя запись с датой ≤ on_date (курсы публикуются по будням)."""
-    if currency == "KGS":
-        return Decimal(1)
-    row = await session.execute(
-        select(ExchangeRate.rate)
-        .where(ExchangeRate.currency == currency, ExchangeRate.rate_date <= on_date)
-        .order_by(ExchangeRate.rate_date.desc())
-        .limit(1)
-    )
-    value = row.scalar_one_or_none()
-    return Decimal(value) if value is not None else None
+
+async def resolve_rates(
+    session: AsyncSession,
+    *,
+    currencies: list[str],
+    rate_date: dt.date,
+    manual: dict[str, Decimal] | None = None,
+) -> tuple[dict[str, Decimal | None], dict[str, str], dict[str, dict], list[dict]]:
+    """Курсы на день: (курс | None, причины, след, проигнорированные ручные курсы).
+
+    Ручной курс применяется, только если официальный не подтверждён.
+    """
+    manual = {k.upper(): v for k, v in (manual or {}).items()}
+    values: dict[str, Decimal | None] = {}
+    issues: dict[str, str] = {}
+    provenance: dict[str, dict] = {}
+    ignored: list[dict] = []
+    for currency in dict.fromkeys(c.upper() for c in currencies):
+        res: FxResolution = await resolve_fx(session, currency, rate_date)
+        if res.quote is not None:
+            values[currency] = res.quote.rate
+            provenance[currency] = res.quote.to_json()
+            if currency in manual and manual[currency] != res.quote.rate:
+                ignored.append({
+                    "currency": currency, "manual": format(manual[currency], "f"),
+                    "official": format(res.quote.rate, "f"), "day": rate_date.isoformat(),
+                })
+        elif currency in manual:
+            values[currency] = manual[currency]
+            provenance[currency] = {
+                "currency": currency, "day": rate_date.isoformat(),
+                "rate": format(manual[currency], "f"), "source": "manual",
+                "issue": res.issue,
+            }
+        else:
+            values[currency] = None
+            if res.issue:
+                issues[currency] = res.issue
+    return values, issues, provenance, ignored
 
 
 async def build_ref_snapshot(
@@ -73,6 +118,7 @@ async def build_ref_snapshot(
     hs_codes: list[str | None],
     contract_currency: str,
     rate_date: dt.date,
+    manual_rates: dict[str, Decimal] | None = None,
 ) -> RefSnapshot:
     """Собрать снапшот по позициям досье (порядок item_refs = порядку hs_codes)."""
     snapshot = RefSnapshot()
@@ -90,6 +136,9 @@ async def build_ref_snapshot(
                 nodes[node.code] = node
 
     vat_default = settings.VAT_RATE_DEFAULT
+    # Ставки ЕТТ из сводной редакции ЕЭК на дату (refsync.ett_sync); снимок
+    # TWS в tnved_tree — только для групп без ЕТТ и дат раньше редакции.
+    ett_rows, ett_notes, ett_groups = await ett_snapshot(session, unique_codes)
 
     per_code_ref: dict[str, ItemRef] = {}
     for code in unique_codes:
@@ -99,9 +148,13 @@ async def build_ref_snapshot(
             per_code_ref[code] = ItemRef(code_exists=False, is_leaf=False)
             continue
 
+        duty = resolve_duty(
+            code, fallback_rate=node.duty_rate, rows=ett_rows, notes=ett_notes,
+            group_versions=ett_groups, day=rate_date,
+        )
         snapshot.codes[code] = CodeInfo(
             exists=True, is_leaf=bool(node.is_leaf),
-            unit_secondary=node.unit_secondary, duty_raw=node.duty_rate,
+            unit_secondary=node.unit_secondary, duty_raw=duty.rate,
         )
 
         vat_rate, vat_note = vat_default, None
@@ -132,7 +185,7 @@ async def build_ref_snapshot(
 
         per_code_ref[code] = ItemRef(
             code_exists=True, is_leaf=bool(node.is_leaf),
-            duty_raw=node.duty_rate,
+            duty_raw=duty.rate, duty_trace=duty.trace, duty_issue=duty.issue,
             vat_rate=vat_rate, vat_note=vat_note,
             excise_amount=excise_amount, excise_unit=excise_unit,
             unit_secondary=node.unit_secondary,
@@ -163,10 +216,18 @@ async def build_ref_snapshot(
     snapshot.remedies = await get_trade_remedies(session)
     snapshot.agreements = await get_trade_agreements(session)
 
+    contract = contract_currency.upper()
+    values, issues, provenance, ignored = await resolve_rates(
+        session, currencies=[contract, "USD", "EUR"], rate_date=rate_date, manual=manual_rates,
+    )
     snapshot.rates = Rates(
         rate_date=rate_date,
-        contract=await get_fx_rate(session, contract_currency, rate_date),
-        usd=await get_fx_rate(session, "USD", rate_date),
-        eur=await get_fx_rate(session, "EUR", rate_date),
+        contract=values[contract],
+        usd=values["USD"],
+        eur=values["EUR"],
+        issues=issues,
+        provenance=provenance,
     )
+    snapshot.manual_ignored = ignored
+    snapshot.checks = await check_datasets(session, rate_date)
     return snapshot

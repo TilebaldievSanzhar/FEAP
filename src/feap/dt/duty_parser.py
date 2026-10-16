@@ -8,6 +8,10 @@
     '{p}%, но не менее {a} {CUR} за {UNIT}' -> COMBINED_MIN   (max из двух частей)
     '{p}% плюс {a} {CUR} за {UNIT}'         -> COMBINED_PLUS  (сумма частей)
     '{a} {CUR} за {UNIT}'                   -> SPECIFIC
+    '{p1}%, либо {p2}%, но не менее {a} {CUR} за {UNIT}, в зависимости от того,
+     какая из исчисленных сумм таможенной пошлины ниже'
+                                            -> ALTERNATIVE_MIN (легковые авто 8703:
+                                               min(p1, max(p2, a за единицу)))
 
     CUR  ∈ {EUR, USD}
     UNIT ∈ {1 кг, 1 л, 1 см3, мл, 1 т, 1 шт, 1 пар, 1 1000 шт, 1 м2}
@@ -30,6 +34,7 @@ class DutyKind(str, Enum):
     SPECIFIC = "specific"
     COMBINED_MIN = "combined_min"
     COMBINED_PLUS = "combined_plus"
+    ALTERNATIVE_MIN = "alternative_min"
 
 
 class BasisKind(str, Enum):
@@ -77,10 +82,15 @@ class ParsedDuty:
     specific_currency: str | None = None   # 'EUR' | 'USD'
     basis: BasisKind | None = None
     raw: str = ""
+    #: ALTERNATIVE_MIN: первая (альтернативная) адвалорная ставка p1.
+    alternative_pct: Decimal | None = None
 
     @property
     def has_specific(self) -> bool:
-        return self.kind in (DutyKind.SPECIFIC, DutyKind.COMBINED_MIN, DutyKind.COMBINED_PLUS)
+        return self.kind in (
+            DutyKind.SPECIFIC, DutyKind.COMBINED_MIN, DutyKind.COMBINED_PLUS,
+            DutyKind.ALTERNATIVE_MIN,
+        )
 
 
 class DutyParseError(ValueError):
@@ -96,6 +106,12 @@ _RE_COMBINED_PLUS = re.compile(
     rf"^({_NUM})\s*%\s+плюс\s+({_NUM})\s+(EUR|USD)\s+за\s+(.+)$"
 )
 _RE_SPECIFIC = re.compile(rf"^({_NUM})\s+(EUR|USD)\s+за\s+(.+)$")
+#: Суффикс ставки «какая из сумм ниже» (ЕТТ, легковые автомобили 8703).
+ALTERNATIVE_SUFFIX = "в зависимости от того, какая из исчисленных сумм таможенной пошлины ниже"
+_RE_ALTERNATIVE_MIN = re.compile(
+    rf"^({_NUM})\s*%,\s*либо\s+({_NUM})\s*%,\s*но не менее\s+({_NUM})\s+(EUR|USD)\s+за\s+"
+    rf"(.+?),\s*{ALTERNATIVE_SUFFIX}$"
+)
 
 
 def _basis(unit_text: str, raw: str) -> BasisKind:
@@ -115,6 +131,17 @@ def parse_duty_rate(raw: str | None) -> ParsedDuty:
     if m := _RE_AD_VALOREM.match(s):
         return ParsedDuty(
             kind=DutyKind.AD_VALOREM, advalorem_pct=Decimal(m.group(1)), raw=s,
+        )
+
+    if m := _RE_ALTERNATIVE_MIN.match(s):
+        return ParsedDuty(
+            kind=DutyKind.ALTERNATIVE_MIN,
+            alternative_pct=Decimal(m.group(1)),
+            advalorem_pct=Decimal(m.group(2)),
+            specific_amount=Decimal(m.group(3)),
+            specific_currency=m.group(4),
+            basis=_basis(m.group(5), s),
+            raw=s,
         )
 
     if m := _RE_COMBINED_MIN.match(s):

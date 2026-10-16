@@ -212,13 +212,30 @@ def select_rate(
     manufacturer: str | None = None,
     variant: str | None = None,
 ) -> RateChoice:
-    """Ставка меры для товара. Нехватка данных → missing (а не «прочие» молча)."""
+    """Ставка меры для товара. Нехватка данных → missing (а не «прочие» молча).
+
+    needs_review — ставки разобраны из текста реестра неуверенно или обновлены
+    и ещё не проверены человеком (refsync.remedies): ставку вводит декларант
+    по тексту решения, разобранные значения — только подсказка.
+    """
     origin_up = (origin or "").upper()
     candidates = [
         r for r in measure.rates
         if r.country is None or r.country == origin_up
         or (r.country == "EU" and origin_up in EU_MEMBERS)
     ]
+    if measure.needs_review:
+        hint = "; ".join(
+            f"{format(r.rate_pct.normalize(), 'f')}%"
+            + (f" ({', '.join(r.producers)})" if r.producers else "")
+            + (f" [{r.variant}]" if r.variant else "")
+            for r in candidates[:6]
+        )
+        return RateChoice(None, [
+            f"ставки меры {measure.measure_no} не проверены по тексту решения — укажите ставку "
+            f"вручную (remedy_decisions['{measure.measure_no}'].rate_pct)"
+            + (f"; по разбору реестра ЕЭК: {hint}" if hint else ""),
+        ])
     if not candidates:
         return RateChoice(None, [
             f"ставка меры {measure.measure_no} для страны {origin_up or '—'} "

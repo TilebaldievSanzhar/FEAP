@@ -20,6 +20,7 @@ from arq.cron import cron
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from feap.cascade.orchestrator import CascadeOrchestrator
+from feap.clock import BISHKEK_TZ
 from feap.config import settings
 from feap.jobs.tasks import (
     cleanup_expired_jobs,
@@ -32,6 +33,13 @@ from feap.jobs.tasks import (
     run_resume_item,
 )
 from feap.llm.client import get_provider
+from feap.refsync.jobs import (
+    refsync_ett,
+    refsync_health,
+    refsync_nbkr,
+    refsync_nbkr_archive,
+    refsync_remedies,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +91,8 @@ class WorkerSettings:
         run_ocr_job,
         run_ocr_split_and_enqueue,
     ]
+    # Часы cron — по Бишкеку (курс на завтра НБКР публикует около 16:00 местного).
+    timezone = BISHKEK_TZ
     cron_jobs = [
         # Hourly: TTL cleanup. Stagger minute to avoid both running at once.
         cron(cleanup_expired_jobs, hour=None, minute=0),
@@ -93,6 +103,16 @@ class WorkerSettings:
             hour=None,
             minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55},
         ),
+        # Справочники (docs/refdata_sync.md): курсы НБКР — каждые 15 минут и
+        # при старте; сверка с архивом НБКР и реестр мер ЕЭК — раз в день;
+        # проверка гарантий и оповещения — ежечасно.
+        cron(refsync_nbkr, minute={2, 17, 32, 47}, run_at_startup=True, timeout=120),
+        cron(refsync_nbkr_archive, hour=7, minute=10, timeout=300),
+        cron(refsync_remedies, hour=6, minute=40, run_at_startup=True, timeout=300),
+        # ЕТТ: страница ЕЭК — ежедневно; PDF скачиваются только у групп с новой
+        # редакцией (первый запуск — все 96, несколько минут).
+        cron(refsync_ett, hour=6, minute=50, run_at_startup=True, timeout=1800),
+        cron(refsync_health, minute=25, timeout=120),
     ]
     on_startup = on_startup
     on_shutdown = on_shutdown

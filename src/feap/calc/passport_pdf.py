@@ -17,6 +17,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus import KeepTogether, SimpleDocTemplate, Spacer
 
 from feap.calc.schemas import CalcOut, CalcParams, ClassificationNote
+from feap.clock import BISHKEK_TZ, today_bishkek
 from feap.dt.exporters.pdf import (
     FONT,
     _money,
@@ -82,6 +83,55 @@ def _remedy_rates(rates: list) -> str:
     return f"{_pct(format(nums[0], 'f'))[:-1]}–{_pct(format(nums[-1], 'f'))}"
 
 
+_FX_SOURCE_RU = {
+    "nbkr_daily": "ежедневный курс НБКР",
+    "nbkr_weekly": "еженедельный курс НБКР",
+    "nbkr_archive": "архив НБКР",
+}
+
+
+def _moment_ru(moment: dt.datetime | None) -> str:
+    return moment.astimezone(BISHKEK_TZ).strftime("%d.%m.%Y %H:%M") if moment else "—"
+
+
+def duty_text(lookup: CodeLookupResponse) -> str:
+    """«0% — временная, прим. 123С) к ЕТТ до 31.10.2028; базовая 5%»."""
+    rate = lookup.duty_rate or "—"
+    info = lookup.duty_info
+    if info is None:
+        return rate
+    if info.issue:
+        return f"{rate} — {info.issue}"
+    if info.source == "ett_note":
+        until = f" до {_date_ru(dt.date.fromisoformat(info.valid_to))}" if info.valid_to else ""
+        return f"{rate} — временная, прим. {info.note_id}) к ЕТТ{until}; базовая {info.base_rate}"
+    return rate
+
+
+def provenance_lines(calc: CalcOut) -> list[str]:
+    """«Источник и дата сверки» паспорта: курс на день и гарантии справочников."""
+    lines = []
+    for q in calc.refdata.fx:
+        if q.source == "kgs":
+            continue
+        lines.append(
+            f"Курс {q.currency} на {_date_ru(q.day)}: {format(q.rate.normalize(), 'f')} сом — "
+            f"{_FX_SOURCE_RU.get(q.source, q.source)}, получен {_moment_ru(q.fetched_at)}"
+        )
+    for d in calc.refdata.datasets:
+        if d.guarantee == "eec":
+            lines.append(
+                f"{d.title}: сверено с ЕЭК {_moment_ru(d.checked_at)}, гарантия до "
+                f"{_date_ru(d.guaranteed_until)}" if d.ok and d.guaranteed_until else f"{d.message}"
+            )
+        elif d.ok and d.checked_at:
+            lines.append(f"{d.title}: подтверждено экспертом {_moment_ru(d.checked_at)}"
+                         + (f" ({d.checked_by})" if d.checked_by else ""))
+        elif d.message:
+            lines.append(d.message)
+    return lines
+
+
 def _on_page(canvas, doc) -> None:  # noqa: ANN001 — сигнатура reportlab
     canvas.saveState()
     canvas.setFont(FONT, 7.5)
@@ -120,7 +170,7 @@ def render_passport_pdf(
     meta = [f"ставки и курсы на {_date_ru(on_date)}"]
     if sku:
         meta.insert(0, f"SKU {sku}")
-    meta.append(f"сформирован {_date_ru(dt.date.today())}")
+    meta.append(f"сформирован {_date_ru(today_bishkek())}")
     story.append(_p(" · ".join(meta), st["meta"]))
     story.append(_p(title, st["h2"]))
     if description and description.strip() != title.strip():
@@ -157,7 +207,7 @@ def render_passport_pdf(
     excise = (f"{lookup.excise.rate} {lookup.excise.rate_unit or ''}".strip()
               if lookup.excise.applicable else "нет")
     rates_rows = [
-        [_p("Пошлина ЕТТ", st["cell"]), _p(lookup.duty_rate or "—", st["cell_b"])],
+        [_p("Пошлина ЕТТ", st["cell"]), _p(duty_text(lookup), st["cell_b"])],
         [_p("НДС", st["cell"]), _p(vat, st["cell_b"])],
         [_p("Акциз", st["cell"]), _p(excise, st["cell"])],
         [_p("Сбор за таможенные операции", st["cell"]),
@@ -267,6 +317,12 @@ def render_passport_pdf(
             fr = [[_p(_SEV_RU.get(f.severity, f.severity), st["cell_b"]), _p(f.message, st["cell"])]
                   for f in calc.findings]
             story.append(_table(fr, [25 * mm, width - 25 * mm], header=False))
+
+        lines = provenance_lines(calc)
+        if lines:
+            story.append(_p("Источник и дата сверки", st["h2"]))
+            for line in lines:
+                story.append(_p(line, st["cell"]))
 
     story.append(Spacer(1, 4 * mm))
     story.append(KeepTogether([_p(

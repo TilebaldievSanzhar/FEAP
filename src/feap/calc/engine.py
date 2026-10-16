@@ -29,7 +29,8 @@ from feap.db.queries import get_leaf_by_code
 from feap.dt.customs_value import quantize_money
 from feap.dt.exporters.xlsx import PAYMENT_KIND_RU
 from feap.dt.flk import draft_status
-from feap.dt.refdata import get_fx_rate
+from feap.dt.refdata import resolve_rates
+from feap.refsync.schemas import RefdataOut
 from feap.dt.schemas import (
     AssembledDraft,
     Finding,
@@ -46,6 +47,7 @@ CALC_RULES: frozenset[str] = frozenset({
     "F-03", "F-06", "F-07", "F-08", "F-10", "F-14", "F-16", "F-17",
     "W-FREIGHT", "W-FEE", "W-FTA", "I-EAEU",
     "W-REMEDY-EXEMPT", "I-REMEDY-NA", "W-REMEDY-VAT", "W-VAT-COND", "I-VAT-COND",
+    "W-REF-ATTEST", "W-REF-GUARD", "I-ETT-NOTE", "W-ETT-NOTE-END",
 })
 
 #: Стороны временного досье — в расчёт и паспорт не попадают.
@@ -169,6 +171,24 @@ def select_findings(findings: list[Finding]) -> list[Finding]:
     return [f for f in findings if f.rule in CALC_RULES]
 
 
+def contract_rate_of(graphs: dict) -> Decimal | None:
+    """Курс графы 23 — ровно тот, по которому собран проект (None — не подтверждён)."""
+    raw = (graphs.get("header", {}).get("g23") or {}).get("rate")
+    return Decimal(raw) if raw is not None else None
+
+
+def refdata_out(graphs: dict, *, currencies: list[str], cost_fx: list[dict]) -> RefdataOut:
+    """След справочников расчёта: курсы использованных валют + гарантии справочников."""
+    meta = graphs.get("meta") or {}
+    fx_meta: dict = meta.get("fx") or {}
+    fx = [fx_meta[c] for c in dict.fromkeys(currencies) if c in fx_meta]
+    seen = {f["currency"] for f in fx}
+    fx.extend(f for f in cost_fx if f["currency"] not in seen)
+    return RefdataOut.model_validate({
+        "fx": fx, "datasets": (meta.get("refdata") or {}).get("datasets") or [],
+    })
+
+
 def build_calc_out(
     calc: CalcIn,
     assembled: AssembledDraft,
@@ -177,6 +197,7 @@ def build_calc_out(
     contract_rate: Decimal | None,
     cost_rates: dict[str, Decimal],
     extra_missing: list[str] | None = None,
+    cost_fx: list[dict] | None = None,
 ) -> CalcOut:
     """Ответ расчёта из собранного временного досье (чистая функция)."""
     graphs = assembled.graphs
@@ -213,6 +234,7 @@ def build_calc_out(
         landed_cost=landed,
         findings=selected,
         missing_parameters=missing,
+        refdata=refdata_out(graphs, currencies=[calc.currency], cost_fx=cost_fx or []),
     )
 
 
@@ -223,19 +245,28 @@ async def run_calc(session: AsyncSession, calc: CalcIn) -> CalcOut:
 
     assembled, findings = await assemble_and_validate(session, to_shipment(calc))
     rate_date = dt.date.fromisoformat(assembled.graphs["meta"]["rate_date"])
-    contract_rate = await get_fx_rate(session, calc.currency, rate_date)
 
-    # Курсы для расходов вне таможенной стоимости (валюты могут быть любыми).
-    cost_rates: dict[str, Decimal] = {}
+    # Курсы для расходов вне таможенной стоимости (валюты могут быть любыми) —
+    # те же правила: только подтверждённый курс на день, иначе needs_input.
+    cost_currencies = sorted({c.currency for c in calc.costs} - {"KGS"})
+    values, issues, provenance, _ = await resolve_rates(
+        session, currencies=cost_currencies, rate_date=rate_date,
+    )
+    cost_rates: dict[str, Decimal] = {"KGS": Decimal(1)}
     extra_missing: list[str] = []
-    for currency in sorted({c.currency for c in calc.costs}):
-        rate = await get_fx_rate(session, currency, rate_date)
+    for currency in cost_currencies:
+        rate = values.get(currency)
         if rate is None:
-            extra_missing.append(f"курс {currency} НБКР на {rate_date.isoformat()} (расходы)")
+            reason = issues.get(currency)
+            extra_missing.append(
+                f"курс {currency} НБКР на {rate_date.isoformat()} (расходы)"
+                + (f": {reason}" if reason else "")
+            )
         else:
             cost_rates[currency] = rate
 
     return build_calc_out(
         calc, assembled, findings,
-        contract_rate=contract_rate, cost_rates=cost_rates, extra_missing=extra_missing,
+        contract_rate=contract_rate_of(assembled.graphs), cost_rates=cost_rates,
+        extra_missing=extra_missing, cost_fx=list(provenance.values()),
     )

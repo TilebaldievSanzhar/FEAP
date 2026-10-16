@@ -189,13 +189,28 @@ class NtmResponse(BaseModel):
     ntm: NtmSummary
 
 
+class DutyRateInfo(BaseModel):
+    """Источник ставки пошлины на дату (tariff.ett.resolve_duty)."""
+
+    source: str = Field(description="ett_base | ett_note | fallback (снимок TWS)")
+    version: str | None = Field(None, description="Дата редакции ЕТТ группы")
+    base_rate: str | None = Field(None, description="Базовая ставка ЕТТ (без примечания)")
+    note_id: str | None = Field(None, description="Примечание к ЕТТ: «123С»")
+    valid_to: str | None = Field(None, description="Временная ставка действует до (ISO)")
+    from_decision: str | None = None
+    issue: str | None = Field(None, description="Ставку нельзя применить: код исключён и т.п.")
+
+
 class CodeLookupResponse(BaseModel):
     """Справка по 10-значному коду ТН ВЭД."""
 
     code: str
     code_formatted: str
     name: str
-    duty_rate: str | None = None
+    duty_rate: str | None = Field(None, description="Ставка пошлины ЕТТ на дату (с учётом примечаний)")
+    duty_info: DutyRateInfo | None = Field(
+        None, description="Откуда ставка: редакция ЕТТ, временная ставка по примечанию, срок",
+    )
     vat: VatInfo
     excise: ExciseInfo
     unit_primary: str | None = None

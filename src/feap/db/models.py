@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     Numeric,
     String,
     Text,
@@ -770,15 +771,36 @@ class DtDraftRow(Base):
 
 
 class ExchangeRate(Base):
+    """Официальный курс НБКР, действующий в календарный день rate_date.
+
+    Строка на каждый день (включая выходные), см. refsync.nbkr: поиск курса —
+    только точное совпадение дня; source='legacy' (до миграции 014) не читается.
+    """
+
     __tablename__ = "exchange_rates"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    rate_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
+    rate_date: Mapped[dt.date] = mapped_column(
+        Date, nullable=False, comment="День, в который курс действует (не дата публикации)",
+    )
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     rate: Mapped[object] = mapped_column(
         Numeric(18, 6), nullable=False, comment="Сом за единицу валюты (официальный курс НБКР)",
     )
-    source: Mapped[str] = mapped_column(String(20), nullable=False, default="NBKR")
+    source: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="nbkr_daily",
+        comment="nbkr_daily | nbkr_weekly | nbkr_archive | legacy",
+    )
+    effective_from: Mapped[dt.date | None] = mapped_column(
+        Date, comment="Дата публикации НБКР, с которой курс действует",
+    )
+    nominal: Mapped[int | None] = mapped_column(Integer, comment="Номинал в публикации")
+    fetched_at: Mapped[dt.datetime | None] = mapped_column(
+        DateTime(timezone=True), comment="Когда курс получен из источника",
+    )
+    published_at: Mapped[dt.datetime | None] = mapped_column(
+        DateTime(timezone=True), comment="Last-Modified фида НБКР",
+    )
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -790,6 +812,154 @@ class ExchangeRate(Base):
 
     def __repr__(self) -> str:
         return f"<ExchangeRate {self.currency} {self.rate_date} {self.rate}>"
+
+
+# ── ЕТТ ЕАЭС из сводной редакции ЕЭК (tariff.ett, refsync.ett_sync) ────────
+
+class EttRate(Base):
+    """Лист ЕТТ: базовая ставка и номера примечаний (редакция PDF группы)."""
+
+    __tablename__ = "ett_rates"
+
+    code: Mapped[str] = mapped_column(String(10), primary_key=True)
+    group_code: Mapped[str] = mapped_column(String(2), nullable=False, index=True)
+    base_rate: Mapped[str] = mapped_column(String(300), nullable=False)
+    rate_raw: Mapped[str] = mapped_column(Text, nullable=False)
+    notes: Mapped[list[str]] = mapped_column(ARRAY(String(8)), nullable=False, default=list)
+    unit: Mapped[str | None] = mapped_column(String(60))
+    version: Mapped[dt.date | None] = mapped_column(Date)
+    source_url: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    def __repr__(self) -> str:
+        return f"<EttRate {self.code} {self.base_rate} {self.notes}>"
+
+
+class EttNoteRow(Base):
+    """Примечание к ЕТТ: временная ставка и периоды действия."""
+
+    __tablename__ = "ett_notes"
+
+    note_id: Mapped[str] = mapped_column(String(8), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(10), nullable=False)
+    periods: Mapped[list[dict]] = mapped_column(JSONB, nullable=False, default=list)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    version: Mapped[dt.date | None] = mapped_column(Date)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    def __repr__(self) -> str:
+        return f"<EttNote {self.note_id} {self.kind}>"
+
+
+# ── Обновление справочников (refsync, docs/refdata_sync.md) ─────────────────
+
+class RefDataset(Base):
+    """Состояние справочника: когда сверялись, чем закончилось, подпись эксперта."""
+
+    __tablename__ = "ref_datasets"
+
+    dataset: Mapped[str] = mapped_column(String(40), primary_key=True)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="unknown", comment="ok | failing | unknown",
+    )
+    last_attempt_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    last_success_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    last_change_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    consecutive_failures: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_error: Mapped[str | None] = mapped_column(Text)
+    meta: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"),
+        comment="Наблюдённые даты публикаций, предупреждения источника",
+    )
+    alerted_at: Mapped[dt.datetime | None] = mapped_column(
+        DateTime(timezone=True), comment="Последнее оповещение о сбое (троттлинг)",
+    )
+    attested_at: Mapped[dt.datetime | None] = mapped_column(
+        DateTime(timezone=True), comment="Эксперт подтвердил актуальность (ручные справочники)",
+    )
+    attested_by: Mapped[str | None] = mapped_column(String(200))
+    attested_note: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    def __repr__(self) -> str:
+        return f"<RefDataset {self.dataset} {self.status}>"
+
+
+class RefSyncRun(Base):
+    """Журнал запусков обновления справочника."""
+
+    __tablename__ = "ref_sync_runs"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    dataset: Mapped[str] = mapped_column(String(40), nullable=False)
+    trigger: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="cron | startup | on_demand | manual",
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="ok | no_change | failed | skipped",
+    )
+    started_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    finished_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    stats: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"),
+    )
+    error: Mapped[str | None] = mapped_column(Text)
+    source_url: Mapped[str | None] = mapped_column(Text)
+    raw_sha256: Mapped[str | None] = mapped_column(String(64))
+    raw_gzip: Mapped[bytes | None] = mapped_column(
+        LargeBinary, comment="Сжатый ответ источника — только когда содержимое изменилось",
+    )
+
+    __table_args__ = (
+        Index("idx_ref_sync_runs_dataset_started", "dataset", "started_at"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<RefSyncRun {self.dataset} {self.status} {self.started_at}>"
+
+
+class RefChange(Base):
+    """Изменение справочника: аудит, оповещение, подтверждение человеком."""
+
+    __tablename__ = "ref_changes"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    dataset: Mapped[str] = mapped_column(String(40), nullable=False)
+    key: Mapped[str] = mapped_column(String(100), nullable=False, comment="measure_no, код…")
+    change: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="added | updated | missing | corrected",
+    )
+    fields: Mapped[list[str]] = mapped_column(ARRAY(String(40)), nullable=False, default=list)
+    before: Mapped[dict | None] = mapped_column(JSONB)
+    after: Mapped[dict | None] = mapped_column(JSONB)
+    effective_from: Mapped[dt.date | None] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False,
+        comment="applied — применено без подтверждения; pending — ждёт человека; "
+                "approved / rejected — решение принято",
+    )
+    run_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("ref_sync_runs.id", ondelete="SET NULL"),
+    )
+    detected_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    decided_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    decided_by: Mapped[str | None] = mapped_column(String(200))
+    note: Mapped[str | None] = mapped_column(Text)
+
+    __table_args__ = (
+        Index("idx_ref_changes_dataset_status", "dataset", "status"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<RefChange {self.dataset} {self.key} {self.change} {self.status}>"
 
 
 class UsageEvent(Base):

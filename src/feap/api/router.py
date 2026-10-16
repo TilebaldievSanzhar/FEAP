@@ -13,6 +13,7 @@ from feap.auth.deps import AuthContext, get_auth_context
 from feap.calc.lookup import build_code_lookup, build_ntm_summary, rate_infos
 from feap.cascade.orchestrator import CascadeOrchestrator, SessionNotFound
 from feap.usage import record_usage
+from feap.clock import today_bishkek
 from feap.db.models import TnvedNode
 from feap.db.queries import get_trade_agreements, get_trade_remedies
 from feap.ntm.schemas import NtmVerifyRequest, NtmVerifyResponse
@@ -171,7 +172,7 @@ async def list_trade_remedies(
     Справочник, а не проверка товара: подпадание под меру решает декларант в
     позиции досье (remedy_decisions).
     """
-    day = on_date or dt.date.today()
+    day = on_date or today_bishkek()
     measures = registry_measures(
         await get_trade_remedies(db), code=code, origin=origin, on_date=day,
     )

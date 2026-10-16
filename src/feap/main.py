@@ -12,6 +12,7 @@ from feap.api.calc_router import router as calc_router
 from feap.api.dt_router import router as dt_router
 from feap.api.jobs_router import router as jobs_router
 from feap.api.ocr_router import router as ocr_router
+from feap.api.refdata_router import router as refdata_router
 from feap.api.router import router
 from feap.auth.access import RedactQueryTokenFilter
 from feap.config import settings
@@ -78,6 +79,7 @@ app.include_router(jobs_router)
 app.include_router(ocr_router)
 app.include_router(dt_router)
 app.include_router(calc_router)
+app.include_router(refdata_router)
 
 
 @app.get("/health")
