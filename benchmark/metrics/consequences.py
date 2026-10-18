@@ -115,7 +115,7 @@ async def code_consequences(
 class ConsequenceDiff:
     """Predicted vs gold. delta < 0 means the declarant would underpay."""
 
-    kind: str  # same | paperwork | money | unknown | invalid_code | gold_invalid
+    kind: str  # same | paperwork | money | unknown | invalid_code | gold_invalid | gold_partial
     delta_total: Decimal | None = None
     delta_by_kind: dict[str, Decimal] = field(default_factory=dict)
     remedies_missed: list[str] = field(default_factory=list)

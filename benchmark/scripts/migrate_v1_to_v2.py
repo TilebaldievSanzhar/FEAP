@@ -51,7 +51,7 @@ H30_RECHECK = GoldReview(
     on=AUDIT_DATE,
     by='team source review (v32 label recheck), not an expert ruling',
     disposition='disputed',
-    previous_code_10='8518220009',
+    previous_code='8518220009',
     reason=(
         'Два динамика в одном корпусе обосновывают 851822 для обычной колонки. Решение Коллегии '
         'ЕЭК № 150 от 24.11.2020 относит портативную систему с Bluetooth, аккумулятором, '
@@ -63,8 +63,8 @@ H30_RECHECK = GoldReview(
     )],
 )
 H30_CONDITIONAL = [
-    ConditionalCode(code_10='8518220009', condition='колонка без микрофона и громкой связи'),
-    ConditionalCode(code_10='8518309500', condition='есть микрофон и громкая связь (Решение № 150)'),
+    ConditionalCode(code='8518220009', condition='колонка без микрофона и громкой связи'),
+    ConditionalCode(code='8518309500', condition='есть микрофон и громкая связь (Решение № 150)'),
 ]
 
 _GROUP_IN_URL = re.compile(r'ru\.(\d{2})_')
@@ -89,29 +89,29 @@ def gold_from_audit(case: TestCase, review: dict | None) -> ClassificationGold:
     )
     if review is None:
         return ClassificationGold(
-            code_10=truth.code_10, verification=Verification.UNVERIFIED,
+            code=truth.code_10, verification=Verification.UNVERIFIED,
             sufficiency=Sufficiency.UNKNOWN, **common,
         )
     source = _source(review['source'])
     if review['disposition'] == 'corrected':
         history = [GoldReview(
             on=AUDIT_DATE, by=AUDIT_BY, disposition='corrected',
-            previous_code_10=review['old_code_10'], reason=review['reason'], sources=[source],
+            previous_code=review['old_code_10'], reason=review['reason'], sources=[source],
         )]
         if case.id == 'BENCH-H30':
             return ClassificationGold(
-                code_10=review['replacement_code_10'], conditional=H30_CONDITIONAL,
+                code=review['replacement_code_10'], conditional=H30_CONDITIONAL,
                 verification=Verification.DISPUTED, sufficiency=Sufficiency.INSUFFICIENT,
                 missing_facts=['наличие микрофона и функции громкой связи'],
                 reviews=[*history, H30_RECHECK], **common,
             )
         return ClassificationGold(
-            code_10=review['replacement_code_10'], verification=Verification.SOURCE_REVIEWED,
+            code=review['replacement_code_10'], verification=Verification.SOURCE_REVIEWED,
             sufficiency=Sufficiency.SUFFICIENT, reviews=history, **common,
         )
     if review['disposition'] == 'quarantined_exact10':
         return ClassificationGold(
-            code_10=truth.code_10, verification=Verification.QUARANTINED,
+            code=truth.code_10, verification=Verification.QUARANTINED,
             sufficiency=Sufficiency.INSUFFICIENT, missing_facts=[review['reason']],
             reviews=[GoldReview(
                 on=AUDIT_DATE, by=AUDIT_BY, disposition='quarantined',

@@ -139,7 +139,9 @@ def check_budget(args: argparse.Namespace, dataset) -> None:
                 if p.status != "error" or not args.retry_errors}
     n_cases = sum(c.id not in done for c in dataset.cases)
 
-    reference = args.cost_reference or latest_trace(args.results_dir)
+    # A new run's own folder has no trace yet: fall back to every recorded run.
+    reference = (args.cost_reference or latest_trace(args.results_dir)
+                 or latest_trace(Path("benchmark/data/results")))
     estimate = estimate_cost(reference, n_cases) if reference else None
     if estimate is None:
         logger.warning("No recorded API costs to estimate the run: budget not checked")
@@ -184,10 +186,11 @@ async def run_classification(args: argparse.Namespace, dataset) -> tuple[list, l
 def main() -> None:
     args = parse_args()
 
-    # ── Load dataset ──────────────────────────────────────────────────
+    # ── Load dataset (v1 or v2 cases) ─────────────────────────────────
+    from benchmark.schema.case_v2 import load_dataset
     from benchmark.schema.test_case import TestDataset
 
-    dataset = TestDataset.load_jsonl(args.dataset)
+    dataset = load_dataset(args.dataset)
     if args.max:
         dataset = TestDataset(
             name=dataset.name,
@@ -218,6 +221,16 @@ def main() -> None:
                 len(not_started),
             )
             sys.exit(3)
+
+    from benchmark.schema.case_v2 import is_v2_file
+
+    if is_v2_file(args.dataset):
+        # v1 metrics need ten-digit gold; v2 gold may stop at the heading.
+        pred_path = args.predictions or args.results_dir / f"{args.run_id}_predictions.jsonl"
+        print(f"\nv2 cases: score with\n  python -m benchmark.scripts.score_v2 --cases "
+              f"{args.dataset.as_posix()} --predictions {pred_path.as_posix()} "
+              f"--run-id {args.run_id} --money-date YYYY-MM-DD")
+        return
 
     # ── Align predictions with cases ──────────────────────────────────
     # Build a lookup by case_id (in case order differs after resume)

@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0",
-  "created_at": "2026-10-16T12:07:01.063052+00:00",
-  "sha256": "6fa5fb0c6dca8d14efa127aa5868c1159fa2da1d1e738c0cd2b1bed93582cfc6",
+  "created_at": "2026-10-18T08:45:48.015862+00:00",
+  "sha256": "3fbdbb6e42448a48ecd9349c43b67e8e25ddd817adca332f4fae1602db63438e",
   "n": 100,
   "purpose": "Synthetic regression set (tier D), already used for tuning: comparisons with past runs only, not an estimate of accuracy on real goods.",
   "built_from": {
@@ -37,6 +37,9 @@
     "unknown": 85,
     "insufficient": 12,
     "sufficient": 3
+  },
+  "by_gold_digits": {
+    "10": 100
   },
   "scored": 88
 }

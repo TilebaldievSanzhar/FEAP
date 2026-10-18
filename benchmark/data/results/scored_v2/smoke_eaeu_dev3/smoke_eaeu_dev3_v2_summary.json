@@ -1,0 +1,144 @@
+{
+  "n_cases": 3,
+  "n_scored": 3,
+  "not_scored": [],
+  "outcomes": {
+    "correct": {
+      "k": 2,
+      "n": 3,
+      "share": 0.6666666666666666,
+      "ci95": [
+        0.2077,
+        0.9385
+      ]
+    },
+    "safe_stop": {
+      "k": 1,
+      "n": 3,
+      "share": 0.3333333333333333,
+      "ci95": [
+        0.0615,
+        0.7923
+      ]
+    },
+    "silent_error": {
+      "k": 0,
+      "n": 3,
+      "share": 0.0,
+      "ci95": [
+        0.0,
+        0.5615
+      ]
+    },
+    "failure": {
+      "k": 0,
+      "n": 3,
+      "share": 0.0,
+      "ci95": [
+        0.0,
+        0.5615
+      ]
+    }
+  },
+  "reasons": {
+    "exact": 2,
+    "flagged_wrong": 1
+  },
+  "flags": {
+    "wrong_codes": 1,
+    "flag_recall_on_wrong": {
+      "k": 1,
+      "n": 1,
+      "share": 1.0,
+      "ci95": [
+        0.2065,
+        1.0
+      ]
+    },
+    "false_alarm_on_correct": {
+      "k": 1,
+      "n": 2,
+      "share": 0.5,
+      "ci95": [
+        0.0945,
+        0.9055
+      ]
+    }
+  },
+  "by_difficulty": {},
+  "by_verification": {
+    "official": {
+      "n": 3,
+      "correct": 2,
+      "safe_stop": 1,
+      "silent_error": 0,
+      "failure": 0
+    }
+  },
+  "by_gold_digits": {
+    "10": {
+      "n": 3,
+      "correct": 2,
+      "safe_stop": 1,
+      "silent_error": 0,
+      "failure": 0
+    }
+  },
+  "by_section": {
+    "I": {
+      "n": 2,
+      "correct": 1,
+      "safe_stop": 1,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "IV": {
+      "n": 1,
+      "correct": 1,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    }
+  },
+  "by_authority": {
+    "BY": {
+      "n": 3,
+      "correct": 2,
+      "safe_stop": 1,
+      "silent_error": 0,
+      "failure": 0
+    }
+  },
+  "silent_errors": [],
+  "partial": {
+    "scored_cases": 3,
+    "planned_cases": 150
+  },
+  "money": {
+    "silent_error": {
+      "n": 0,
+      "by_kind": {},
+      "underpaid_cases": 0,
+      "underpaid_kgs": "0",
+      "overpaid_cases": 0,
+      "overpaid_kgs": "0",
+      "remedies_missed_cases": 0,
+      "ntm_missed_cases": 0
+    },
+    "safe_stop": {
+      "n": 1,
+      "by_kind": {
+        "money": 1
+      },
+      "underpaid_cases": 0,
+      "underpaid_kgs": "0",
+      "overpaid_cases": 1,
+      "overpaid_kgs": "9794.40",
+      "remedies_missed_cases": 0,
+      "ntm_missed_cases": 0
+    }
+  },
+  "run_id": "smoke_eaeu_dev3",
+  "cases_path": "benchmark/data/cases/v2/eaeu_pd_dev150.jsonl",
+  "predictions_path": "benchmark/data/results/smoke_eaeu_dev3/smoke_eaeu_dev3_predictions.jsonl"
+}

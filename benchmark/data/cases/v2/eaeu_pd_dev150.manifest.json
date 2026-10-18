@@ -1,0 +1,74 @@
+{
+  "schema_version": "2.0",
+  "created_at": "2026-10-18T08:45:51.100153+00:00",
+  "sha256": "5078cb4b173014d1eb049fb1ce0978c4abb5f16e54415eb6dc897857c0e14ffe",
+  "n": 150,
+  "purpose": "Dev set for error analysis and tuning; no ten-digit code shared with the test set.",
+  "built_from": {
+    "snapshot": {
+      "path": "benchmark/data/raw/eaeu_predecisions/2026-10-18",
+      "on_date": "2026-10-18",
+      "fetched_at": "2026-10-18T08:34:43.254739+00:00",
+      "records": 12974,
+      "manifest_sha256": "2c034d2561d04edbaea92ac4f11247adfca4193bf1dee7019b5dc88c60f69d28"
+    },
+    "pool": {
+      "usable": 12765,
+      "dropped": {
+        "code not a current leaf": 47,
+        "description length": 70,
+        "duplicate description": 90,
+        "same description, different codes": 2
+      }
+    },
+    "stratification": {
+      "weights": "sqrt(share of section in KG imports 2024, UN Comtrade AG2)",
+      "comtrade_sha256": "1304b74854925f90ef897c28ab59ec9c0ca658609c3e618a67e1006a6ceabcac",
+      "section_share": {
+        "I": 0.011,
+        "II": 0.0327,
+        "III": 0.0062,
+        "IV": 0.0456,
+        "IX": 0.0059,
+        "V": 0.1144,
+        "VI": 0.0577,
+        "VII": 0.0283,
+        "VIII": 0.0015,
+        "X": 0.0073,
+        "XI": 0.0598,
+        "XII": 0.0132,
+        "XIII": 0.0114,
+        "XIV": 0.0021,
+        "XV": 0.0629,
+        "XVI": 0.3159,
+        "XVII": 0.1991,
+        "XVIII": 0.012,
+        "XX": 0.013,
+        "XXI": 0.0
+      },
+      "floor_per_section": 8,
+      "max_per_subheading": 2,
+      "one_case_per_code": true,
+      "seed": 20261018
+    }
+  },
+  "by_track": {
+    "passport": 150
+  },
+  "by_split": {
+    "dev": 150
+  },
+  "by_tier": {
+    "A": 150
+  },
+  "by_verification": {
+    "official": 150
+  },
+  "by_sufficiency": {
+    "unknown": 150
+  },
+  "by_gold_digits": {
+    "10": 150
+  },
+  "scored": 150
+}

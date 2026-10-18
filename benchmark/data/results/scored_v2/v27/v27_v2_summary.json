@@ -119,6 +119,165 @@
       "failure": 1
     }
   },
+  "by_gold_digits": {
+    "10": {
+      "n": 88,
+      "correct": 80,
+      "safe_stop": 5,
+      "silent_error": 2,
+      "failure": 1
+    }
+  },
+  "by_section": {
+    "I": {
+      "n": 7,
+      "correct": 7,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "II": {
+      "n": 3,
+      "correct": 3,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "III": {
+      "n": 2,
+      "correct": 2,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "IV": {
+      "n": 7,
+      "correct": 7,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "V": {
+      "n": 3,
+      "correct": 3,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "VI": {
+      "n": 9,
+      "correct": 7,
+      "safe_stop": 1,
+      "silent_error": 1,
+      "failure": 0
+    },
+    "VII": {
+      "n": 3,
+      "correct": 2,
+      "safe_stop": 1,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "VIII": {
+      "n": 2,
+      "correct": 1,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 1
+    },
+    "IX": {
+      "n": 2,
+      "correct": 2,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "X": {
+      "n": 2,
+      "correct": 2,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XI": {
+      "n": 5,
+      "correct": 4,
+      "safe_stop": 1,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XII": {
+      "n": 2,
+      "correct": 2,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XIII": {
+      "n": 2,
+      "correct": 1,
+      "safe_stop": 0,
+      "silent_error": 1,
+      "failure": 0
+    },
+    "XIV": {
+      "n": 1,
+      "correct": 1,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XV": {
+      "n": 5,
+      "correct": 4,
+      "safe_stop": 1,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XVI": {
+      "n": 14,
+      "correct": 13,
+      "safe_stop": 1,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XVII": {
+      "n": 9,
+      "correct": 9,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XVIII": {
+      "n": 5,
+      "correct": 5,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XIX": {
+      "n": 1,
+      "correct": 1,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XX": {
+      "n": 3,
+      "correct": 3,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "XXI": {
+      "n": 1,
+      "correct": 1,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    }
+  },
+  "by_authority": {},
   "silent_errors": [
     "BENCH-M26",
     "BENCH-H03"

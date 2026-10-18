@@ -1,0 +1,51 @@
+{
+  "schema_version": "2.0",
+  "created_at": "2026-10-18T13:40:57.478630+00:00",
+  "sha256": "68d170da7b5d541b110f2a4b0fb7b96300654a8efc19715472511a0fa704c910",
+  "n": 67,
+  "purpose": "LOCKED test: EEC Collegium decisions since the 2022 edition, binding in all member states; gold may stop at the heading. Never tune on its per-case errors.",
+  "built_from": {
+    "decisions": {
+      "path": "benchmark/data/raw/eec_decisions/decisions.json",
+      "sha256": "08246313326335eadb79bc8e9c8af7d23cce68e2a368a317693d97c8043bc618",
+      "n": 252
+    },
+    "kept_items": 198,
+    "dropped": {
+      "decided before 2017": 50,
+      "decision amended": 29,
+      "decision cancelled": 2,
+      "text not parsed: HTTPStatusError: Client error '404 Not Found' for url 'https://zakon.uchet.kz/rus/docs/H18EK000092'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404": 1,
+      "text not parsed: no classification item recognised": 5,
+      "code not in current nomenclature": 1,
+      "text not parsed: HTTPStatusError: Client error '404 Not Found' for url 'https://docs.eaeunion.org/docs/ru-ru/01444882/err_21062024_70'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404": 1
+    },
+    "rules": {
+      "in_force_only": true,
+      "test_from": "2022-01-01",
+      "dev_from": "2017-01-01"
+    }
+  },
+  "by_track": {
+    "passport": 67
+  },
+  "by_split": {
+    "test": 67
+  },
+  "by_tier": {
+    "A": 67
+  },
+  "by_verification": {
+    "official": 67
+  },
+  "by_sufficiency": {
+    "sufficient": 67
+  },
+  "by_gold_digits": {
+    "4": 31,
+    "6": 14,
+    "9": 4,
+    "10": 18
+  },
+  "scored": 67
+}

@@ -22,11 +22,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
+
+from benchmark.schema.test_case import Difficulty, GroundTruth, TestCase, TestDataset
 
 SCHEMA_VERSION = '2.0'
 
-_CODE10 = re.compile(r'^\d{10}$')
+#: Heading, subheading, and the eight-, nine- and ten-digit levels of ТН ВЭД ЕАЭС.
+_CODE = re.compile(r'^(?:\d{4}|\d{6}|\d{8,10})$')
 
 #: First two digits of a code → section (Roman numeral).
 _SECTION_BOUNDS: tuple[tuple[int, str], ...] = (
@@ -34,6 +37,7 @@ _SECTION_BOUNDS: tuple[tuple[int, str], ...] = (
     (43, 'VIII'), (46, 'IX'), (49, 'X'), (63, 'XI'), (67, 'XII'), (70, 'XIII'), (71, 'XIV'),
     (83, 'XV'), (85, 'XVI'), (89, 'XVII'), (92, 'XVIII'), (93, 'XIX'), (96, 'XX'), (97, 'XXI'),
 )
+SECTIONS: tuple[str, ...] = tuple(section for _, section in _SECTION_BOUNDS)
 
 
 def section_of(code: str) -> str | None:
@@ -43,9 +47,10 @@ def section_of(code: str) -> str | None:
     return next((section for upper, section in _SECTION_BOUNDS if group <= upper), None)
 
 
-def _check_code10(code: str) -> str:
-    if not _CODE10.match(code):
-        raise ValueError(f'Expected a ten-digit code, got {code!r}')
+def _check_code(code: str) -> str:
+    """Heading to ten digits — as precise as the source is."""
+    if not _CODE.match(code):
+        raise ValueError(f'Expected a code of 4, 6, 8, 9 or 10 digits, got {code!r}')
     return code
 
 
@@ -77,7 +82,7 @@ NOT_SCORED: frozenset[Verification] = frozenset({Verification.QUARANTINED, Verif
 
 
 class Sufficiency(str, Enum):
-    """Does the input fix the gold code at ten digits?"""
+    """Does the input fix the gold code at its precision?"""
 
     SUFFICIENT = 'sufficient'
     INSUFFICIENT = 'insufficient'  # the right behaviour is a question or a flag
@@ -107,23 +112,28 @@ class GoldReview(BaseModel):
     on: dt.date
     by: str = Field(description="'team source review', an expert's role, …")
     disposition: Literal['confirmed', 'corrected', 'quarantined', 'disputed']
-    previous_code_10: str | None = None
+    previous_code: str | None = Field(
+        None, validation_alias=AliasChoices('previous_code', 'previous_code_10'),
+    )
     reason: str
     sources: list[SourceRef] = Field(default_factory=list)
 
 
 class ConditionalCode(BaseModel):
-    code_10: str
+    code: str = Field(validation_alias=AliasChoices('code', 'code_10'))
     condition: str = Field(description='The fact that would make this code right')
 
-    @field_validator('code_10')
+    @field_validator('code')
     @classmethod
     def _code(cls, v: str) -> str:
-        return _check_code10(v)
+        return _check_code(v)
 
 
 class ClassificationGold(BaseModel):
-    code_10: str
+    code: str = Field(
+        validation_alias=AliasChoices('code', 'code_10'),
+        description='As precise as the source: an EEC decision may fix only the heading',
+    )
     acceptable: list[str] = Field(
         default_factory=list, description='Other defensible codes, each justified in reviews',
     )
@@ -138,22 +148,28 @@ class ClassificationGold(BaseModel):
     requires_backtrack: bool = False
     reviews: list[GoldReview] = Field(default_factory=list)
 
-    @field_validator('code_10')
+    @field_validator('code')
     @classmethod
     def _code(cls, v: str) -> str:
-        return _check_code10(v)
+        return _check_code(v)
 
     @field_validator('acceptable')
     @classmethod
     def _acceptable(cls, v: list[str]) -> list[str]:
-        return [_check_code10(c) for c in v]
+        return [_check_code(c) for c in v]
 
     @property
     def scored(self) -> bool:
         return self.verification not in NOT_SCORED
 
-    def accepts(self, code: str | None) -> bool:
-        return code is not None and (code == self.code_10 or code in self.acceptable)
+    @property
+    def digits(self) -> int:
+        return len(self.code)
+
+    def accepts(self, predicted: str | None) -> bool:
+        """A ten-digit answer is right if it starts with the gold (or an acceptable) code."""
+        return bool(predicted) and any(
+            predicted.startswith(code) for code in (self.code, *self.acceptable))
 
 
 class Lot(BaseModel):
@@ -213,7 +229,7 @@ class CaseV2(BaseModel):
     @property
     def section(self) -> str | None:
         gold = self.gold.classification
-        return section_of(gold.code_10) if gold else None
+        return section_of(gold.code) if gold else None
 
 
 # ── IO ──────────────────────────────────────────────────────────────────────
@@ -226,6 +242,42 @@ def load_cases(path: Path) -> list[CaseV2]:
         duplicates = sorted(i for i, n in Counter(ids).items() if n > 1)
         raise ValueError(f'Duplicate case ids in {path}: {duplicates}')
     return cases
+
+
+def to_v1(case: CaseV2) -> TestCase:
+    """A v2 case as a v1 TestCase, so the existing runners can classify it.
+
+    v1 needs ten digits: a shorter gold code is padded with zeros, so v1 metrics on
+    v2 sets are not meaningful — score them with score_v2.
+    """
+    gold = case.gold.classification
+    if gold is None:
+        raise ValueError(f'{case.id}: no classification gold')
+    return TestCase(
+        id=case.id,
+        product_description=case.input.description,
+        ground_truth=GroundTruth.from_code10(gold.code.ljust(10, '0'), case.section or '?'),
+        source=case.provenance.reference,
+        difficulty=Difficulty(case.difficulty) if case.difficulty else Difficulty.UNKNOWN,
+        opi_rules_expected=gold.opi_expected,
+        trap_codes=gold.trap_codes,
+        requires_backtrack=gold.requires_backtrack,
+        additional_info=case.input.additional_info,
+        notes=case.notes,
+    )
+
+
+def is_v2_file(path: Path) -> bool:
+    with path.open(encoding='utf-8') as f:
+        first = next((line for line in f if line.strip()), '')
+    return bool(first) and json.loads(first).get('schema_version') == SCHEMA_VERSION
+
+
+def load_dataset(path: Path) -> TestDataset:
+    """v1 or v2 JSONL as a v1 TestDataset (v2 cases converted with to_v1)."""
+    if is_v2_file(path):
+        return TestDataset(name=path.stem, cases=[to_v1(c) for c in load_cases(path)])
+    return TestDataset.load_jsonl(path)
 
 
 def save_cases(cases: list[CaseV2], path: Path) -> None:
@@ -251,6 +303,7 @@ def write_manifest(path: Path, cases: list[CaseV2], *, purpose: str, built_from:
         'by_tier': dict(Counter(c.tier.value for c in cases)),
         'by_verification': dict(Counter(g.verification.value for g in gold)),
         'by_sufficiency': dict(Counter(g.sufficiency.value for g in gold)),
+        'by_gold_digits': dict(sorted(Counter(g.digits for g in gold).items())),
         'scored': sum(g.scored for g in gold),
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n',

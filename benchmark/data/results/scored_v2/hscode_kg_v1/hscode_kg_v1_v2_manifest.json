@@ -1,10 +1,10 @@
 {
-  "scored_at": "2026-10-16T12:21:57.105122+00:00",
+  "scored_at": "2026-10-18T13:21:13.948818+00:00",
   "run_id": "hscode_kg_v1",
-  "git_revision": "603ceb6a2d7dbc783b26c3e7268db1a84522b1ac",
+  "git_revision": "1043b8f4b6edf150bb1b352d478ff74917ae0960",
   "cases": {
     "path": "benchmark/data/cases/v2/passport_regression100.jsonl",
-    "sha256": "6fa5fb0c6dca8d14efa127aa5868c1159fa2da1d1e738c0cd2b1bed93582cfc6"
+    "sha256": "3fbdbb6e42448a48ecd9349c43b67e8e25ddd817adca332f4fae1602db63438e"
   },
   "predictions": {
     "path": "benchmark/data/results/hscode_kg/hscode_kg_v1_predictions.jsonl",
@@ -102,7 +102,7 @@
     {
       "dataset": "eaeu_remedies",
       "status": "ok",
-      "last_success_at": "2026-10-16T11:29:48.245443+00:00",
+      "last_success_at": "2026-10-18T13:20:39.779402+00:00",
       "last_change_at": "2026-10-16T06:02:01.778950+00:00",
       "attested_at": null,
       "attested_by": null
@@ -110,7 +110,7 @@
     {
       "dataset": "ett_rates",
       "status": "ok",
-      "last_success_at": "2026-10-16T11:29:47.863498+00:00",
+      "last_success_at": "2026-10-18T13:20:39.124030+00:00",
       "last_change_at": "2026-10-16T11:18:08.653161+00:00",
       "attested_at": null,
       "attested_by": null
@@ -126,15 +126,15 @@
     {
       "dataset": "nbkr_daily",
       "status": "ok",
-      "last_success_at": "2026-10-16T12:17:00.424857+00:00",
-      "last_change_at": "2026-10-16T10:58:12.484231+00:00",
+      "last_success_at": "2026-10-18T13:20:38.904610+00:00",
+      "last_change_at": "2026-10-18T13:20:38.904610+00:00",
       "attested_at": null,
       "attested_by": null
     },
     {
       "dataset": "nbkr_weekly",
       "status": "ok",
-      "last_success_at": "2026-10-16T12:17:00.463371+00:00",
+      "last_success_at": "2026-10-18T13:20:38.966721+00:00",
       "last_change_at": "2026-10-16T10:58:12.535631+00:00",
       "attested_at": null,
       "attested_by": null

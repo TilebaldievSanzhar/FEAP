@@ -1,0 +1,33 @@
+{
+  "schema_version": "2.0",
+  "created_at": "2026-10-18T09:05:09.738606+00:00",
+  "sha256": "49a8e8282e8911a68b4ecc50f2b3991b12ec2326ebd0fcb410f6e31165a2435d",
+  "n": 400,
+  "purpose": "Short variants of eaeu_pd_test400.jsonl (same split, locked if the source is): first sentence of the official description, same gold code.",
+  "built_from": {
+    "cases": {
+      "path": "benchmark/data/cases/v2/eaeu_pd_test400.jsonl",
+      "sha256": "5944e17a7a52482942f8beea0ff136c4f931bdbfb4cabedeaae0557d516a8376"
+    },
+    "rule": "first sentence, lead «Товар представляет собой» removed, ≤160 characters"
+  },
+  "by_track": {
+    "passport": 400
+  },
+  "by_split": {
+    "test": 400
+  },
+  "by_tier": {
+    "A": 400
+  },
+  "by_verification": {
+    "official": 400
+  },
+  "by_sufficiency": {
+    "unknown": 400
+  },
+  "by_gold_digits": {
+    "10": 400
+  },
+  "scored": 400
+}

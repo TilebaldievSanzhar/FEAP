@@ -15,6 +15,8 @@ class Difficulty(str, Enum):
     MEDIUM = "medium"
     # Disputed in courts, composite goods, borderline sections
     HARD = "hard"
+    # Not labelled (e.g. v2 cases from official decisions)
+    UNKNOWN = "unknown"
 
 
 class GroundTruth(BaseModel):

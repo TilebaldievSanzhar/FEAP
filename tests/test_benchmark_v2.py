@@ -2,6 +2,7 @@
 import pytest
 
 from benchmark.metrics.outcome import Outcome, case_outcome, summarize
+from benchmark.metrics.report_v2 import render_markdown
 from benchmark.metrics.stats import wilson
 from benchmark.schema.case_v2 import (
     CaseV2,
@@ -11,7 +12,9 @@ from benchmark.schema.case_v2 import (
     Provenance,
     Sufficiency,
     Verification,
+    is_v2_file,
     load_cases,
+    load_dataset,
     save_cases,
     section_of,
 )
@@ -32,7 +35,7 @@ def case(cid='C1', code='8516400000', verification=Verification.UNVERIFIED,
         provenance=Provenance(kind='synthetic', reference='test'), difficulty=difficulty,
         input=PassportInput(description='Утюг электрический бытовой'),
         gold=GoldLayers(classification=ClassificationGold(
-            code_10=code, acceptable=list(acceptable),
+            code=code, acceptable=list(acceptable),
             verification=verification, sufficiency=sufficiency,
         )),
     )
@@ -48,11 +51,27 @@ def prediction(cid='C1', code='8516400000', status='completed', review=False, er
 
 # ── schema ──────────────────────────────────────────────────────────────────
 
-def test_gold_codes_must_have_ten_digits():
+def test_gold_code_has_heading_to_ten_digit_precision():
+    for bad in ('85164', '8516400', '8516 40', '851640000a'):
+        with pytest.raises(ValueError):
+            case(code=bad)
     with pytest.raises(ValueError):
-        case(code='85164000')
-    with pytest.raises(ValueError):
-        case(acceptable=['8516'])
+        case(acceptable=['85164'])
+    assert case(code='8516').gold.classification.digits == 4
+
+
+def test_old_files_with_code_10_still_load():
+    data = case().model_dump(mode='json')
+    data['gold']['classification']['code_10'] = data['gold']['classification'].pop('code')
+    assert CaseV2.model_validate(data).gold.classification.code == '8516400000'
+
+
+def test_partial_gold_accepts_any_code_inside_it():
+    gold = case(code='2106').gold.classification
+    assert gold.accepts('2106909809') and not gold.accepts('2103909000')
+    assert not gold.accepts(None)
+    outcome = case_outcome(case(code='2106'), prediction(code='2106909809'))
+    assert outcome.outcome is Outcome.CORRECT and outcome.reason == 'prefix'
 
 
 def test_dossier_track_is_rejected_until_phase_two():
@@ -67,6 +86,17 @@ def test_round_trip_and_duplicate_ids(tmp_path):
     save_cases([case('A'), case('A')], path)
     with pytest.raises(ValueError, match='Duplicate'):
         load_cases(path)
+
+
+def test_v2_files_load_into_the_v1_runner(tmp_path):
+    path = tmp_path / 'cases.jsonl'
+    save_cases([case('A'), case('B', code='2106')], path)
+    assert is_v2_file(path)
+    dataset = load_dataset(path)
+    assert [c.id for c in dataset.cases] == ['A', 'B']
+    assert dataset.cases[0].ground_truth.code_10 == '8516400000'
+    assert dataset.cases[1].ground_truth.code_10 == '2106000000'  # padded for v1 only
+    assert dataset.cases[1].difficulty.value == 'easy'
 
 
 def test_section_of_group_boundaries():
@@ -94,7 +124,7 @@ def test_unaudited_label_stays_unverified():
     gold = gold_from_audit(v1(), None)
     assert gold.verification is Verification.UNVERIFIED
     assert gold.sufficiency is Sufficiency.UNKNOWN
-    assert gold.code_10 == '1602501000' and gold.reviews == []
+    assert gold.code == '1602501000' and gold.reviews == []
 
 
 def test_correction_becomes_source_reviewed_with_history():
@@ -102,9 +132,9 @@ def test_correction_becomes_source_reviewed_with_history():
         'disposition': 'corrected', 'old_code_10': '1602501000',
         'replacement_code_10': '1602509501', 'reason': 'не сырое мясо', 'source': SOURCE,
     })
-    assert gold.code_10 == '1602509501'
+    assert gold.code == '1602509501'
     assert gold.verification is Verification.SOURCE_REVIEWED
-    assert gold.reviews[0].previous_code_10 == '1602501000'
+    assert gold.reviews[0].previous_code == '1602501000'
     assert gold.reviews[0].sources[0].title == 'ЕТТ ЕАЭС, группа 16, PDF ЕЭК'
 
 
@@ -125,7 +155,7 @@ def test_h30_keeps_both_decisions_and_is_disputed():
     })
     assert gold.verification is Verification.DISPUTED and not gold.scored
     assert [r.disposition for r in gold.reviews] == ['corrected', 'disputed']
-    assert {c.code_10 for c in gold.conditional} == {'8518220009', '8518309500'}
+    assert {c.code for c in gold.conditional} == {'8518220009', '8518309500'}
 
 
 def test_migrated_case_keeps_v1_input_and_tags():
@@ -190,3 +220,13 @@ def test_wilson_interval_stays_in_unit_range():
     low, high = wilson(79, 88)
     assert low == pytest.approx(0.8166, abs=1e-3) and high == pytest.approx(0.9452, abs=1e-3)
     assert wilson(0, 0) is None
+
+
+def test_report_of_a_partial_run_says_it_is_not_a_result():
+    outcomes = [case_outcome(case('A'), prediction('A'))]
+    summary = {**summarize(outcomes), 'run_id': 'smoke', 'cases_path': 'c.jsonl',
+               'predictions_path': 'p.jsonl', 'partial': {'scored_cases': 1, 'planned_cases': 150}}
+    manifest = {'cases': {'sha256': 'a' * 64}, 'predictions': {'sha256': 'b' * 64},
+                'scored_at': '2026-10-18T00:00:00+00:00'}
+    report = render_markdown(summary, outcomes, {}, manifest)
+    assert 'Частичный прогон' in report and '1 из 150' in report

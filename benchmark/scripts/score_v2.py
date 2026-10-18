@@ -26,6 +26,7 @@ from pathlib import Path
 from benchmark.metrics.consequences import (
     STANDARD_LOT,
     CodeConsequences,
+    ConsequenceDiff,
     code_consequences,
     compare_consequences,
 )
@@ -47,6 +48,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument('--money-date', type=dt.date.fromisoformat, default=None,
                    help='Rates and measures for cases without as_of_date (YYYY-MM-DD)')
     p.add_argument('--no-money', action='store_true', help='Outcomes only, no database')
+    p.add_argument('--only-predicted', action='store_true',
+                   help='Score only cases with a prediction (smoke runs); the report says so')
     return p.parse_args()
 
 
@@ -92,6 +95,12 @@ async def price_errors(
         if day is None:
             raise SystemExit(f'{case.id} has no as_of_date: pass --money-date')
         lot = case.lot or STANDARD_LOT
+        if outcome.gold_digits < 10:
+            # A heading-level gold has no payments of its own to compare against.
+            priced[case.id] = {'date': day.isoformat(), 'standard_lot': lot.standard,
+                               'gold': None, 'predicted': None,
+                               'diff': ConsequenceDiff(kind='gold_partial').to_json()}
+            continue
         gold = await consequences(outcome.gold_code, lot, day)
         pred = await consequences(outcome.predicted_code, lot, day)
         priced[case.id] = {
@@ -139,8 +148,14 @@ def main() -> None:
 
     cases = load_cases(args.cases)
     predictions = align(cases, load_predictions(args.predictions))
+    if args.only_predicted:
+        planned = len(cases)
+        cases = [c for c in cases if c.id in predictions]
+        logger.warning('Partial run: scoring %d of %d cases', len(cases), planned)
     outcomes = [case_outcome(c, predictions.get(c.id)) for c in cases]
     summary = summarize(outcomes)
+    if args.only_predicted:
+        summary['partial'] = {'scored_cases': len(cases), 'planned_cases': planned}
 
     priced: dict[str, dict] = {}
     manifest: dict = {

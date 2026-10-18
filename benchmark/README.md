@@ -28,6 +28,31 @@ python -m benchmark.scripts.run_calc_scenarios --run-id calc_2026-10-16
 versions, not as accuracy on real goods. Paid runs (`evaluate`, `evaluate_audited`) now
 estimate their cost first and stop cleanly on a persistent OpenRouter 402.
 
+### Real tier-A sets (phase 1)
+
+| Set | Source | Use |
+|---|---|---|
+| `eaeu_pd_test400` | EAEU collection of preliminary decisions (registry ЕС 999, nsi.eaeunion.org) | **locked test** |
+| `eaeu_pd_test400_short` | same cases, first sentence of the description | locked test: ask vs guess |
+| `eaeu_pd_dev150` | same collection, no code shared with test | dev, error analysis |
+| `eec_decisions_test` | EEC Collegium decisions since 2022 (gold may stop at the heading) | locked test, hard goods |
+| `eec_decisions_dev` | EEC decisions 2017–2021, not re-verified for the 2022 edition | dev |
+
+```bash
+python -m benchmark.scripts.collect_eaeu_predecisions --date 2026-10-18   # raw snapshot
+python -m benchmark.scripts.build_eaeu_pd_sets --snapshot 2026-10-18     # test/dev sets
+python -m benchmark.scripts.build_short_variants --cases benchmark/data/cases/v2/eaeu_pd_test400.jsonl
+python -m benchmark.scripts.collect_eec_decisions && python -m benchmark.scripts.build_eec_sets
+# run (paid) and score:
+python -m benchmark.scripts.evaluate_audited --dataset benchmark/data/cases/v2/eaeu_pd_test400.jsonl \
+    --run-id <run> --results-dir benchmark/data/results/<run> --concurrency 1 --timeout 300
+python -m benchmark.scripts.score_v2 --cases benchmark/data/cases/v2/eaeu_pd_test400.jsonl \
+    --predictions benchmark/data/results/<run>/<run>_predictions.jsonl --run-id <run> --money-date <day>
+```
+
+Raw downloads stay in `benchmark/data/raw/` (not in git); the case files are self-contained
+and their manifests record the hashes of the snapshots they came from.
+
 The rest of this README describes v1.
 
 ## Directory structure

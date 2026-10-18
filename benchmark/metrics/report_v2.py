@@ -15,7 +15,8 @@ LABELS: dict[Outcome, str] = {
 }
 
 REASONS: dict[str, str] = {
-    'exact': 'точное совпадение', 'acceptable': 'допустимый альтернативный код',
+    'exact': 'точное совпадение', 'prefix': 'совпадение до точности эталона',
+    'acceptable': 'допустимый альтернативный код',
     'flagged_wrong': 'неверный код с флагом «проверить»',
     'question_justified': 'вопрос там, где сведений не хватает',
     'question_unneeded': 'лишний вопрос', 'question': 'вопрос',
@@ -28,6 +29,7 @@ DIFF_LABELS: dict[str, str] = {
     'same': 'без последствий', 'paperwork': 'другие меры или доп. единица',
     'money': 'меняет платежи', 'unknown': 'не рассчитано',
     'invalid_code': 'кода нет в ЕТТ', 'gold_invalid': 'эталона нет в ЕТТ',
+    'gold_partial': 'эталон неполный — не сравнивается',
 }
 
 
@@ -55,6 +57,8 @@ def _share_line(share: dict) -> str:
 
 def _changes(record: dict) -> str:
     diff, gold, pred = record['diff'], record['gold'], record['predicted']
+    if gold is None or pred is None:
+        return 'у эталона меньше 10 знаков'
     parts = []
     gold_duty, pred_duty = gold['rates'].get('duty'), pred['rates'].get('duty')
     if gold_duty != pred_duty and (gold_duty or pred_duty):
@@ -107,6 +111,13 @@ def render_markdown(summary: dict, outcomes: list[CaseOutcome], priced: dict[str
         f"Предсказания: `{summary['predictions_path']}` "
         f"(sha256 {manifest['predictions']['sha256'][:12]}…)  ",
         f"Оценено: {manifest['scored_at'][:10]}", '',
+    ]
+    if summary.get('partial'):
+        part = summary['partial']
+        lines += [f"> **Частичный прогон:** оценены {part['scored_cases']} из "
+                  f"{part['planned_cases']} кейсов набора — это проверка пайплайна, а не результат.",
+                  '']
+    lines += [
         f'## Светофор: {n} из {total} кейсов с установленным эталоном', '',
         '| Исход | Кейсов | Доля | 95% ДИ (Уилсон) |', '|---|---:|---:|---|',
     ]
@@ -166,8 +177,12 @@ def render_markdown(summary: dict, outcomes: list[CaseOutcome], priced: dict[str
                 f"{money['remedies_missed_cases']}, нетарифная мера — {money['ntm_missed_cases']}."
             )]
 
-    lines += _breakdown('По сложности', summary['by_difficulty'])
-    lines += _breakdown('По статусу эталона', summary['by_verification'])
+    for title, key in (('По сложности', 'by_difficulty'), ('По статусу эталона', 'by_verification'),
+                       ('По точности эталона, знаков', 'by_gold_digits'),
+                       ('По органу, принявшему решение', 'by_authority'),
+                       ('По разделам', 'by_section')):
+        if summary.get(key):
+            lines += _breakdown(title, summary[key])
 
     verification = Counter(o.verification for o in outcomes)
     limits = []
