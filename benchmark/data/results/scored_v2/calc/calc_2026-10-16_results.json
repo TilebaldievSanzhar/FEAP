@@ -1,0 +1,618 @@
+{
+  "manifest": {
+    "run_id": "calc_2026-10-16",
+    "ran_at": "2026-10-16T12:25:15.380712+00:00",
+    "scenarios": {
+      "path": "benchmark/data/scenarios/calc_v1.jsonl",
+      "sha256": "2594bf1e7e0992b2fcd0393648fe5312beb0cfde53a6bc3bfd42409669f066aa"
+    },
+    "settings": {
+      "DT_VAT_INCLUDE_REMEDY_DUTIES": false,
+      "DT_CUSTOMS_FEE_MODE": "percent",
+      "DT_CALC_INDEX_KGS": "100",
+      "VAT_RATE_DEFAULT": "12%",
+      "REFDATA_GUARD": "enforce"
+    },
+    "reference_data": {
+      "tnved_tree": {
+        "rows": 20236,
+        "sha256": "36ebd77f2b85d1809091bd1744ae6c3f764081f656c03c3ed5f57eadf59c0639"
+      },
+      "tnved_notes": {
+        "rows": 533,
+        "sha256": "d5dc8b4c771acfd98a010eb725fac2207e120a7a2d44e425bc2d0204bc094403"
+      },
+      "tnved_explanatory_notes": {
+        "rows": 3413,
+        "sha256": "ef4857c799a231458a8dbe62226f50d803ec45a4b25cfad94896848008e6c0e0"
+      },
+      "tnved_opi": {
+        "rows": 10,
+        "sha256": "0d51ab7a617ca2a9559bb1f744e1f5d14241ccde2f52b4ed3aa2f9403c515ee7"
+      },
+      "ett_rates": {
+        "rows": 13294,
+        "sha256": "9ec758d6c505ade9b26f48387b39bcae02781da49c3ea6d96fea04808df9370e"
+      },
+      "ett_notes": {
+        "rows": 125,
+        "sha256": "5c52b003b36e0ba51b468f554898a056c78aa8dd78fc8017e8bdf22cdf6e1af1"
+      },
+      "excise_rates": {
+        "rows": 23,
+        "sha256": "1a212732a8e0d50b18a08b28fe85ebc9b420b98ec4843934782d33ca3d045f7b"
+      },
+      "vat_exemptions": {
+        "rows": 85,
+        "sha256": "e2de9509c869637dbf0d8171c0b28701ffe9c74c9519ef20713c99536c8824ee"
+      },
+      "trade_remedies": {
+        "rows": 28,
+        "sha256": "03e2041d1f90db760d101e938b18a2751eee9d5fbf3e2d381f4b1779191616dc"
+      },
+      "trade_agreements": {
+        "rows": 6,
+        "sha256": "784cf6e7ec4d4a20e37d700ebf922828734bfb928d3835bfdd3d43b421e0ba25"
+      },
+      "ref_classifiers": {
+        "rows": 49,
+        "sha256": "60f50d245dbcdea52f22d36c90ba439c3eae5cc6ca4e9c7b4c59ab4015072741"
+      },
+      "ntm_measure_types": {
+        "rows": 13,
+        "sha256": "7f0a13e08579bb63a481951730ac2c0ac325d6f37a9ebd674c5fc7ac4691a13b"
+      },
+      "ntm_measures": {
+        "rows": 36,
+        "sha256": "0ab72f831e50e68e9492979382d8b8bb332b7a80450c98393c57149ecb89b8bc"
+      },
+      "ntm_measure_codes": {
+        "rows": 157,
+        "sha256": "8349cac5b0ae6c8da3c60d2848455bcc480b09f4d27592ab8ef380e77556eb67"
+      },
+      "exchange_rates": {
+        "dates": [
+          "2026-10-15"
+        ],
+        "rows": 48,
+        "sha256": "60d4609064ef46513ab1f32e5a3d1fa3840dd01a845730a91e804bed8d3891aa"
+      }
+    },
+    "refdata_status": [
+      {
+        "dataset": "eaeu_remedies",
+        "status": "ok",
+        "last_success_at": "2026-10-16T11:29:48.245443+00:00",
+        "last_change_at": "2026-10-16T06:02:01.778950+00:00",
+        "attested_at": null,
+        "attested_by": null
+      },
+      {
+        "dataset": "ett_rates",
+        "status": "ok",
+        "last_success_at": "2026-10-16T11:29:47.863498+00:00",
+        "last_change_at": "2026-10-16T11:18:08.653161+00:00",
+        "attested_at": null,
+        "attested_by": null
+      },
+      {
+        "dataset": "nbkr_archive",
+        "status": "ok",
+        "last_success_at": "2026-10-16T05:56:31.814602+00:00",
+        "last_change_at": "2026-10-16T05:46:06.654967+00:00",
+        "attested_at": null,
+        "attested_by": null
+      },
+      {
+        "dataset": "nbkr_daily",
+        "status": "ok",
+        "last_success_at": "2026-10-16T12:17:00.424857+00:00",
+        "last_change_at": "2026-10-16T10:58:12.484231+00:00",
+        "attested_at": null,
+        "attested_by": null
+      },
+      {
+        "dataset": "nbkr_weekly",
+        "status": "ok",
+        "last_success_at": "2026-10-16T12:17:00.463371+00:00",
+        "last_change_at": "2026-10-16T10:58:12.535631+00:00",
+        "attested_at": null,
+        "attested_by": null
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "CALC-01",
+      "title": "Адвалорная пошлина 12%, CPT, доллары",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "874500.00",
+          "actual": "874500.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "104940.00",
+          "actual": "104940.00",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "117532.80",
+          "actual": "117532.80",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3498.00",
+          "actual": "3498.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-02",
+      "title": "Нулевая пошлина, НДС от таможенной стоимости",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "874500.00",
+          "actual": "874500.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "0.00",
+          "actual": "0.00",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "104940.00",
+          "actual": "104940.00",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3498.00",
+          "actual": "3498.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-03",
+      "title": "Ставка со сноской после окончания её срока",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "874500.00",
+          "actual": "874500.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "43725.00",
+          "actual": "43725.00",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "110187.00",
+          "actual": "110187.00",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3498.00",
+          "actual": "3498.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-04",
+      "title": "FOB: фрахт и страховка до границы ЕАЭС",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "947083.50",
+          "actual": "947083.50",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "113650.02",
+          "actual": "113650.02",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "127288.02",
+          "actual": "127288.02",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3788.33",
+          "actual": "3788.33",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-05",
+      "title": "CIF: вычет фрахта после границы",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "839520.00",
+          "actual": "839520.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "100742.40",
+          "actual": "100742.40",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "112831.49",
+          "actual": "112831.49",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3358.08",
+          "actual": "3358.08",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-06",
+      "title": "Контракт в евро, страна без мер защиты рынка",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "978959.00",
+          "actual": "978959.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "88106.31",
+          "actual": "88106.31",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "128047.84",
+          "actual": "128047.84",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3915.84",
+          "actual": "3915.84",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-07",
+      "title": "Сбор: минимум 5 РП",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "43725.00",
+          "actual": "43725.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "5247.00",
+          "actual": "5247.00",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "5876.64",
+          "actual": "5876.64",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "500.00",
+          "actual": "500.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-08",
+      "title": "Сбор: максимум 2500 РП",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "699600000.00",
+          "actual": "699600000.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "83952000.00",
+          "actual": "83952000.00",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "94026240.00",
+          "actual": "94026240.00",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "250000.00",
+          "actual": "250000.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-09",
+      "title": "«Не менее»: адвалорная часть больше",
+      "verification": "snapshot_locked",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "874500.00",
+          "actual": "874500.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "437250.00",
+          "actual": "437250.00",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "0.00",
+          "actual": "0.00",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3498.00",
+          "actual": "3498.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-10",
+      "title": "«Не менее»: специфическая часть больше",
+      "verification": "snapshot_locked",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "87450.00",
+          "actual": "87450.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "88106.31",
+          "actual": "88106.31",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "0.00",
+          "actual": "0.00",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "500.00",
+          "actual": "500.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-11",
+      "title": "Специфическая пошлина за пару",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "874500.00",
+          "actual": "874500.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "73421.93",
+          "actual": "73421.93",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "113750.63",
+          "actual": "113750.63",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3498.00",
+          "actual": "3498.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-12",
+      "title": "Специфическая пошлина без доп. единицы",
+      "verification": "source_reviewed",
+      "ok": true,
+      "status": "needs_input",
+      "lines": [],
+      "problems": [],
+      "missing_parameters": [
+        "Товар 1 (6401100000): количество пар (доп. единица)",
+        "Товар 1 (6401100000): сумма пошлины (не рассчитана)"
+      ]
+    },
+    {
+      "id": "CALC-13",
+      "title": "Акциз на вино из справочника акцизов",
+      "verification": "snapshot_locked",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "874500.00",
+          "actual": "874500.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "109312.50",
+          "actual": "109312.50",
+          "ok": true
+        },
+        {
+          "kind": "excise",
+          "expected": "75000.00",
+          "actual": "75000.00",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "127057.50",
+          "actual": "127057.50",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3498.00",
+          "actual": "3498.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-14",
+      "title": "Антидумпинговая пошлина применяется",
+      "verification": "snapshot_locked",
+      "ok": true,
+      "status": "ready",
+      "lines": [
+        {
+          "kind": "customs_value",
+          "expected": "874500.00",
+          "actual": "874500.00",
+          "ok": true
+        },
+        {
+          "kind": "duty",
+          "expected": "78705.00",
+          "actual": "78705.00",
+          "ok": true
+        },
+        {
+          "kind": "antidumping",
+          "expected": "191428.05",
+          "actual": "191428.05",
+          "ok": true
+        },
+        {
+          "kind": "vat",
+          "expected": "114384.60",
+          "actual": "114384.60",
+          "ok": true
+        },
+        {
+          "kind": "fee",
+          "expected": "3498.00",
+          "actual": "3498.00",
+          "ok": true
+        }
+      ],
+      "problems": [],
+      "missing_parameters": []
+    },
+    {
+      "id": "CALC-15",
+      "title": "Мера защиты рынка без решения декларанта",
+      "verification": "snapshot_locked",
+      "ok": true,
+      "status": "needs_input",
+      "lines": [],
+      "problems": [],
+      "missing_parameters": [
+        "Товар 1 (7615101000): антидемпинговая мера AD-32 «Алюминиевая посуда» (CN) совпадает по коду — подтвердите, подпадает ли товар под описание меры (remedy_decisions['AD-32']: applies / not_applicable / exempt)"
+      ]
+    }
+  ]
+}

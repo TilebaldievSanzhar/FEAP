@@ -1,0 +1,42 @@
+{
+  "schema_version": "2.0",
+  "created_at": "2026-10-16T12:07:01.063052+00:00",
+  "sha256": "6fa5fb0c6dca8d14efa127aa5868c1159fa2da1d1e738c0cd2b1bed93582cfc6",
+  "n": 100,
+  "purpose": "Synthetic regression set (tier D), already used for tuning: comparisons with past runs only, not an estimate of accuracy on real goods.",
+  "built_from": {
+    "v1": {
+      "path": "benchmark/data/cases/benchmark_100.jsonl",
+      "sha256": "809b9580355ea50ab5766c8928d240acd0f228c896f86bc7062ab34e4c19377c"
+    },
+    "audit": {
+      "path": "benchmark/data/results/v32_label_audit.json",
+      "sha256": "928c92825526d89de4ceac7b645e5a0ef56c9052d0a5a9a50a98829b7efd5322"
+    },
+    "recheck": {
+      "path": "docs/sgr_v32_label_recheck.md",
+      "sha256": "f781f6a05e1c12627c33eae647ee6b3d323a2bb56e58ebc0f8a6cdff47ca4a51"
+    }
+  },
+  "by_track": {
+    "passport": 100
+  },
+  "by_split": {
+    "regression": 100
+  },
+  "by_tier": {
+    "D": 100
+  },
+  "by_verification": {
+    "unverified": 85,
+    "quarantined": 11,
+    "source_reviewed": 3,
+    "disputed": 1
+  },
+  "by_sufficiency": {
+    "unknown": 85,
+    "insufficient": 12,
+    "sufficient": 3
+  },
+  "scored": 88
+}

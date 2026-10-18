@@ -1,0 +1,14 @@
+{
+  "created_at": "2026-10-16T12:18:54.204406+00:00",
+  "sha256": "2594bf1e7e0992b2fcd0393648fe5312beb0cfde53a6bc3bfd42409669f066aa",
+  "n": 15,
+  "purpose": "Payment stage on real reference data against an independent oracle. Rates are declared by the team, not by an expert.",
+  "by_verification": {
+    "source_reviewed": 10,
+    "snapshot_locked": 5
+  },
+  "by_status": {
+    "ready": 13,
+    "needs_input": 2
+  }
+}

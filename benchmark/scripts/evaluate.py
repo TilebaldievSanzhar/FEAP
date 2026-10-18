@@ -105,11 +105,62 @@ def parse_args() -> argparse.Namespace:
         default=120.0,
         help="Per-case timeout in seconds (default: 120). Increase for slow models.",
     )
+    p.add_argument(
+        "--cost-reference",
+        type=Path,
+        default=None,
+        help="Trace with recorded API costs for the estimate "
+             "(default: latest *_trace.jsonl under --results-dir)",
+    )
+    p.add_argument(
+        "--max-cost-usd",
+        type=float,
+        default=None,
+        help="Refuse to start if the estimated cost exceeds this amount",
+    )
+    p.add_argument(
+        "--skip-budget-check",
+        action="store_true",
+        help="Do not estimate the cost or query the OpenRouter balance before the run",
+    )
     return p.parse_args()
 
 
-async def run_classification(args: argparse.Namespace, dataset) -> list:
-    """Run the cascade classifier on the dataset."""
+def check_budget(args: argparse.Namespace, dataset) -> None:
+    """Refuse to start a run that the balance or --max-cost-usd cannot cover."""
+    from benchmark.evaluator.budget import estimate_cost, latest_trace, openrouter_remaining_usd
+    from benchmark.schema.prediction import load_predictions
+    from feap.config import settings
+
+    pred_path = args.results_dir / f"{args.run_id}_predictions.jsonl"
+    done = set()
+    if not args.no_resume and pred_path.exists():
+        done = {p.case_id for p in load_predictions(pred_path)
+                if p.status != "error" or not args.retry_errors}
+    n_cases = sum(c.id not in done for c in dataset.cases)
+
+    reference = args.cost_reference or latest_trace(args.results_dir)
+    estimate = estimate_cost(reference, n_cases) if reference else None
+    if estimate is None:
+        logger.warning("No recorded API costs to estimate the run: budget not checked")
+        return
+    remaining = asyncio.run(openrouter_remaining_usd(settings.OPENROUTER_API_KEY))
+    logger.info(
+        "Estimated cost $%.2f for %d cases (p90 $%.4f per case, %s); OpenRouter remaining: %s",
+        estimate.estimate_usd, n_cases, estimate.per_case_p90_usd, estimate.reference,
+        "unknown" if remaining is None else f"${remaining:.2f}",
+    )
+    if args.max_cost_usd is not None and estimate.estimate_usd > args.max_cost_usd:
+        logger.error("Estimate exceeds --max-cost-usd %.2f", args.max_cost_usd)
+        sys.exit(3)
+    if remaining is not None and remaining < estimate.estimate_usd:
+        logger.error("Balance does not cover the estimate: top up, run fewer cases "
+                     "(--max) or pass --skip-budget-check")
+        sys.exit(3)
+
+
+async def run_classification(args: argparse.Namespace, dataset) -> tuple[list, list[str]]:
+    """Run the cascade classifier on the dataset → (predictions, ids not run for budget)."""
     from feap.db.engine import async_session
     from benchmark.evaluator.runner import BenchmarkRunner
 
@@ -127,7 +178,7 @@ async def run_classification(args: argparse.Namespace, dataset) -> list:
         retry_errors=args.retry_errors,
         retry_case_ids=set(args.retry_case_id),
     )
-    return predictions
+    return predictions, runner.not_started
 
 
 def main() -> None:
@@ -155,7 +206,18 @@ def main() -> None:
         predictions = load_predictions(args.predictions)
         logger.info("Loaded %d predictions from %s", len(predictions), args.predictions)
     else:
-        predictions = asyncio.run(run_classification(args, dataset))
+        if not args.skip_budget_check:
+            check_budget(args, dataset)
+        predictions, not_started = asyncio.run(run_classification(args, dataset))
+        if not_started:
+            # A report over the cases that happened to run would look like a result
+            # (v32_refs); stop here and let resume finish the run.
+            logger.error(
+                "Run stopped by the OpenRouter budget: %d cases not run. Metrics are not "
+                "computed for a partial run; add credits and rerun with the same --run-id.",
+                len(not_started),
+            )
+            sys.exit(3)
 
     # ── Align predictions with cases ──────────────────────────────────
     # Build a lookup by case_id (in case order differs after resume)

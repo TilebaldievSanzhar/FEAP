@@ -1,0 +1,158 @@
+{
+  "n_cases": 100,
+  "n_scored": 88,
+  "not_scored": [
+    "BENCH-H02",
+    "BENCH-H05",
+    "BENCH-H10",
+    "BENCH-H12",
+    "BENCH-H13",
+    "BENCH-H20",
+    "BENCH-H30",
+    "BENCH-M04",
+    "BENCH-M19",
+    "BENCH-M20",
+    "BENCH-M36",
+    "BENCH-M39"
+  ],
+  "outcomes": {
+    "correct": {
+      "k": 82,
+      "n": 88,
+      "share": 0.9318181818181818,
+      "ci95": [
+        0.8591,
+        0.9684
+      ]
+    },
+    "safe_stop": {
+      "k": 1,
+      "n": 88,
+      "share": 0.011363636363636364,
+      "ci95": [
+        0.002,
+        0.0616
+      ]
+    },
+    "silent_error": {
+      "k": 5,
+      "n": 88,
+      "share": 0.056818181818181816,
+      "ci95": [
+        0.0245,
+        0.1262
+      ]
+    },
+    "failure": {
+      "k": 0,
+      "n": 88,
+      "share": 0.0,
+      "ci95": [
+        0.0,
+        0.0418
+      ]
+    }
+  },
+  "reasons": {
+    "exact": 82,
+    "flagged_wrong": 1,
+    "wrong_unflagged": 5
+  },
+  "flags": {
+    "wrong_codes": 6,
+    "flag_recall_on_wrong": {
+      "k": 1,
+      "n": 6,
+      "share": 0.16666666666666666,
+      "ci95": [
+        0.0301,
+        0.5635
+      ]
+    },
+    "false_alarm_on_correct": {
+      "k": 8,
+      "n": 82,
+      "share": 0.0975609756097561,
+      "ci95": [
+        0.0503,
+        0.1809
+      ]
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "n": 30,
+      "correct": 28,
+      "safe_stop": 0,
+      "silent_error": 2,
+      "failure": 0
+    },
+    "medium": {
+      "n": 35,
+      "correct": 33,
+      "safe_stop": 1,
+      "silent_error": 1,
+      "failure": 0
+    },
+    "hard": {
+      "n": 23,
+      "correct": 21,
+      "safe_stop": 0,
+      "silent_error": 2,
+      "failure": 0
+    }
+  },
+  "by_verification": {
+    "source_reviewed": {
+      "n": 3,
+      "correct": 3,
+      "safe_stop": 0,
+      "silent_error": 0,
+      "failure": 0
+    },
+    "unverified": {
+      "n": 85,
+      "correct": 79,
+      "safe_stop": 1,
+      "silent_error": 5,
+      "failure": 0
+    }
+  },
+  "silent_errors": [
+    "BENCH-E10",
+    "BENCH-E22",
+    "BENCH-M27",
+    "BENCH-H07",
+    "BENCH-H27"
+  ],
+  "money": {
+    "silent_error": {
+      "n": 5,
+      "by_kind": {
+        "same": 2,
+        "money": 3
+      },
+      "underpaid_cases": 3,
+      "underpaid_kgs": "78355.20",
+      "overpaid_cases": 0,
+      "overpaid_kgs": "0",
+      "remedies_missed_cases": 0,
+      "ntm_missed_cases": 1
+    },
+    "safe_stop": {
+      "n": 1,
+      "by_kind": {
+        "same": 1
+      },
+      "underpaid_cases": 0,
+      "underpaid_kgs": "0",
+      "overpaid_cases": 0,
+      "overpaid_kgs": "0",
+      "remedies_missed_cases": 0,
+      "ntm_missed_cases": 0
+    }
+  },
+  "run_id": "v31_hybrid",
+  "cases_path": "benchmark/data/cases/v2/passport_regression100.jsonl",
+  "predictions_path": "benchmark/data/results/v31_hybrid/v31_hybrid_predictions.jsonl"
+}

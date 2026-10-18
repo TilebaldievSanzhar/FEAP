@@ -1,0 +1,143 @@
+{
+  "scored_at": "2026-10-16T12:21:54.465703+00:00",
+  "run_id": "v27",
+  "git_revision": "603ceb6a2d7dbc783b26c3e7268db1a84522b1ac",
+  "cases": {
+    "path": "benchmark/data/cases/v2/passport_regression100.jsonl",
+    "sha256": "6fa5fb0c6dca8d14efa127aa5868c1159fa2da1d1e738c0cd2b1bed93582cfc6"
+  },
+  "predictions": {
+    "path": "benchmark/data/results/v27/v27_predictions.jsonl",
+    "sha256": "4079b5a590e06e7e2ebf13262c016fa11eea36de93dcc2c00a27f4d6ecf21507",
+    "reference_data": null
+  },
+  "money": {
+    "date": "2026-10-15",
+    "standard_lot": {
+      "price": "10000",
+      "currency": "USD",
+      "incoterms": "CPT",
+      "origin_country": "CN",
+      "manufacturer": null,
+      "qty": "1000",
+      "qty_unit": "шт",
+      "net_kg": "900",
+      "gross_kg": "1000",
+      "supp_qty": null,
+      "supp_unit": null,
+      "standard": true
+    },
+    "settings": {
+      "DT_VAT_INCLUDE_REMEDY_DUTIES": false,
+      "DT_CUSTOMS_FEE_MODE": "percent",
+      "REFDATA_GUARD": "enforce"
+    }
+  },
+  "reference_data": {
+    "tnved_tree": {
+      "rows": 20236,
+      "sha256": "36ebd77f2b85d1809091bd1744ae6c3f764081f656c03c3ed5f57eadf59c0639"
+    },
+    "tnved_notes": {
+      "rows": 533,
+      "sha256": "d5dc8b4c771acfd98a010eb725fac2207e120a7a2d44e425bc2d0204bc094403"
+    },
+    "tnved_explanatory_notes": {
+      "rows": 3413,
+      "sha256": "ef4857c799a231458a8dbe62226f50d803ec45a4b25cfad94896848008e6c0e0"
+    },
+    "tnved_opi": {
+      "rows": 10,
+      "sha256": "0d51ab7a617ca2a9559bb1f744e1f5d14241ccde2f52b4ed3aa2f9403c515ee7"
+    },
+    "ett_rates": {
+      "rows": 13294,
+      "sha256": "9ec758d6c505ade9b26f48387b39bcae02781da49c3ea6d96fea04808df9370e"
+    },
+    "ett_notes": {
+      "rows": 125,
+      "sha256": "5c52b003b36e0ba51b468f554898a056c78aa8dd78fc8017e8bdf22cdf6e1af1"
+    },
+    "excise_rates": {
+      "rows": 23,
+      "sha256": "1a212732a8e0d50b18a08b28fe85ebc9b420b98ec4843934782d33ca3d045f7b"
+    },
+    "vat_exemptions": {
+      "rows": 85,
+      "sha256": "e2de9509c869637dbf0d8171c0b28701ffe9c74c9519ef20713c99536c8824ee"
+    },
+    "trade_remedies": {
+      "rows": 28,
+      "sha256": "03e2041d1f90db760d101e938b18a2751eee9d5fbf3e2d381f4b1779191616dc"
+    },
+    "trade_agreements": {
+      "rows": 6,
+      "sha256": "784cf6e7ec4d4a20e37d700ebf922828734bfb928d3835bfdd3d43b421e0ba25"
+    },
+    "ref_classifiers": {
+      "rows": 49,
+      "sha256": "60f50d245dbcdea52f22d36c90ba439c3eae5cc6ca4e9c7b4c59ab4015072741"
+    },
+    "ntm_measure_types": {
+      "rows": 13,
+      "sha256": "7f0a13e08579bb63a481951730ac2c0ac325d6f37a9ebd674c5fc7ac4691a13b"
+    },
+    "ntm_measures": {
+      "rows": 36,
+      "sha256": "0ab72f831e50e68e9492979382d8b8bb332b7a80450c98393c57149ecb89b8bc"
+    },
+    "ntm_measure_codes": {
+      "rows": 157,
+      "sha256": "8349cac5b0ae6c8da3c60d2848455bcc480b09f4d27592ab8ef380e77556eb67"
+    },
+    "exchange_rates": {
+      "dates": [
+        "2026-10-15"
+      ],
+      "rows": 48,
+      "sha256": "60d4609064ef46513ab1f32e5a3d1fa3840dd01a845730a91e804bed8d3891aa"
+    }
+  },
+  "refdata_status": [
+    {
+      "dataset": "eaeu_remedies",
+      "status": "ok",
+      "last_success_at": "2026-10-16T11:29:48.245443+00:00",
+      "last_change_at": "2026-10-16T06:02:01.778950+00:00",
+      "attested_at": null,
+      "attested_by": null
+    },
+    {
+      "dataset": "ett_rates",
+      "status": "ok",
+      "last_success_at": "2026-10-16T11:29:47.863498+00:00",
+      "last_change_at": "2026-10-16T11:18:08.653161+00:00",
+      "attested_at": null,
+      "attested_by": null
+    },
+    {
+      "dataset": "nbkr_archive",
+      "status": "ok",
+      "last_success_at": "2026-10-16T05:56:31.814602+00:00",
+      "last_change_at": "2026-10-16T05:46:06.654967+00:00",
+      "attested_at": null,
+      "attested_by": null
+    },
+    {
+      "dataset": "nbkr_daily",
+      "status": "ok",
+      "last_success_at": "2026-10-16T12:17:00.424857+00:00",
+      "last_change_at": "2026-10-16T10:58:12.484231+00:00",
+      "attested_at": null,
+      "attested_by": null
+    },
+    {
+      "dataset": "nbkr_weekly",
+      "status": "ok",
+      "last_success_at": "2026-10-16T12:17:00.463371+00:00",
+      "last_change_at": "2026-10-16T10:58:12.535631+00:00",
+      "attested_at": null,
+      "attested_by": null
+    }
+  ]
+}

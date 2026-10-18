@@ -9,14 +9,12 @@ import contextvars
 import hashlib
 import json
 import subprocess
-from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 
 import feap
-import psycopg2
-from psycopg2 import sql
 
+from benchmark.evaluator.fingerprint import database_fingerprint
 from benchmark.evaluator.runner import BenchmarkRunner
 from benchmark.scripts import evaluate
 from feap.config import settings
@@ -24,25 +22,6 @@ from feap.llm.client import get_provider
 from feap.llm.models import get_max_tokens, get_temperature, resolve_model
 
 case_id = contextvars.ContextVar('benchmark_case_id', default=None)
-
-
-def database_fingerprint():
-    """Hash classification reference data, excluding mutable sessions/embeddings."""
-    fingerprints = {}
-    with closing(psycopg2.connect(settings.database_url_sync)) as connection, connection:
-        for table in ('tnved_tree', 'tnved_notes', 'tnved_explanatory_notes', 'tnved_opi'):
-            digest = hashlib.sha256()
-            count = 0
-            with connection.cursor(name=f'audit_{table}') as cursor:
-                cursor.execute(sql.SQL(
-                    "SELECT to_jsonb(t) - 'embedding' - 'updated_at' FROM {} AS t ORDER BY id"
-                ).format(sql.Identifier(table)))
-                for (row,) in cursor:
-                    digest.update(json.dumps(row, sort_keys=True, ensure_ascii=False).encode())
-                    digest.update(b'\n')
-                    count += 1
-            fingerprints[table] = {'rows': count, 'sha256': digest.hexdigest()}
-    return fingerprints
 
 
 def main():

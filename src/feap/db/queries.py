@@ -396,13 +396,15 @@ async def get_excise_rate(
 async def get_ntm_measures_for_code(
     session: AsyncSession,
     code: str,
+    on_date: dt.date | None = None,
 ) -> list[tuple[NtmMeasure, NtmMeasureCode, NtmMeasureType]]:
     """Get all active NTM measures applicable to a 10-digit code.
 
     Checks exact match + all parent prefixes (8, 6, 4, 2 digits) with
-    applies_to_children=True. Filters by valid date range.
+    applies_to_children=True. Filters by valid date range on on_date
+    (default: today in Bishkek).
     """
-    today = today_bishkek()
+    today = on_date or today_bishkek()
 
     # Build prefix list: '8509800000', '85098000', '850980', '8509', '85'
     prefixes = []
