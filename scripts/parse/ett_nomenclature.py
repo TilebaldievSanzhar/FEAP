@@ -36,21 +36,19 @@ OUTPUT_PATH = PROJECT_ROOT / "data" / "parsed" / "nomenclature.json"
 ALL_GROUPS = [f"{i:02d}" for i in range(1, 98) if i != 77]
 
 
-def extract_group_name(pdf: bytes) -> str:
-    """Group title from the first page: uppercase lines after «ГРУППА NN»."""
-    import pymupdf  # noqa: PLC0415 — heavy dependency, only for PDF parsing
+def group_title(lines: list[str], group_code: str) -> str:
+    """Group title: the uppercase lines after the line «ГРУППА NN» of this group.
 
-    with pymupdf.open(stream=pdf, filetype="pdf") as doc:
-        lines = doc[0].get_text().split("\n")
-
-    collecting = False
-    parts: list[str] = []
-    for line in lines:
-        s = line.strip()
-        if re.match(r"^ГРУППА\s+\d+", s):
-            collecting = True
+    The first group of a section (50, 72, 84, 86) opens with the section title and
+    notes, so its header comes pages later, sometimes at the very end of a page with
+    the title on the next one: the lines of all pages are searched together.
+    """
+    header = re.compile(rf"^ГРУППА\s+0?{int(group_code)}\s*$")
+    for i, line in enumerate(lines):
+        if not header.match(line.strip()):
             continue
-        if collecting:
+        parts: list[str] = []
+        for s in (raw.strip() for raw in lines[i + 1:]):
             if not s:
                 if parts:
                     break
@@ -63,7 +61,17 @@ def extract_group_name(pdf: bytes) -> str:
                 parts.append(s)
             else:
                 break
-    return " ".join(parts).rstrip(":")
+        return " ".join(parts).rstrip(":")
+    return ""
+
+
+def extract_group_name(pdf: bytes, group_code: str) -> str:
+    """Group title from the PDF text, pages joined."""
+    import pymupdf  # noqa: PLC0415 — heavy dependency, only for PDF parsing
+
+    with pymupdf.open(stream=pdf, filetype="pdf") as doc:
+        lines = [line for page in doc for line in page.get_text().split("\n")]
+    return group_title(lines, group_code)
 
 
 def parse_group_pdf(pdf_path: Path, group_code: str) -> dict:
@@ -71,7 +79,7 @@ def parse_group_pdf(pdf_path: Path, group_code: str) -> dict:
     raw = pdf_path.read_bytes()
     names = parse_group_names(extract_spans(raw), group_code)
     return {
-        "group_name": extract_group_name(raw),
+        "group_name": extract_group_name(raw, group_code),
         "positions": names.positions,
         "subpositions": names.subpositions,
         "leaves": names.leaves,
