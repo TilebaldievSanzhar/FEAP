@@ -9,6 +9,7 @@ from benchmark.holdout import (
     HOLDOUT_SETS,
     Holdout,
     HoldoutLeak,
+    file_sha256,
     load_pool,
     shingles,
     source_of,
@@ -123,3 +124,18 @@ def test_dev150_for_thresholds_loses_two_codes_of_eec_decisions():
     pool = holdout.pool(load_cases(CASES_DIR / 'eaeu_pd_dev150.jsonl'), 'calibration')
     assert len(pool.cases) == 148
     assert sorted(leak.holdout for leak in pool.excluded) == ['3304990000', '9503007000']
+
+
+def test_frozen_hashes_are_those_of_the_set_manifests():
+    """Хеш — по содержимому как в git: CRLF рабочей копии Windows его не меняет."""
+    frozen = json.loads((CASES_DIR / 'holdout.json').read_text(encoding='utf-8'))
+    for name in HOLDOUT_SETS:
+        own = json.loads((CASES_DIR / f'{name}.manifest.json').read_text(encoding='utf-8'))
+        assert frozen['sets'][name]['sha256'] == own['sha256']
+
+
+def test_hash_ignores_line_endings(tmp_path):
+    lf, crlf = tmp_path / 'lf.jsonl', tmp_path / 'crlf.jsonl'
+    lf.write_bytes(b'{"a": 1}\n{"b": 2}\n')
+    crlf.write_bytes(b'{"a": 1}\r\n{"b": 2}\r\n')
+    assert file_sha256(lf) == file_sha256(crlf)

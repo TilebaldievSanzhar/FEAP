@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "created_at": "2026-11-05T05:12:06.327871+00:00",
+  "created_at": "2026-11-05T05:17:19.976847+00:00",
   "sha256": "1563407a89f1cdd727295b36c2c8d00360719126480dbe929318f6892bac8b70",
   "n": 12022,
   "purpose": "Replay of family specifications. No holdout record or near-duplicate text; records sharing a code with holdout stay.",
@@ -19,7 +19,7 @@
       "same description, different codes": 2
     },
     "holdout": {
-      "manifest_sha256": "0041e81d820520549976be0f4a28f7bc040f1d5c2b5814023f5faa87ef5fa1ce",
+      "manifest_sha256": "a8eb9adef6b53d3f58d07ef42b7fd6e109978d127415e78f8675c955c83119a1",
       "excluded": {
         "text": 343,
         "record": 400

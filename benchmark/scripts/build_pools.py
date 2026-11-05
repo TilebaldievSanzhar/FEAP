@@ -23,7 +23,7 @@ import hashlib
 import json
 
 from benchmark.collectors.eaeu_predecisions import load_records
-from benchmark.holdout import MANIFEST, Holdout, load_pool
+from benchmark.holdout import MANIFEST, Holdout, file_sha256, load_pool
 from benchmark.schema.case_v2 import save_cases, write_manifest
 from benchmark.scripts.build_eaeu_pd_sets import OUT_DIR, RAW_ROOT, _leaves, pool, to_case
 
@@ -65,7 +65,7 @@ def main() -> None:
                              (raw_dir / 'manifest.json').read_bytes()).hexdigest()},
             'usable': len(rows),
             'dropped_before_holdout': dict(dropped),
-            'holdout': {'manifest_sha256': hashlib.sha256(MANIFEST.read_bytes()).hexdigest(),
+            'holdout': {'manifest_sha256': file_sha256(MANIFEST),
                         'excluded': chosen.summary()},
         })
         load_pool(path, purpose, holdout)  # the file as written must pass the guard

@@ -114,8 +114,9 @@ class Pool:
         return dict(Counter(leak.kind for leak in self.excluded))
 
 
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def file_sha256(path: Path) -> str:
+    """Хеш файла как в git: на Windows рабочая копия получает CRLF (core.autocrlf)."""
+    return hashlib.sha256(path.read_bytes().replace(b'\r\n', b'\n')).hexdigest()
 
 
 class Holdout:
@@ -140,7 +141,7 @@ class Holdout:
         sets = {}
         for name in HOLDOUT_SETS:
             path = cases_dir / f'{name}.jsonl'
-            if _sha256(path) != frozen['sets'][name]['sha256']:
+            if file_sha256(path) != frozen['sets'][name]['sha256']:
                 raise HoldoutLeak(f'{path} изменён после заморозки holdout ({manifest})')
             sets[name] = load_cases(path)
         holdout = cls(sets)
@@ -159,7 +160,7 @@ class Holdout:
                 'near_duplicate': {'shingle_words': SHINGLE_WORDS, 'jaccard_at_least': NEAR_DUPLICATE,
                                    'texts_of': list(TEXT_SETS)},
             },
-            'sets': {name: {'n': len(cases), 'sha256': _sha256(CASES_DIR / f'{name}.jsonl'),
+            'sets': {name: {'n': len(cases), 'sha256': file_sha256(CASES_DIR / f'{name}.jsonl'),
                             'case_ids': sorted(c.id for c in cases)}
                      for name, cases in self.sets.items()},
             'sources': sorted(self.sources),
