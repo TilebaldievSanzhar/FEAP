@@ -81,3 +81,18 @@ def test_gold_labels_cover_the_gold_path_and_its_specific_siblings():
     # без «простых» правил соседи не размечаются
     only_path = gold_labels(trace, _case('0207146009', ['ОПИ 1', 'ОПИ 3б']), {'0207': t})
     assert {s for _, _, s in only_path} == {Status.T}
+
+
+def test_error_level_and_candidate_coverage_of_the_baseline():
+    from benchmark.scripts.baseline_report import coverage, error_level
+    assert error_level('0207146009', '0207147009') == 'eight_digit'
+    assert error_level('9401490000', '9401710009') == 'subheading'
+    assert error_level('7604210000', '7610909000') == 'heading'
+    assert error_level('7604210000', '8544499509') == 'group'
+    assert error_level('2204219800', '2204219600') == 'eight_digit'
+    assert error_level('8708509109', '8708509909') == 'eight_digit'
+    assert error_level('85015220', '8501522001') == 'beyond_gold'
+    seen = {'L3': {'7604', '7610'}, 'L4': {'761010', '761090'}, 'L5': {'7610901000'}}
+    assert coverage('7604210000', seen) == {'L2_group': False, 'L3_heading': True, 'L4_subheading': False,
+                                            'L5_leaf': False}
+    assert coverage('7604', seen)['L4_subheading'] is None

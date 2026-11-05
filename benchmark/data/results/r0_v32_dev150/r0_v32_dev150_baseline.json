@@ -1,0 +1,2742 @@
+{
+  "all": {
+    "light": {
+      "n_cases": 150,
+      "n_scored": 150,
+      "not_scored": [],
+      "outcomes": {
+        "correct": {
+          "k": 75,
+          "n": 150,
+          "share": 0.5,
+          "ci95": [
+            0.421,
+            0.579
+          ]
+        },
+        "safe_stop": {
+          "k": 13,
+          "n": 150,
+          "share": 0.08666666666666667,
+          "ci95": [
+            0.0513,
+            0.1426
+          ]
+        },
+        "silent_error": {
+          "k": 62,
+          "n": 150,
+          "share": 0.41333333333333333,
+          "ci95": [
+            0.3377,
+            0.4933
+          ]
+        },
+        "failure": {
+          "k": 0,
+          "n": 150,
+          "share": 0.0,
+          "ci95": [
+            0.0,
+            0.025
+          ]
+        }
+      },
+      "reasons": {
+        "exact": 75,
+        "flagged_wrong": 13,
+        "wrong_unflagged": 62
+      },
+      "flags": {
+        "wrong_codes": 75,
+        "flag_recall_on_wrong": {
+          "k": 13,
+          "n": 75,
+          "share": 0.17333333333333334,
+          "ci95": [
+            0.1042,
+            0.2743
+          ]
+        },
+        "false_alarm_on_correct": {
+          "k": 2,
+          "n": 75,
+          "share": 0.02666666666666667,
+          "ci95": [
+            0.0073,
+            0.0921
+          ]
+        }
+      },
+      "by_difficulty": {},
+      "by_verification": {
+        "official": {
+          "n": 150,
+          "correct": 75,
+          "safe_stop": 13,
+          "silent_error": 62,
+          "failure": 0
+        }
+      },
+      "by_gold_digits": {
+        "10": {
+          "n": 150,
+          "correct": 75,
+          "safe_stop": 13,
+          "silent_error": 62,
+          "failure": 0
+        }
+      },
+      "by_section": {
+        "I": {
+          "n": 8,
+          "correct": 4,
+          "safe_stop": 1,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "II": {
+          "n": 8,
+          "correct": 5,
+          "safe_stop": 1,
+          "silent_error": 2,
+          "failure": 0
+        },
+        "III": {
+          "n": 7,
+          "correct": 5,
+          "safe_stop": 0,
+          "silent_error": 2,
+          "failure": 0
+        },
+        "IV": {
+          "n": 8,
+          "correct": 5,
+          "safe_stop": 0,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "V": {
+          "n": 10,
+          "correct": 6,
+          "safe_stop": 1,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "VI": {
+          "n": 8,
+          "correct": 5,
+          "safe_stop": 0,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "VII": {
+          "n": 8,
+          "correct": 6,
+          "safe_stop": 0,
+          "silent_error": 2,
+          "failure": 0
+        },
+        "IX": {
+          "n": 8,
+          "correct": 1,
+          "safe_stop": 3,
+          "silent_error": 4,
+          "failure": 0
+        },
+        "X": {
+          "n": 8,
+          "correct": 3,
+          "safe_stop": 1,
+          "silent_error": 4,
+          "failure": 0
+        },
+        "XI": {
+          "n": 8,
+          "correct": 3,
+          "safe_stop": 0,
+          "silent_error": 5,
+          "failure": 0
+        },
+        "XIII": {
+          "n": 8,
+          "correct": 2,
+          "safe_stop": 0,
+          "silent_error": 6,
+          "failure": 0
+        },
+        "XIV": {
+          "n": 3,
+          "correct": 0,
+          "safe_stop": 1,
+          "silent_error": 2,
+          "failure": 0
+        },
+        "XV": {
+          "n": 8,
+          "correct": 3,
+          "safe_stop": 0,
+          "silent_error": 5,
+          "failure": 0
+        },
+        "XVI": {
+          "n": 20,
+          "correct": 13,
+          "safe_stop": 1,
+          "silent_error": 6,
+          "failure": 0
+        },
+        "XVII": {
+          "n": 14,
+          "correct": 9,
+          "safe_stop": 2,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "XVIII": {
+          "n": 8,
+          "correct": 1,
+          "safe_stop": 1,
+          "silent_error": 6,
+          "failure": 0
+        },
+        "XX": {
+          "n": 8,
+          "correct": 4,
+          "safe_stop": 1,
+          "silent_error": 3,
+          "failure": 0
+        }
+      },
+      "by_authority": {
+        "BY": {
+          "n": 52,
+          "correct": 26,
+          "safe_stop": 2,
+          "silent_error": 24,
+          "failure": 0
+        },
+        "KZ": {
+          "n": 59,
+          "correct": 27,
+          "safe_stop": 10,
+          "silent_error": 22,
+          "failure": 0
+        },
+        "RU": {
+          "n": 39,
+          "correct": 22,
+          "safe_stop": 1,
+          "silent_error": 16,
+          "failure": 0
+        }
+      },
+      "silent_errors": [
+        "PD-BY-0c29a819",
+        "PD-BY-0ee433a8",
+        "PD-BY-140c752b",
+        "PD-BY-28408573",
+        "PD-BY-2ae9799b",
+        "PD-BY-33febc59",
+        "PD-BY-4445b404",
+        "PD-BY-48c28f26",
+        "PD-BY-55273f30",
+        "PD-BY-80f5ab18",
+        "PD-BY-95751e68",
+        "PD-BY-957cc89d",
+        "PD-BY-ae3f8ecc",
+        "PD-BY-b0dc3475",
+        "PD-BY-b668d056",
+        "PD-BY-b84af756",
+        "PD-BY-c63e6e79",
+        "PD-BY-c85420d0",
+        "PD-BY-caaee662",
+        "PD-BY-cb4051d7",
+        "PD-BY-dd32e910",
+        "PD-BY-dd5f06f6",
+        "PD-BY-f516776e",
+        "PD-BY-f9d85ae3",
+        "PD-KZ-145026ed",
+        "PD-KZ-14b2dfed",
+        "PD-KZ-1ba23c86",
+        "PD-KZ-212ba0e5",
+        "PD-KZ-4e1f1a01",
+        "PD-KZ-52d51e97",
+        "PD-KZ-5aff5f6f",
+        "PD-KZ-6a48ef76",
+        "PD-KZ-7b59ffda",
+        "PD-KZ-7c120345",
+        "PD-KZ-864d7810",
+        "PD-KZ-aa751ae1",
+        "PD-KZ-ad62ba2a",
+        "PD-KZ-b5c547aa",
+        "PD-KZ-bbe961e6",
+        "PD-KZ-cb3c3ced",
+        "PD-KZ-daaea0a4",
+        "PD-KZ-e4ffdf54",
+        "PD-KZ-e5de8355",
+        "PD-KZ-ee63fc53",
+        "PD-KZ-f3f0c02e",
+        "PD-KZ-faec5d7c",
+        "PD-RU-003f12b2",
+        "PD-RU-252fcc0d",
+        "PD-RU-2bc0f216",
+        "PD-RU-2ddb7155",
+        "PD-RU-37715b0b",
+        "PD-RU-4b2da111",
+        "PD-RU-50cd1a6f",
+        "PD-RU-53aa17ec",
+        "PD-RU-6e74d842",
+        "PD-RU-87c44433",
+        "PD-RU-9b1d6c04",
+        "PD-RU-a0cc09c0",
+        "PD-RU-a988a0c8",
+        "PD-RU-d1e50e4a",
+        "PD-RU-d6ac15c0",
+        "PD-RU-f1b1bd81"
+      ]
+    },
+    "wrong_codes": 75,
+    "error_level": {
+      "group": {
+        "k": 30,
+        "n": 75,
+        "share": 0.4,
+        "ci95": [
+          0.2966,
+          0.5131
+        ]
+      },
+      "heading": {
+        "k": 19,
+        "n": 75,
+        "share": 0.25333333333333335,
+        "ci95": [
+          0.1686,
+          0.3621
+        ]
+      },
+      "subheading": {
+        "k": 14,
+        "n": 75,
+        "share": 0.18666666666666668,
+        "ci95": [
+          0.1146,
+          0.2893
+        ]
+      },
+      "eight_digit": {
+        "k": 5,
+        "n": 75,
+        "share": 0.06666666666666667,
+        "ci95": [
+          0.0288,
+          0.1468
+        ]
+      },
+      "national": {
+        "k": 7,
+        "n": 75,
+        "share": 0.09333333333333334,
+        "ci95": [
+          0.0459,
+          0.1803
+        ]
+      }
+    },
+    "gold_among_candidates_of_wrong": {
+      "L2_group": {
+        "k": 48,
+        "n": 75,
+        "share": 0.64,
+        "ci95": [
+          0.527,
+          0.7394
+        ]
+      },
+      "L3_heading": {
+        "k": 45,
+        "n": 75,
+        "share": 0.6,
+        "ci95": [
+          0.4869,
+          0.7034
+        ]
+      },
+      "L4_subheading": {
+        "k": 21,
+        "n": 75,
+        "share": 0.28,
+        "ci95": [
+          0.191,
+          0.3904
+        ]
+      },
+      "L5_leaf": {
+        "k": 6,
+        "n": 75,
+        "share": 0.08,
+        "ci95": [
+          0.0372,
+          0.1637
+        ]
+      }
+    },
+    "stage2_first": true,
+    "cost_usd": {
+      "total": 3.5179,
+      "per_case": 0.02345
+    },
+    "latency_s": {
+      "p50": 19.4,
+      "p95": 27.3
+    },
+    "wrong": [
+      {
+        "case_id": "PD-BY-0c29a819",
+        "gold": "0406900100",
+        "predicted": "0406105009",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-0ee433a8",
+        "gold": "0406909200",
+        "predicted": "0406908200",
+        "flagged": false,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-BY-140c752b",
+        "gold": "7216611000",
+        "predicted": "7308909809",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-22682727",
+        "gold": "4811490000",
+        "predicted": "4810390000",
+        "flagged": true,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-28408573",
+        "gold": "9021290004",
+        "predicted": "9021290009",
+        "flagged": false,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-2ae9799b",
+        "gold": "4411149000",
+        "predicted": "4421991000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-33febc59",
+        "gold": "4819200000",
+        "predicted": "4823908597",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-4445b404",
+        "gold": "6116930000",
+        "predicted": "9506999000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-48c28f26",
+        "gold": "9603909100",
+        "predicted": "3924900009",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-55273f30",
+        "gold": "8426410003",
+        "predicted": "8427201909",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-80f5ab18",
+        "gold": "1704906500",
+        "predicted": "1704909800",
+        "flagged": false,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-BY-853aafd2",
+        "gold": "0408998000",
+        "predicted": "2106909300",
+        "flagged": true,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-95751e68",
+        "gold": "7116208000",
+        "predicted": "6802999000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-957cc89d",
+        "gold": "7013499900",
+        "predicted": "7010909101",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-ae3f8ecc",
+        "gold": "2621900000",
+        "predicted": "3824999608",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-b0dc3475",
+        "gold": "4818300000",
+        "predicted": "4818901000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-b668d056",
+        "gold": "9603909900",
+        "predicted": "9018908409",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-b84af756",
+        "gold": "1102907000",
+        "predicted": "1901200000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-c63e6e79",
+        "gold": "4401390000",
+        "predicted": "4602199000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-c85420d0",
+        "gold": "9018390000",
+        "predicted": "9018311009",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-caaee662",
+        "gold": "0406105009",
+        "predicted": "0406105002",
+        "flagged": false,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-cb4051d7",
+        "gold": "3909310000",
+        "predicted": "3824100000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-dd32e910",
+        "gold": "2309909609",
+        "predicted": "3824999608",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-dd5f06f6",
+        "gold": "6810990000",
+        "predicted": "6815990008",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-f516776e",
+        "gold": "7326199009",
+        "predicted": "9401990009",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-f9d85ae3",
+        "gold": "7315119000",
+        "predicted": "8431310000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-07a05db1",
+        "gold": "8544499509",
+        "predicted": "8544499101",
+        "flagged": true,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-145026ed",
+        "gold": "8436809000",
+        "predicted": "8479899707",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-14b2dfed",
+        "gold": "8709199000",
+        "predicted": "8479899707",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-1ba23c86",
+        "gold": "8517699000",
+        "predicted": "8517790009",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-212ba0e5",
+        "gold": "8705908001",
+        "predicted": "8705908005",
+        "flagged": false,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-2163f4d5",
+        "gold": "9506290000",
+        "predicted": "9506919000",
+        "flagged": true,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-4447b9b6",
+        "gold": "8702101994",
+        "predicted": "8702101997",
+        "flagged": true,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-4972fc20",
+        "gold": "2612209000",
+        "predicted": "2612109000",
+        "flagged": true,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-4e1f1a01",
+        "gold": "7019190000",
+        "predicted": "7019150000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-52d51e97",
+        "gold": "8412908009",
+        "predicted": "8412904008",
+        "flagged": false,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-KZ-5aff5f6f",
+        "gold": "4415202000",
+        "predicted": "4421999000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-63d8c3ca",
+        "gold": "4408909509",
+        "predicted": "4408901509",
+        "flagged": true,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-66eb3b1f",
+        "gold": "4421999000",
+        "predicted": "4412330000",
+        "flagged": true,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-68d6f053",
+        "gold": "9031908500",
+        "predicted": "8479907000",
+        "flagged": true,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-6a48ef76",
+        "gold": "7106920000",
+        "predicted": "7115900000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-7b59ffda",
+        "gold": "3006910000",
+        "predicted": "9018908409",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-7c120345",
+        "gold": "6810910000",
+        "predicted": "6811820000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-864d7810",
+        "gold": "5407940000",
+        "predicted": "5407740000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-a5592608",
+        "gold": "4404100001",
+        "predicted": "4404100002",
+        "flagged": true,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-KZ-a8e870aa",
+        "gold": "8708709909",
+        "predicted": "4011209000",
+        "flagged": true,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-aa751ae1",
+        "gold": "8607211009",
+        "predicted": "8607290000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-ad62ba2a",
+        "gold": "8414108900",
+        "predicted": "8414809000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-b5c547aa",
+        "gold": "6307909800",
+        "predicted": "3926909709",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-bbe961e6",
+        "gold": "2709009009",
+        "predicted": "2709009003",
+        "flagged": false,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-KZ-cb3c3ced",
+        "gold": "1511909902",
+        "predicted": "1517909100",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-daaea0a4",
+        "gold": "6006329000",
+        "predicted": "6001920000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-e4ffdf54",
+        "gold": "9031803800",
+        "predicted": "8479820000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-e5de8355",
+        "gold": "9030100000",
+        "predicted": "9027890000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-ee63fc53",
+        "gold": "5703390009",
+        "predicted": "5703310009",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-f3f0c02e",
+        "gold": "2620999509",
+        "predicted": "2620300000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-faec5d7c",
+        "gold": "3814009000",
+        "predicted": "2922170000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-fff9eca2",
+        "gold": "7112910000",
+        "predicted": "7112990000",
+        "flagged": true,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-003f12b2",
+        "gold": "4418790000",
+        "predicted": "4412330000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-252fcc0d",
+        "gold": "3707909000",
+        "predicted": "8443999000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-2bc0f216",
+        "gold": "8302500000",
+        "predicted": "4420909900",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-2ddb7155",
+        "gold": "9107000000",
+        "predicted": "8536490000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-37715b0b",
+        "gold": "4901100000",
+        "predicted": "4911990000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-4b2da111",
+        "gold": "6815990008",
+        "predicted": "6802931000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-50cd1a6f",
+        "gold": "1516109000",
+        "predicted": "3824999208",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-53aa17ec",
+        "gold": "1604209090",
+        "predicted": "1604199780",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-6e74d842",
+        "gold": "6804210000",
+        "predicted": "8202998000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-87c44433",
+        "gold": "9506911000",
+        "predicted": "9019109009",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-9b1d6c04",
+        "gold": "1212999509",
+        "predicted": "1106100000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-a0cc09c0",
+        "gold": "8205400000",
+        "predicted": "3926909709",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-a988a0c8",
+        "gold": "3917320001",
+        "predicted": "4009110000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-c9df588b",
+        "gold": "0902100009",
+        "predicted": "0902100001",
+        "flagged": true,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-RU-d1e50e4a",
+        "gold": "8479810000",
+        "predicted": "8477200000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-d6ac15c0",
+        "gold": "4811590009",
+        "predicted": "4810923000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-f1b1bd81",
+        "gold": "9032890000",
+        "predicted": "8537109100",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      }
+    ]
+  },
+  "calibration": {
+    "light": {
+      "n_cases": 148,
+      "n_scored": 148,
+      "not_scored": [],
+      "outcomes": {
+        "correct": {
+          "k": 73,
+          "n": 148,
+          "share": 0.49324324324324326,
+          "ci95": [
+            0.4139,
+            0.5729
+          ]
+        },
+        "safe_stop": {
+          "k": 13,
+          "n": 148,
+          "share": 0.08783783783783784,
+          "ci95": [
+            0.0521,
+            0.1445
+          ]
+        },
+        "silent_error": {
+          "k": 62,
+          "n": 148,
+          "share": 0.4189189189189189,
+          "ci95": [
+            0.3425,
+            0.4995
+          ]
+        },
+        "failure": {
+          "k": 0,
+          "n": 148,
+          "share": 0.0,
+          "ci95": [
+            0.0,
+            0.0253
+          ]
+        }
+      },
+      "reasons": {
+        "exact": 73,
+        "flagged_wrong": 13,
+        "wrong_unflagged": 62
+      },
+      "flags": {
+        "wrong_codes": 75,
+        "flag_recall_on_wrong": {
+          "k": 13,
+          "n": 75,
+          "share": 0.17333333333333334,
+          "ci95": [
+            0.1042,
+            0.2743
+          ]
+        },
+        "false_alarm_on_correct": {
+          "k": 2,
+          "n": 73,
+          "share": 0.0273972602739726,
+          "ci95": [
+            0.0075,
+            0.0945
+          ]
+        }
+      },
+      "by_difficulty": {},
+      "by_verification": {
+        "official": {
+          "n": 148,
+          "correct": 73,
+          "safe_stop": 13,
+          "silent_error": 62,
+          "failure": 0
+        }
+      },
+      "by_gold_digits": {
+        "10": {
+          "n": 148,
+          "correct": 73,
+          "safe_stop": 13,
+          "silent_error": 62,
+          "failure": 0
+        }
+      },
+      "by_section": {
+        "I": {
+          "n": 8,
+          "correct": 4,
+          "safe_stop": 1,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "II": {
+          "n": 8,
+          "correct": 5,
+          "safe_stop": 1,
+          "silent_error": 2,
+          "failure": 0
+        },
+        "III": {
+          "n": 7,
+          "correct": 5,
+          "safe_stop": 0,
+          "silent_error": 2,
+          "failure": 0
+        },
+        "IV": {
+          "n": 8,
+          "correct": 5,
+          "safe_stop": 0,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "V": {
+          "n": 10,
+          "correct": 6,
+          "safe_stop": 1,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "VI": {
+          "n": 7,
+          "correct": 4,
+          "safe_stop": 0,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "VII": {
+          "n": 8,
+          "correct": 6,
+          "safe_stop": 0,
+          "silent_error": 2,
+          "failure": 0
+        },
+        "IX": {
+          "n": 8,
+          "correct": 1,
+          "safe_stop": 3,
+          "silent_error": 4,
+          "failure": 0
+        },
+        "X": {
+          "n": 8,
+          "correct": 3,
+          "safe_stop": 1,
+          "silent_error": 4,
+          "failure": 0
+        },
+        "XI": {
+          "n": 8,
+          "correct": 3,
+          "safe_stop": 0,
+          "silent_error": 5,
+          "failure": 0
+        },
+        "XIII": {
+          "n": 8,
+          "correct": 2,
+          "safe_stop": 0,
+          "silent_error": 6,
+          "failure": 0
+        },
+        "XIV": {
+          "n": 3,
+          "correct": 0,
+          "safe_stop": 1,
+          "silent_error": 2,
+          "failure": 0
+        },
+        "XV": {
+          "n": 8,
+          "correct": 3,
+          "safe_stop": 0,
+          "silent_error": 5,
+          "failure": 0
+        },
+        "XVI": {
+          "n": 20,
+          "correct": 13,
+          "safe_stop": 1,
+          "silent_error": 6,
+          "failure": 0
+        },
+        "XVII": {
+          "n": 14,
+          "correct": 9,
+          "safe_stop": 2,
+          "silent_error": 3,
+          "failure": 0
+        },
+        "XVIII": {
+          "n": 8,
+          "correct": 1,
+          "safe_stop": 1,
+          "silent_error": 6,
+          "failure": 0
+        },
+        "XX": {
+          "n": 7,
+          "correct": 3,
+          "safe_stop": 1,
+          "silent_error": 3,
+          "failure": 0
+        }
+      },
+      "by_authority": {
+        "BY": {
+          "n": 52,
+          "correct": 26,
+          "safe_stop": 2,
+          "silent_error": 24,
+          "failure": 0
+        },
+        "KZ": {
+          "n": 58,
+          "correct": 26,
+          "safe_stop": 10,
+          "silent_error": 22,
+          "failure": 0
+        },
+        "RU": {
+          "n": 38,
+          "correct": 21,
+          "safe_stop": 1,
+          "silent_error": 16,
+          "failure": 0
+        }
+      },
+      "silent_errors": [
+        "PD-BY-0c29a819",
+        "PD-BY-0ee433a8",
+        "PD-BY-140c752b",
+        "PD-BY-28408573",
+        "PD-BY-2ae9799b",
+        "PD-BY-33febc59",
+        "PD-BY-4445b404",
+        "PD-BY-48c28f26",
+        "PD-BY-55273f30",
+        "PD-BY-80f5ab18",
+        "PD-BY-95751e68",
+        "PD-BY-957cc89d",
+        "PD-BY-ae3f8ecc",
+        "PD-BY-b0dc3475",
+        "PD-BY-b668d056",
+        "PD-BY-b84af756",
+        "PD-BY-c63e6e79",
+        "PD-BY-c85420d0",
+        "PD-BY-caaee662",
+        "PD-BY-cb4051d7",
+        "PD-BY-dd32e910",
+        "PD-BY-dd5f06f6",
+        "PD-BY-f516776e",
+        "PD-BY-f9d85ae3",
+        "PD-KZ-145026ed",
+        "PD-KZ-14b2dfed",
+        "PD-KZ-1ba23c86",
+        "PD-KZ-212ba0e5",
+        "PD-KZ-4e1f1a01",
+        "PD-KZ-52d51e97",
+        "PD-KZ-5aff5f6f",
+        "PD-KZ-6a48ef76",
+        "PD-KZ-7b59ffda",
+        "PD-KZ-7c120345",
+        "PD-KZ-864d7810",
+        "PD-KZ-aa751ae1",
+        "PD-KZ-ad62ba2a",
+        "PD-KZ-b5c547aa",
+        "PD-KZ-bbe961e6",
+        "PD-KZ-cb3c3ced",
+        "PD-KZ-daaea0a4",
+        "PD-KZ-e4ffdf54",
+        "PD-KZ-e5de8355",
+        "PD-KZ-ee63fc53",
+        "PD-KZ-f3f0c02e",
+        "PD-KZ-faec5d7c",
+        "PD-RU-003f12b2",
+        "PD-RU-252fcc0d",
+        "PD-RU-2bc0f216",
+        "PD-RU-2ddb7155",
+        "PD-RU-37715b0b",
+        "PD-RU-4b2da111",
+        "PD-RU-50cd1a6f",
+        "PD-RU-53aa17ec",
+        "PD-RU-6e74d842",
+        "PD-RU-87c44433",
+        "PD-RU-9b1d6c04",
+        "PD-RU-a0cc09c0",
+        "PD-RU-a988a0c8",
+        "PD-RU-d1e50e4a",
+        "PD-RU-d6ac15c0",
+        "PD-RU-f1b1bd81"
+      ]
+    },
+    "wrong_codes": 75,
+    "error_level": {
+      "group": {
+        "k": 30,
+        "n": 75,
+        "share": 0.4,
+        "ci95": [
+          0.2966,
+          0.5131
+        ]
+      },
+      "heading": {
+        "k": 19,
+        "n": 75,
+        "share": 0.25333333333333335,
+        "ci95": [
+          0.1686,
+          0.3621
+        ]
+      },
+      "subheading": {
+        "k": 14,
+        "n": 75,
+        "share": 0.18666666666666668,
+        "ci95": [
+          0.1146,
+          0.2893
+        ]
+      },
+      "eight_digit": {
+        "k": 5,
+        "n": 75,
+        "share": 0.06666666666666667,
+        "ci95": [
+          0.0288,
+          0.1468
+        ]
+      },
+      "national": {
+        "k": 7,
+        "n": 75,
+        "share": 0.09333333333333334,
+        "ci95": [
+          0.0459,
+          0.1803
+        ]
+      }
+    },
+    "gold_among_candidates_of_wrong": {
+      "L2_group": {
+        "k": 48,
+        "n": 75,
+        "share": 0.64,
+        "ci95": [
+          0.527,
+          0.7394
+        ]
+      },
+      "L3_heading": {
+        "k": 45,
+        "n": 75,
+        "share": 0.6,
+        "ci95": [
+          0.4869,
+          0.7034
+        ]
+      },
+      "L4_subheading": {
+        "k": 21,
+        "n": 75,
+        "share": 0.28,
+        "ci95": [
+          0.191,
+          0.3904
+        ]
+      },
+      "L5_leaf": {
+        "k": 6,
+        "n": 75,
+        "share": 0.08,
+        "ci95": [
+          0.0372,
+          0.1637
+        ]
+      }
+    },
+    "stage2_first": true,
+    "cost_usd": {
+      "total": 3.4775,
+      "per_case": 0.0235
+    },
+    "latency_s": {
+      "p50": 19.4,
+      "p95": 27.3
+    },
+    "wrong": [
+      {
+        "case_id": "PD-BY-0c29a819",
+        "gold": "0406900100",
+        "predicted": "0406105009",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-0ee433a8",
+        "gold": "0406909200",
+        "predicted": "0406908200",
+        "flagged": false,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-BY-140c752b",
+        "gold": "7216611000",
+        "predicted": "7308909809",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-22682727",
+        "gold": "4811490000",
+        "predicted": "4810390000",
+        "flagged": true,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-28408573",
+        "gold": "9021290004",
+        "predicted": "9021290009",
+        "flagged": false,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-2ae9799b",
+        "gold": "4411149000",
+        "predicted": "4421991000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-33febc59",
+        "gold": "4819200000",
+        "predicted": "4823908597",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-4445b404",
+        "gold": "6116930000",
+        "predicted": "9506999000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-48c28f26",
+        "gold": "9603909100",
+        "predicted": "3924900009",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-55273f30",
+        "gold": "8426410003",
+        "predicted": "8427201909",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-80f5ab18",
+        "gold": "1704906500",
+        "predicted": "1704909800",
+        "flagged": false,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-BY-853aafd2",
+        "gold": "0408998000",
+        "predicted": "2106909300",
+        "flagged": true,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-95751e68",
+        "gold": "7116208000",
+        "predicted": "6802999000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-957cc89d",
+        "gold": "7013499900",
+        "predicted": "7010909101",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-ae3f8ecc",
+        "gold": "2621900000",
+        "predicted": "3824999608",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-b0dc3475",
+        "gold": "4818300000",
+        "predicted": "4818901000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-b668d056",
+        "gold": "9603909900",
+        "predicted": "9018908409",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-b84af756",
+        "gold": "1102907000",
+        "predicted": "1901200000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-c63e6e79",
+        "gold": "4401390000",
+        "predicted": "4602199000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-c85420d0",
+        "gold": "9018390000",
+        "predicted": "9018311009",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-caaee662",
+        "gold": "0406105009",
+        "predicted": "0406105002",
+        "flagged": false,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-cb4051d7",
+        "gold": "3909310000",
+        "predicted": "3824100000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-dd32e910",
+        "gold": "2309909609",
+        "predicted": "3824999608",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-dd5f06f6",
+        "gold": "6810990000",
+        "predicted": "6815990008",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-f516776e",
+        "gold": "7326199009",
+        "predicted": "9401990009",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-BY-f9d85ae3",
+        "gold": "7315119000",
+        "predicted": "8431310000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-07a05db1",
+        "gold": "8544499509",
+        "predicted": "8544499101",
+        "flagged": true,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-145026ed",
+        "gold": "8436809000",
+        "predicted": "8479899707",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-14b2dfed",
+        "gold": "8709199000",
+        "predicted": "8479899707",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-1ba23c86",
+        "gold": "8517699000",
+        "predicted": "8517790009",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-212ba0e5",
+        "gold": "8705908001",
+        "predicted": "8705908005",
+        "flagged": false,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-2163f4d5",
+        "gold": "9506290000",
+        "predicted": "9506919000",
+        "flagged": true,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-4447b9b6",
+        "gold": "8702101994",
+        "predicted": "8702101997",
+        "flagged": true,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-4972fc20",
+        "gold": "2612209000",
+        "predicted": "2612109000",
+        "flagged": true,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-4e1f1a01",
+        "gold": "7019190000",
+        "predicted": "7019150000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-52d51e97",
+        "gold": "8412908009",
+        "predicted": "8412904008",
+        "flagged": false,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-KZ-5aff5f6f",
+        "gold": "4415202000",
+        "predicted": "4421999000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-63d8c3ca",
+        "gold": "4408909509",
+        "predicted": "4408901509",
+        "flagged": true,
+        "level": "eight_digit",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-66eb3b1f",
+        "gold": "4421999000",
+        "predicted": "4412330000",
+        "flagged": true,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-68d6f053",
+        "gold": "9031908500",
+        "predicted": "8479907000",
+        "flagged": true,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-6a48ef76",
+        "gold": "7106920000",
+        "predicted": "7115900000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-7b59ffda",
+        "gold": "3006910000",
+        "predicted": "9018908409",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-7c120345",
+        "gold": "6810910000",
+        "predicted": "6811820000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-864d7810",
+        "gold": "5407940000",
+        "predicted": "5407740000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-a5592608",
+        "gold": "4404100001",
+        "predicted": "4404100002",
+        "flagged": true,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-KZ-a8e870aa",
+        "gold": "8708709909",
+        "predicted": "4011209000",
+        "flagged": true,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-aa751ae1",
+        "gold": "8607211009",
+        "predicted": "8607290000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-ad62ba2a",
+        "gold": "8414108900",
+        "predicted": "8414809000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-b5c547aa",
+        "gold": "6307909800",
+        "predicted": "3926909709",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-bbe961e6",
+        "gold": "2709009009",
+        "predicted": "2709009003",
+        "flagged": false,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-KZ-cb3c3ced",
+        "gold": "1511909902",
+        "predicted": "1517909100",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-daaea0a4",
+        "gold": "6006329000",
+        "predicted": "6001920000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-e4ffdf54",
+        "gold": "9031803800",
+        "predicted": "8479820000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-e5de8355",
+        "gold": "9030100000",
+        "predicted": "9027890000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-ee63fc53",
+        "gold": "5703390009",
+        "predicted": "5703310009",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-f3f0c02e",
+        "gold": "2620999509",
+        "predicted": "2620300000",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-faec5d7c",
+        "gold": "3814009000",
+        "predicted": "2922170000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-KZ-fff9eca2",
+        "gold": "7112910000",
+        "predicted": "7112990000",
+        "flagged": true,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-003f12b2",
+        "gold": "4418790000",
+        "predicted": "4412330000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-252fcc0d",
+        "gold": "3707909000",
+        "predicted": "8443999000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-2bc0f216",
+        "gold": "8302500000",
+        "predicted": "4420909900",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-2ddb7155",
+        "gold": "9107000000",
+        "predicted": "8536490000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-37715b0b",
+        "gold": "4901100000",
+        "predicted": "4911990000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-4b2da111",
+        "gold": "6815990008",
+        "predicted": "6802931000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-50cd1a6f",
+        "gold": "1516109000",
+        "predicted": "3824999208",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-53aa17ec",
+        "gold": "1604209090",
+        "predicted": "1604199780",
+        "flagged": false,
+        "level": "subheading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-6e74d842",
+        "gold": "6804210000",
+        "predicted": "8202998000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-87c44433",
+        "gold": "9506911000",
+        "predicted": "9019109009",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-9b1d6c04",
+        "gold": "1212999509",
+        "predicted": "1106100000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-a0cc09c0",
+        "gold": "8205400000",
+        "predicted": "3926909709",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-a988a0c8",
+        "gold": "3917320001",
+        "predicted": "4009110000",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-c9df588b",
+        "gold": "0902100009",
+        "predicted": "0902100001",
+        "flagged": true,
+        "level": "national",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": true,
+          "L5_leaf": true
+        }
+      },
+      {
+        "case_id": "PD-RU-d1e50e4a",
+        "gold": "8479810000",
+        "predicted": "8477200000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-d6ac15c0",
+        "gold": "4811590009",
+        "predicted": "4810923000",
+        "flagged": false,
+        "level": "heading",
+        "coverage": {
+          "L2_group": true,
+          "L3_heading": true,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      },
+      {
+        "case_id": "PD-RU-f1b1bd81",
+        "gold": "9032890000",
+        "predicted": "8537109100",
+        "flagged": false,
+        "level": "group",
+        "coverage": {
+          "L2_group": false,
+          "L3_heading": false,
+          "L4_subheading": false,
+          "L5_leaf": false
+        }
+      }
+    ]
+  }
+}
