@@ -125,8 +125,8 @@ class PromptAssembler:
         opi_rules: list[dict],
         precedents: list[dict] | None = None,
     ) -> tuple[str, str]:
-        """Level 3b: Deep analysis of shortlisted positions."""
-        system = render("system/level3_deep.jinja2", group_code=group_code)
+        """Level 3b: Deep analysis of shortlisted positions (and precedent headings, if any)."""
+        system = render("system/level3_deep.jinja2", group_code=group_code, precedents=bool(precedents))
 
         parts = [
             render("context/product_card.jinja2", card=_to_obj(card)),

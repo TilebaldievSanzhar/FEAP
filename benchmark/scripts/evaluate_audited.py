@@ -47,6 +47,13 @@ def main():
                        for level in range(6)},
         'cascade_max_backtrack': settings.CASCADE_MAX_BACKTRACK,
         'evidence_policy': getattr(settings, 'SGR_EVIDENCE_POLICY', 'legacy'),
+        'precedents': {
+            'enabled': settings.CASCADE_PRECEDENTS,
+            'candidates': settings.PRECEDENTS_CANDIDATES,
+            'shown': settings.PRECEDENTS_SHOWN,
+            'exclude_sha256': (hashlib.sha256(Path(settings.PRECEDENTS_EXCLUDE_PATH).read_bytes()).hexdigest()
+                               if settings.PRECEDENTS_EXCLUDE_PATH else None),
+        },
         'retry_errors': args.retry_errors,
         'retry_case_ids': sorted(args.retry_case_id),
         'concurrency': args.concurrency,
@@ -61,7 +68,7 @@ def main():
     if manifest_path.exists() and not args.no_resume:
         previous = json.loads(manifest_path.read_text(encoding='utf-8'))
         for key in ('dataset_sha256', 'models', 'source_sha256', 'reference_data',
-                    'generation', 'cascade_max_backtrack', 'evidence_policy'):
+                    'generation', 'cascade_max_backtrack', 'evidence_policy', 'precedents'):
             if previous.get(key) != manifest[key]:
                 raise ValueError(f'Cannot resume with changed {key}; use a new run-id')
         manifest['previous_invocations'] = [

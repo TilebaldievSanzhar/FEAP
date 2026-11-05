@@ -71,6 +71,8 @@ async def validate_and_build_result(
         opi_applied=sorted(all_rules),
         confidence=min_confidence,
         risk_flags=risk_flags,
+        precedent_match=code_10 in state.precedent_codes,
+        precedent_codes=list(state.precedent_codes),
         requires_human_review=min_confidence < 0.6 or bool(risk_flags),
     )
 

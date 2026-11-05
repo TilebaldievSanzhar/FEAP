@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     # --- Cascade tuning ---
     CASCADE_MAX_BACKTRACK: int = 5
     SGR_EVIDENCE_POLICY: Literal['legacy', 'best_guess', 'clarify'] = 'legacy'
+    # Прецеденты (feap.precedents): позиции похожих решений таможни — кандидаты L3.
+    # Выключено по умолчанию до сквозной проверки (docs/navigation_e_n3.md).
+    CASCADE_PRECEDENTS: bool = False
+    PRECEDENTS_CANDIDATES: int = 10  # сколько похожих решений дают позиции-кандидаты
+    PRECEDENTS_SHOWN: int = 5        # сколько решений видит L3b как свидетельства
+    PRECEDENTS_EXCLUDE_PATH: str = ""  # id записей вне индекса (оценка на наборах из реестра)
     SESSION_TTL_MINUTES: int = 30
     SESSION_MAX_ANSWERS: int = 3
 

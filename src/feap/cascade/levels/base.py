@@ -44,6 +44,9 @@ class CascadeState:
         self.stopped_at_level: int | None = None
         self.answer_count: int = 0
 
+        # Похожие решения таможенных органов, показанные L3 (feap.precedents)
+        self.precedent_codes: list[str] = []
+
     def add_decision(self, entry: DecisionChainEntry) -> None:
         self.chain.append(entry)
 
@@ -77,6 +80,7 @@ class CascadeState:
             "clarifying_question": self.clarifying_question,
             "stopped_at_level": self.stopped_at_level,
             "answer_count": self.answer_count,
+            "precedent_codes": self.precedent_codes,
         }
 
     @classmethod
@@ -102,6 +106,7 @@ class CascadeState:
         state.clarifying_question = data.get("clarifying_question")
         state.stopped_at_level = data.get("stopped_at_level")
         state.answer_count = data.get("answer_count", 0)
+        state.precedent_codes = data.get("precedent_codes", [])
         return state
 
 

@@ -855,6 +855,31 @@ class EttNoteRow(Base):
         return f"<EttNote {self.note_id} {self.kind}>"
 
 
+# ── Прецеденты: предварительные решения ЕАЭС (feap.precedents) ─────────────
+
+class ClassificationPrecedent(Base):
+    """Решение таможенного органа: описание товара и присвоенный код (реестр ЕС 999)."""
+
+    __tablename__ = "classification_precedents"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    source: Mapped[str] = mapped_column(String(32), nullable=False, default="eaeu_1999")
+    code: Mapped[str] = mapped_column(String(10), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    justification: Mapped[str | None] = mapped_column(Text)
+    country: Mapped[str | None] = mapped_column(String(8))
+    version_id: Mapped[str | None] = mapped_column(String(64))
+    snapshot: Mapped[dt.date] = mapped_column(Date, nullable=False)
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (Index("idx_precedents_code", "code"),)
+
+    def __repr__(self) -> str:
+        return f"<ClassificationPrecedent {self.id[:8]} {self.code}>"
+
+
 # ── Обновление справочников (refsync, docs/refdata_sync.md) ─────────────────
 
 class RefDataset(Base):

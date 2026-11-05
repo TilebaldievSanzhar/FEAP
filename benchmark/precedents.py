@@ -1,53 +1,36 @@
-"""Precedents: similar decisions of the customs authorities, retrieved by BM25.
+"""Precedents for experiments: the product's BM25 index over a tuning pool, without leaks.
 
-A decision of the EAEU collection (registry ЕС 999) is a real product with the
-code an authority gave it. For a product description the index returns the
-most similar decisions; their codes are candidates for navigation, their texts
-are evidence for the selector.
+The search itself is ``feap.precedents`` (one implementation for the product and the
+benchmark). This wrapper builds the index from benchmark cases instead of the
+``classification_precedents`` table and removes what must not be found:
 
-No leakage by construction:
+- the index is built from a pool (``Holdout.pool(..., 'calibration' | 'replay')``), so it
+  never contains holdout records or their near-duplicates;
+- ``exclude`` drops the records of the evaluated cases and every pool record that is
+  a near-duplicate of one of them (word-trigram Jaccard ≥ 0.3).
 
-- the index is built from a tuning pool (``Holdout.pool(..., 'calibration')``),
-  so it never contains holdout records, their codes or near-duplicates;
-- ``exclude`` drops the records of the evaluated cases and every pool record
-  that is a near-duplicate of one of them (word-trigram Jaccard ≥ 0.3).
-
-The tokenizer is deliberately simple: lower case, ё → е, words of three or more
-letters cut to six characters (a crude stem), numbers kept whole.
+``exclusion_ids`` gives the product the same rule for an end-to-end run: the ids of the
+``classification_precedents`` rows to leave out (``PRECEDENTS_EXCLUDE_PATH``).
 """
 from __future__ import annotations
 
-import math
-import re
-from collections import Counter, defaultdict
+from collections import Counter
 from collections.abc import Iterable
-from dataclasses import dataclass
 
 from benchmark.holdout import NEAR_DUPLICATE, shingles, source_of
 from benchmark.schema.case_v2 import CaseV2
-
-_STOP = set('и в во на с со по из для от до не или а но что как это его ее их при под над к ко о об же'.split())
-
-
-def terms(text: str) -> list[str]:
-    out = []
-    for word in re.findall(r'[0-9a-zа-я]+', text.lower().replace('ё', 'е')):
-        if word.isdigit():
-            out.append(word)
-        elif len(word) >= 3 and word not in _STOP:
-            out.append(word[:6])
-    return out
+from feap.precedents import Precedent, terms  # noqa: F401 — re-exported for scripts
+from feap.precedents import PrecedentIndex as _Index
 
 
-@dataclass(frozen=True)
-class Precedent:
-    case_id: str
-    code: str
-    description: str
-    score: float
+def _near(grams: list[frozenset[str]], text: str) -> bool:
+    g = shingles(text)
+    return any(g & other and len(g & other) / len(g | other) >= NEAR_DUPLICATE for other in grams)
 
 
-class PrecedentIndex:
+class PrecedentIndex(_Index):
+    """``feap.precedents.PrecedentIndex`` over pool cases; a precedent's ``id`` is the case id."""
+
     def __init__(self, pool: Iterable[CaseV2], *, exclude: Iterable[CaseV2] = (), k1: float = 1.2, b: float = 0.75):
         excluded = list(exclude)
         sources = {source_of(c) for c in excluded}
@@ -57,33 +40,33 @@ class PrecedentIndex:
         for case in pool:
             if source_of(case) in sources:
                 self.dropped['record'] += 1
-                continue
-            g = shingles(case.input.description)
-            if any(g & other and len(g & other) / len(g | other) >= NEAR_DUPLICATE for other in grams):
+            elif _near(grams, case.input.description):
                 self.dropped['near_duplicate'] += 1
-                continue
-            self.cases.append(case)
-        self.k1, self.b = k1, b
-        self.tf = [Counter(terms(c.input.description)) for c in self.cases]
-        self.lengths = [sum(tf.values()) for tf in self.tf]
-        self.avg = sum(self.lengths) / max(len(self.lengths), 1)
-        df = Counter(t for tf in self.tf for t in tf)
-        n = len(self.cases)
-        self.idf = {t: math.log(1 + (n - c + 0.5) / (c + 0.5)) for t, c in df.items()}
-        self.postings: dict[str, list[int]] = defaultdict(list)
-        for i, tf in enumerate(self.tf):
-            for t in tf:
-                self.postings[t].append(i)
+            else:
+                self.cases.append(case)
+        super().__init__(((c.id, c.gold.classification.code, c.input.description, None) for c in self.cases),
+                         k1=k1, b=b)
 
-    def search(self, description: str, k: int = 10) -> list[Precedent]:
-        scores: Counter[int] = Counter()
-        for t in set(terms(description)):
-            idf = self.idf.get(t)
-            if idf is None:
-                continue
-            for i in self.postings[t]:
-                f = self.tf[i][t]
-                norm = 1 - self.b + self.b * self.lengths[i] / self.avg
-                scores[i] += idf * f * (self.k1 + 1) / (f + self.k1 * norm)
-        return [Precedent(self.cases[i].id, self.cases[i].gold.classification.code,
-                          self.cases[i].input.description, round(s, 3)) for i, s in scores.most_common(k)]
+
+def registry_id(case: CaseV2) -> str | None:
+    """Id of the registry record behind a case (``classification_precedents.id``)."""
+    source = source_of(case)
+    return source.removeprefix('pd:') if source.startswith('pd:') else None
+
+
+def exclusion_ids(all_ids: Iterable[str], allowed_pool: Iterable[CaseV2], evaluated: Iterable[CaseV2]) -> list[str]:
+    """Rows of the product table to hide during an end-to-end run.
+
+    Everything outside ``allowed_pool`` (holdout and its near-duplicates), the evaluated
+    records and the pool records that are near-duplicates of them.
+    """
+    evaluated = list(evaluated)
+    grams = [shingles(c.input.description) for c in evaluated]
+    hidden = {registry_id(c) for c in evaluated}
+    allowed = set()
+    for case in allowed_pool:
+        rid = registry_id(case)
+        if rid and rid not in hidden and not _near(grams, case.input.description):
+            allowed.add(rid)
+    return sorted(set(all_ids) - allowed)
+

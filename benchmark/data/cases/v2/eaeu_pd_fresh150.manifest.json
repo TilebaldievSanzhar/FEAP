@@ -1,0 +1,42 @@
+{
+  "schema_version": "2.0",
+  "created_at": "2026-11-05T10:43:52.876724+00:00",
+  "sha256": "fe0d32ee41027462e4648a9947485669de2595241ce5b97393b8176a5fcc353b",
+  "n": 145,
+  "purpose": "Fresh sample from the calibration pool for a decisive re-test; never used for tuning.",
+  "built_from": {
+    "pool": {
+      "path": "benchmark/data/cases/v2/pools/eaeu_pd_calibration.jsonl",
+      "sha256": "9fb08844b0f38d6206647cfe8ed867facdb489101fde72bc0318e2d3a6f860cd",
+      "usable": 7432
+    },
+    "avoid": [
+      {
+        "path": "benchmark/data/cases/v2/eaeu_pd_dev150.jsonl",
+        "sha256": "5078cb4b173014d1eb049fb1ce0978c4abb5f16e54415eb6dc897857c0e14ffe"
+      }
+    ],
+    "seed": 20261106,
+    "stratification": "build_eaeu_pd_sets.sample, sqrt(KG import share)",
+    "comtrade_sha256": "1304b74854925f90ef897c28ab59ec9c0ca658609c3e618a67e1006a6ceabcac"
+  },
+  "by_track": {
+    "passport": 145
+  },
+  "by_split": {
+    "dev": 145
+  },
+  "by_tier": {
+    "A": 145
+  },
+  "by_verification": {
+    "official": 145
+  },
+  "by_sufficiency": {
+    "unknown": 145
+  },
+  "by_gold_digits": {
+    "10": 145
+  },
+  "scored": 145
+}
