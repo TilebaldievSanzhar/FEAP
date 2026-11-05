@@ -53,6 +53,28 @@ python -m benchmark.scripts.score_v2 --cases benchmark/data/cases/v2/eaeu_pd_tes
 Raw downloads stay in `benchmark/data/raw/` (not in git); the case files are self-contained
 and their manifests record the hashes of the snapshots they came from.
 
+### Holdout and tuning pools
+
+`holdout.json` freezes the three locked sets (hashes, source records, ten-digit codes);
+`benchmark.holdout.Holdout.load()` fails if any of them was rebuilt. Anything chosen on data —
+thresholds, signal policy, question wording, family specifications — is chosen on a pool built
+through `Holdout.pool(cases, purpose)`:
+
+| Purpose | Excluded |
+|---|---|
+| `calibration` | holdout records, their ten-digit codes, near-duplicate texts (word-trigram Jaccard ≥ 0.3) |
+| `replay` | holdout records, near-duplicate texts; records sharing a code stay |
+
+```bash
+python -m benchmark.holdout                                   # check the freeze and the dev sets
+python -m benchmark.scripts.build_pools --snapshot 2026-10-18 # pools/eaeu_pd_{calibration,replay}
+```
+
+From the 2026-10-18 snapshot: calibration 7,670 of 12,765 records (4,661 share a code with
+holdout), replay 12,022. The pool JSONL files are not in git; read them with `load_pool`, which
+fails on any overlap. For thresholds `eaeu_pd_dev150` gives 148 cases: two share a code with
+`eec_decisions_test`. `passport_regression100` shares 11 codes with holdout — mechanics only.
+
 The rest of this README describes v1.
 
 ## Directory structure

@@ -1,0 +1,48 @@
+{
+  "schema_version": "2.0",
+  "created_at": "2026-11-05T05:12:06.327871+00:00",
+  "sha256": "1563407a89f1cdd727295b36c2c8d00360719126480dbe929318f6892bac8b70",
+  "n": 12022,
+  "purpose": "Replay of family specifications. No holdout record or near-duplicate text; records sharing a code with holdout stay.",
+  "built_from": {
+    "snapshot": {
+      "path": "benchmark/data/raw/eaeu_predecisions/2026-10-18",
+      "on_date": "2026-10-18",
+      "records": 12974,
+      "manifest_sha256": "2c034d2561d04edbaea92ac4f11247adfca4193bf1dee7019b5dc88c60f69d28"
+    },
+    "usable": 12765,
+    "dropped_before_holdout": {
+      "code not a current leaf": 47,
+      "description length": 70,
+      "duplicate description": 90,
+      "same description, different codes": 2
+    },
+    "holdout": {
+      "manifest_sha256": "0041e81d820520549976be0f4a28f7bc040f1d5c2b5814023f5faa87ef5fa1ce",
+      "excluded": {
+        "text": 343,
+        "record": 400
+      }
+    }
+  },
+  "by_track": {
+    "passport": 12022
+  },
+  "by_split": {
+    "dev": 12022
+  },
+  "by_tier": {
+    "A": 12022
+  },
+  "by_verification": {
+    "official": 12022
+  },
+  "by_sufficiency": {
+    "unknown": 12022
+  },
+  "by_gold_digits": {
+    "10": 12022
+  },
+  "scored": 12022
+}
