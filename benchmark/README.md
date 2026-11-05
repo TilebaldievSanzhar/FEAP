@@ -75,6 +75,22 @@ holdout), replay 12,022. The pool JSONL files are not in git; read them with `lo
 fails on any overlap. For thresholds `eaeu_pd_dev150` gives 148 cases: two share a code with
 `eec_decisions_test`. `passport_regression100` shares 11 codes with holdout — mechanics only.
 
+### Condition verifier (decision engine, stage 1)
+
+`verify_replay` checks the code of a recorded cascade run against raw ETT row texts
+(`src/feap/decision`, design in `docs/decision_engine_verifier.md`); `score_verify` reads the
+result as pre-registered in `docs/decision_engine_preregistration.md`.
+
+```bash
+python -m benchmark.scripts.verify_replay --arm DRY --run-id verify_dry_passport100 \
+    --cases benchmark/data/cases/v2/passport_regression100.jsonl \
+    --predictions benchmark/data/results/v32_baseline/v32_baseline_predictions.jsonl \
+    --trace benchmark/data/results/v32_baseline/v32_baseline_trace.jsonl   # no calls: questions, cost
+# the same with --arm V1 or V2 (paid; refuses to start without balance), then:
+python -m benchmark.scripts.score_verify --run-id score_passport100 --cases … --predictions … \
+    --verify benchmark/data/results/verify/<run-id> [--verify …] [--pool calibration]
+```
+
 The rest of this README describes v1.
 
 ## Directory structure
