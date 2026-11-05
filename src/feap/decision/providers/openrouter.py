@@ -18,7 +18,7 @@ import time
 import uuid
 from collections.abc import Sequence
 
-from feap.decision.backend import (
+from feap.decision.backend import (  # noqa: F401 — READING_RULES re-exported for the estimate
     ASSORTMENT_ID,
     READING_RULES,
     SEMANTIC_OPTIONS,

@@ -6,6 +6,8 @@ the cascade trace), asks one arm, and writes a ``VerifyTrace`` per case.
 
 - ``--arm DRY``: no calls. Conditions, questions and a cost estimate per arm;
 - ``--arm V1`` / ``V2``: flash-lite via OpenRouter, one question per call / all in one;
+- ``--arm V3 --model typesafe/jev-1.14``: a decision model via the OpenRouter Decisions API,
+  all questions of a case in one request (``feap.decision.providers.openrouter_decisions``);
 - numbers are extracted once per data set and cached in ``--facts``; every arm reads
   the same values, so arms differ only in the semantic answers (pre-registration §4);
 - holdout cases are refused (``benchmark.holdout``, replay rule) unless ``--allow-holdout``;
@@ -66,11 +68,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument('--cases', type=Path, required=True)
     p.add_argument('--predictions', type=Path, required=True)
     p.add_argument('--trace', type=Path, help='evaluate_audited trace: alternatives of the cascade')
-    p.add_argument('--arm', choices=['DRY', 'V1', 'V2'], required=True)
+    p.add_argument('--arm', choices=['DRY', 'V1', 'V2', 'V3'], required=True)
     p.add_argument('--run-id', required=True)
     p.add_argument('--results-dir', type=Path)
     p.add_argument('--facts', type=Path, help='Shared cache of extracted numbers (default: per data set)')
-    p.add_argument('--model', default=llm.DEFAULT_MODEL)
+    p.add_argument('--model', default=llm.DEFAULT_MODEL, help='Executor: flash-lite for V1/V2, a decision model for V3')
+    p.add_argument('--extract-model', default=llm.DEFAULT_MODEL, help='Numbers are extracted by this model in every arm')
     p.add_argument('--cap', type=int, default=15, help='Siblings kept at a wide fork')
     p.add_argument('--concurrency', type=int, default=2, help='Cases in parallel')
     p.add_argument('--question-concurrency', type=int, default=8, help='V1 calls in parallel per case')
@@ -140,11 +143,13 @@ def estimate(case_traces: list[VerifyTrace], prices: dict[str, float],
                                      estimate_tokens(llm.SYSTEM_BATCH), estimate_tokens(llm.SYSTEM_EXTRACT))
         v1_in = sum(single + s + q for q in q_tokens)
         v2_in = batch + s + sum(q_tokens)
+        v3_in = s + sum(q + estimate_tokens(' '.join(llm.READING_RULES)) for q in q_tokens)
         ex_in = len(keys) * (extract + s + 80)
         rows.append({
             'questions': len(questions), 'numeric_keys': len(t.facts),
             'v1_usd': v1_in * prices['prompt'] + len(questions) * _OUT_SINGLE * prices['completion'],
             'v2_usd': v2_in * prices['prompt'] + len(questions) * _OUT_BATCH_PER_Q * prices['completion'],
+            'v3_usd': v3_in * prices['prompt'],
             'extract_usd': ex_in * prices['prompt'] + len(keys) * _OUT_EXTRACT * prices['completion'],
         })
     if not rows:
@@ -154,20 +159,20 @@ def estimate(case_traces: list[VerifyTrace], prices: dict[str, float],
         values = sorted(r[key] for r in rows)
         return {'mean': round(statistics.fmean(values), 6), 'p50': values[len(values) // 2],
                 'max': values[-1], 'total': round(sum(values), 4)}
-    return {key: stats(key) for key in ('questions', 'numeric_keys', 'v1_usd', 'v2_usd', 'extract_usd')}
+    return {key: stats(key) for key in ('questions', 'numeric_keys', 'v1_usd', 'v2_usd', 'v3_usd', 'extract_usd')}
 
 
 async def model_prices(model: str) -> dict[str, float]:
-    """USD per token from the OpenRouter catalogue; flash-lite list prices if unreachable."""
+    """USD per token of the model's endpoint (decision models are not in the chat catalogue)."""
     import httpx
 
     fallback = {'prompt': 0.30e-6, 'completion': 2.50e-6}
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            data = (await client.get('https://openrouter.ai/api/v1/models')).json()['data']
-        pricing = next(m['pricing'] for m in data if m['id'] == model)
-        return {'prompt': float(pricing['prompt']), 'completion': float(pricing['completion'])}
-    except Exception:  # noqa: BLE001 — the estimate falls back to list prices
+            data = (await client.get(f'https://openrouter.ai/api/v1/models/{model}/endpoints')).json()['data']
+        pricing = max((e['pricing'] for e in data['endpoints']), key=lambda p: float(p.get('prompt') or 0))
+        return {'prompt': float(pricing['prompt']), 'completion': float(pricing.get('completion') or 0)}
+    except Exception:  # noqa: BLE001 — the estimate falls back to flash-lite list prices
         return fallback
 
 
@@ -193,6 +198,7 @@ def manifest(args: argparse.Namespace, n_cases: int) -> dict:
         'holdout_manifest_sha256': file_sha256(HOLDOUT_MANIFEST),
         'arm': args.arm,
         'model': None if args.arm == 'DRY' else args.model,
+        'extract_model': args.extract_model,
         'questions_version': QUESTIONS_VERSION,
         'prompts_sha256': hashlib.sha256(prompts.encode()).hexdigest(),
         'thresholds': {'T': decision_backend.T_THRESHOLD, 'F': decision_backend.F_THRESHOLD},
@@ -266,15 +272,23 @@ async def run(args: argparse.Namespace) -> None:
     if args.arm == 'DRY':
         backend, extractor = DryBackend(), None
     else:
-        backend = llm.OpenRouterLLM(args.model, batch=args.arm == 'V2', concurrency=args.question_concurrency)
-        extractor = llm.OpenRouterExtractor(args.model)
+        if args.arm == 'V3':
+            from feap.decision.providers.openrouter_decisions import OpenRouterDecisions
+
+            if args.model == llm.DEFAULT_MODEL:
+                raise SystemExit('V3 needs a decision model: --model typesafe/jev-1.14, liquid/d1.1, …')
+            backend = OpenRouterDecisions(args.model, concurrency=args.question_concurrency)
+        else:
+            backend = llm.OpenRouterLLM(args.model, batch=args.arm == 'V2', concurrency=args.question_concurrency)
+        extractor = llm.OpenRouterExtractor(args.extract_model)
         dry = await asyncio.gather(*(verify_case(
             case_id=c.id, description=c.input.description, chosen_code=p.predicted_code_10,
             alternatives=alternatives.get(c.id, []), trees=trees, backend=DryBackend(), cap=args.cap,
             facts=facts.get(c.id), headings=headings) for c, p in todo))
         cost = estimate(dry, await model_prices(args.model), facts)
-        key = 'v1_usd' if args.arm == 'V1' else 'v2_usd'
-        need = cost.get(key, {}).get('total', 0) + cost.get('extract_usd', {}).get('total', 0)
+        extract_cost = estimate(dry, await model_prices(args.extract_model), facts)
+        key = {'V1': 'v1_usd', 'V2': 'v2_usd', 'V3': 'v3_usd'}[args.arm]
+        need = cost.get(key, {}).get('total', 0) + extract_cost.get('extract_usd', {}).get('total', 0)
         remaining = await openrouter_remaining_usd(llm_api_key())
         print(f'{len(todo)} cases; estimate ${need:.3f} (no prompt cache); balance '
               f'{"unknown" if remaining is None else f"${remaining:.2f}"}')
