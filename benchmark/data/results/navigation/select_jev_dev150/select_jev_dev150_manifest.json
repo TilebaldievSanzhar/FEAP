@@ -1,0 +1,40 @@
+{
+  "started_at": "2026-11-05T07:23:42+00:00",
+  "arm": "DM",
+  "model": "typesafe/jev-1.14",
+  "k": 10,
+  "evidence": 5,
+  "instructions": "Выбери товарную позицию ТН ВЭД ЕАЭС (4 знака) для товара из описания. Решают тексты товарных позиций (ОПИ 1): более конкретное описание предпочтительнее общего (ОПИ 3а); специальная позиция для вида изделия предпочтительнее позиции по материалу. Похожие решения таможенных органов — подсказка, а не правило: другой товар может отличаться существенным признаком.",
+  "cases": {
+    "path": "benchmark/data/cases/v2/eaeu_pd_dev150.jsonl",
+    "sha256": "5078cb4b173014d1eb049fb1ce0978c4abb5f16e54415eb6dc897857c0e14ffe",
+    "n": 148
+  },
+  "predictions_sha256": "1a422133a2da90296dc3ec4c9b3419955d333110c381c4221143b455bb3fe2cb",
+  "pool_sha256": "9fb08844b0f38d6206647cfe8ed867facdb489101fde72bc0318e2d3a6f860cd",
+  "index": {
+    "size": 7432,
+    "dropped": {
+      "record": 148,
+      "near_duplicate": 90
+    }
+  },
+  "reference_data": {
+    "tnved_tree": {
+      "rows": 20236,
+      "sha256": "a170247414f8cdd4a8e42acfbf95f7ac10bafbbb99af87392969952eaa749340"
+    },
+    "tnved_notes": {
+      "rows": 533,
+      "sha256": "d5dc8b4c771acfd98a010eb725fac2207e120a7a2d44e425bc2d0204bc094403"
+    },
+    "tnved_explanatory_notes": {
+      "rows": 3413,
+      "sha256": "ef4857c799a231458a8dbe62226f50d803ec45a4b25cfad94896848008e6c0e0"
+    },
+    "tnved_opi": {
+      "rows": 10,
+      "sha256": "0d51ab7a617ca2a9559bb1f744e1f5d14241ccde2f52b4ed3aa2f9403c515ee7"
+    }
+  }
+}

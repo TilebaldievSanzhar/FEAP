@@ -71,7 +71,10 @@ def load_run(path: Path) -> tuple[str, dict[str, VerifyTrace], dict | None]:
     manifest_path = files[0].with_name(files[0].name.replace('_verify.jsonl', '_manifest.json'))
     manifest = json.loads(manifest_path.read_text(encoding='utf-8')) if manifest_path.exists() else None
     arms = {t.arm for t in traces.values()}
-    return (arms.pop() if len(arms) == 1 else files[0].stem), traces, manifest
+    arm = arms.pop() if len(arms) == 1 else files[0].stem
+    if arm == 'V3' and manifest and manifest.get('model'):
+        arm = f"V3 {manifest['model'].split('/')[-1]}"  # V3a и V3b различаются моделью
+    return arm, traces, manifest
 
 
 def flagged(trace: VerifyTrace | None, policy: str) -> bool:
@@ -301,6 +304,8 @@ def main() -> None:
     runs, manifests = {}, {}
     for path in args.verify:
         arm, traces, manifest = load_run(path)
+        if arm in runs:
+            raise SystemExit(f'Two runs are named {arm!r}: score them separately')
         runs[arm], manifests[arm] = traces, manifest
     current = database_fingerprint()
     stale = [arm for arm, m in manifests.items() if m and m.get('reference_data') != current]

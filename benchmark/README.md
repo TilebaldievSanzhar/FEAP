@@ -86,10 +86,18 @@ python -m benchmark.scripts.verify_replay --arm DRY --run-id verify_dry_passport
     --cases benchmark/data/cases/v2/passport_regression100.jsonl \
     --predictions benchmark/data/results/v32_baseline/v32_baseline_predictions.jsonl \
     --trace benchmark/data/results/v32_baseline/v32_baseline_trace.jsonl   # no calls: questions, cost
-# the same with --arm V1 or V2 (paid; refuses to start without balance), then:
+# the same with --arm V1 or V2 (paid; refuses to start without balance), or --arm V3 --model
+# typesafe/jev-1.14 (a decision model via the OpenRouter Decisions API), then:
 python -m benchmark.scripts.score_verify --run-id score_passport100 --cases … --predictions … \
     --verify benchmark/data/results/verify/<run-id> [--verify …] [--pool calibration]
 ```
+
+### Navigation (stage 2)
+
+`benchmark/precedents.py` retrieves similar decisions of the EAEU collection (BM25 over the
+calibration pool, without the evaluated cases and their near-duplicates). `heading_select`
+chooses the heading from the cascade's candidates and precedent headings with one arm —
+`CASCADE`, `PREC1`, `FL` (flash-lite) or `DM --model …` — see `docs/navigation_results.md`.
 
 The rest of this README describes v1.
 

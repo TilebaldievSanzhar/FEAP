@@ -1,0 +1,45 @@
+{
+  "arm": "PREC1",
+  "model": null,
+  "n": 148,
+  "heading_accuracy": {
+    "k": 71,
+    "n": 148,
+    "share": 0.4797297297297297,
+    "ci95": [
+      0.4008,
+      0.5597
+    ]
+  },
+  "cascade_heading_accuracy": {
+    "k": 99,
+    "n": 148,
+    "share": 0.668918918918919,
+    "ci95": [
+      0.5897,
+      0.7396
+    ]
+  },
+  "minus_cascade": {
+    "diff": -0.1892,
+    "ci95": [
+      -0.2905,
+      -0.0878
+    ]
+  },
+  "fixed": 19,
+  "broken": 47,
+  "gold_in_candidates": {
+    "k": 137,
+    "n": 148,
+    "share": 0.9256756756756757,
+    "ci95": [
+      0.8718,
+      0.958
+    ]
+  },
+  "candidates_mean": 6.73,
+  "cost_usd": 0,
+  "errors": 0,
+  "latency_ms_p50": 0.0
+}

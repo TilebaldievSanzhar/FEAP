@@ -1,0 +1,45 @@
+{
+  "arm": "FL",
+  "model": null,
+  "n": 148,
+  "heading_accuracy": {
+    "k": 109,
+    "n": 148,
+    "share": 0.7364864864864865,
+    "ci95": [
+      0.6602,
+      0.8008
+    ]
+  },
+  "cascade_heading_accuracy": {
+    "k": 99,
+    "n": 148,
+    "share": 0.668918918918919,
+    "ci95": [
+      0.5897,
+      0.7396
+    ]
+  },
+  "minus_cascade": {
+    "diff": 0.0676,
+    "ci95": [
+      -0.0068,
+      0.1419
+    ]
+  },
+  "fixed": 21,
+  "broken": 11,
+  "gold_in_candidates": {
+    "k": 137,
+    "n": 148,
+    "share": 0.9256756756756757,
+    "ci95": [
+      0.8718,
+      0.958
+    ]
+  },
+  "candidates_mean": 6.73,
+  "cost_usd": 0.1009,
+  "errors": 0,
+  "latency_ms_p50": 21032.6
+}

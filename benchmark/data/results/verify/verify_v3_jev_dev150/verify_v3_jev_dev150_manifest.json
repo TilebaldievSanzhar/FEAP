@@ -1,0 +1,91 @@
+{
+  "started_at": "2026-11-05T07:19:08+00:00",
+  "git_revision": "2476e37390c486b92bbc908a3c223c00cf62a475",
+  "git_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_sha256": {
+    "src/feap/decision/__init__.py": "216f9ec651d7d8c2f616da9a742be532bcddc88fb51b7979e5e5ca9db113e186",
+    "src/feap/decision/backend.py": "3f02c7a1f22447c2a5c5f4fb3f90746f779429786bc3d68cd57bc03516e90e48",
+    "src/feap/decision/conditions.py": "0997956a0990c3b93c8ba0673d0a43bda47b318f440986c53204ac036b5c92b1",
+    "src/feap/decision/contracts.py": "fd12acfcc12c1c68c799f3a352f95d957a79943f6974e105de974afac91d83f0",
+    "src/feap/decision/logic.py": "315f712977e74833028b4f981ad4e8c8a54848314d55ca88a5c174be1273c140",
+    "src/feap/decision/providers/__init__.py": "e986c7d619cce084a32330c3babb439524f71041770f0bc37d60a15a3e0a50ca",
+    "src/feap/decision/providers/openrouter.py": "aa9e66b98e0f7e3c446c0e63c29de07f51d77a64fa775fbe4e682d088fe89987",
+    "src/feap/decision/providers/openrouter_decisions.py": "5488e7a42d9c0655aa15b694d272ff6746ec2051527f759ed77a90df66960a4c",
+    "src/feap/decision/rows.py": "f94410e343a0196430c0edda785fadcfe1192096a713bd3d242f5a7ab68acee2",
+    "src/feap/decision/signals.py": "feb359e34eae3039d35f260dc72a052d0db839c154d25a29693a12a5766ad8b4",
+    "src/feap/decision/verifier.py": "04c6ecfbb53259af626412d57728676f3678c26093a7521b7f467ace9973ea82"
+  },
+  "reference_data": {
+    "tnved_tree": {
+      "rows": 20236,
+      "sha256": "a170247414f8cdd4a8e42acfbf95f7ac10bafbbb99af87392969952eaa749340"
+    },
+    "tnved_notes": {
+      "rows": 533,
+      "sha256": "d5dc8b4c771acfd98a010eb725fac2207e120a7a2d44e425bc2d0204bc094403"
+    },
+    "tnved_explanatory_notes": {
+      "rows": 3413,
+      "sha256": "ef4857c799a231458a8dbe62226f50d803ec45a4b25cfad94896848008e6c0e0"
+    },
+    "tnved_opi": {
+      "rows": 10,
+      "sha256": "0d51ab7a617ca2a9559bb1f744e1f5d14241ccde2f52b4ed3aa2f9403c515ee7"
+    }
+  },
+  "cases": {
+    "path": "benchmark/data/cases/v2/eaeu_pd_dev150.jsonl",
+    "sha256": "5078cb4b173014d1eb049fb1ce0978c4abb5f16e54415eb6dc897857c0e14ffe",
+    "n_run": 150
+  },
+  "predictions": {
+    "path": "benchmark/data/results/r0_v32_dev150/r0_v32_dev150_predictions.jsonl",
+    "sha256": "1a422133a2da90296dc3ec4c9b3419955d333110c381c4221143b455bb3fe2cb"
+  },
+  "trace": {
+    "path": "benchmark/data/results/r0_v32_dev150/r0_v32_dev150_trace.jsonl",
+    "sha256": "2173ec9c5f738983ed8cc1575ddee55cf8d14540abaa8a2cebecb1853d1b6bb2"
+  },
+  "holdout_manifest_sha256": "a8eb9adef6b53d3f58d07ef42b7fd6e109978d127415e78f8675c955c83119a1",
+  "arm": "V3",
+  "model": "typesafe/jev-1.14",
+  "extract_model": "google/gemini-3.5-flash-lite",
+  "questions_version": "e2lite-2",
+  "prompts_sha256": "7ff333c3ea237b7a828b1760fc5ee4cf3ceeb99ca5a3f475122065a8c5d73476",
+  "thresholds": {
+    "T": 0.5,
+    "F": 0.8
+  },
+  "cap": 15,
+  "policies": {
+    "P1": [
+      "S1:*",
+      "S2:*",
+      "S3:strong",
+      "S6:strong",
+      "S7:*"
+    ],
+    "P2": [
+      "S1:*",
+      "S2:*",
+      "S3:medium",
+      "S3:strong",
+      "S4:*",
+      "S6:medium",
+      "S6:strong",
+      "S7:*"
+    ],
+    "P3": [
+      "S1:*",
+      "S2:*",
+      "S3:medium",
+      "S3:strong",
+      "S4:*",
+      "S5:*",
+      "S6:medium",
+      "S6:strong",
+      "S7:*"
+    ]
+  },
+  "facts": "benchmark/data/results/verify/facts/eaeu_pd_dev150__r0_v32_dev150_predictions.jsonl"
+}

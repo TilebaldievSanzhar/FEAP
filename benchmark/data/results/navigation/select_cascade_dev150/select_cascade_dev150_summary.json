@@ -1,0 +1,45 @@
+{
+  "arm": "CASCADE",
+  "model": null,
+  "n": 148,
+  "heading_accuracy": {
+    "k": 99,
+    "n": 148,
+    "share": 0.668918918918919,
+    "ci95": [
+      0.5897,
+      0.7396
+    ]
+  },
+  "cascade_heading_accuracy": {
+    "k": 99,
+    "n": 148,
+    "share": 0.668918918918919,
+    "ci95": [
+      0.5897,
+      0.7396
+    ]
+  },
+  "minus_cascade": {
+    "diff": 0.0,
+    "ci95": [
+      0.0,
+      0.0
+    ]
+  },
+  "fixed": 0,
+  "broken": 0,
+  "gold_in_candidates": {
+    "k": 137,
+    "n": 148,
+    "share": 0.9256756756756757,
+    "ci95": [
+      0.8718,
+      0.958
+    ]
+  },
+  "candidates_mean": 6.73,
+  "cost_usd": 0,
+  "errors": 0,
+  "latency_ms_p50": 0.0
+}

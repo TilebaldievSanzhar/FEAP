@@ -1,0 +1,45 @@
+{
+  "arm": "DM",
+  "model": "liquid/d1.1",
+  "n": 148,
+  "heading_accuracy": {
+    "k": 99,
+    "n": 148,
+    "share": 0.668918918918919,
+    "ci95": [
+      0.5897,
+      0.7396
+    ]
+  },
+  "cascade_heading_accuracy": {
+    "k": 99,
+    "n": 148,
+    "share": 0.668918918918919,
+    "ci95": [
+      0.5897,
+      0.7396
+    ]
+  },
+  "minus_cascade": {
+    "diff": 0.0,
+    "ci95": [
+      -0.0946,
+      0.0878
+    ]
+  },
+  "fixed": 23,
+  "broken": 23,
+  "gold_in_candidates": {
+    "k": 137,
+    "n": 148,
+    "share": 0.9256756756756757,
+    "ci95": [
+      0.8718,
+      0.958
+    ]
+  },
+  "candidates_mean": 6.73,
+  "cost_usd": 0.0047,
+  "errors": 5,
+  "latency_ms_p50": 13261.9
+}
