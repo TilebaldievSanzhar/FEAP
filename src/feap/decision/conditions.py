@@ -11,15 +11,18 @@
 
 - сноска 5) или «в порядке, указанном в дополнительном примечании» — режим: из
   описания не выводится, по умолчанию не заявлен (презумпция);
-- «прочие» / «прочий» / «прочая» / «прочее» — остаток; с уточнением
-  («креветки прочие», «прочие, с содержанием жира») — остаток ∧ уточнение.
-  «… и прочие пищевые субпродукты» — перечисление, а не остаток;
+- «прочие» в любом падеже («из прочих текстильных материалов», «филе прочей рыбы») и
+  «любых других» — остаток; с уточнением («креветки прочие», «прочие, с содержанием жира») —
+  остаток ∧ уточнение. Перечисление — не остаток: «… и прочие пищевые субпродукты»,
+  «без прочих ингредиентов», «с прочими материалами», «гормонов, прочих соединений»;
 - вся строка — сравнение с числом («массой не более 80 кг») — числовое условие;
 - остальное — семантическое условие для исполнителя.
 
-Текст товарной позиции с «прочие» («Мебель прочая и ее части», 9403) — остаток среди
-позиций своей группы: он исключает предшествующие позиции. Для этого нужны позиции
-группы (``headings``); без них текст позиции проверяется как обычное условие.
+Текст товарной позиции с «прочие» («Мебель прочая и ее части», 9403) или с оговоркой
+«в другом месте не поименованные» (8543, 9031) — остаток среди позиций своей группы: он
+исключает предшествующие позиции и всегда — позицию, выбранную каскадом, если она идёт
+раньше. Для этого нужны позиции группы (``headings``); без них текст позиции проверяется
+как обычное условие.
 """
 from __future__ import annotations
 
@@ -36,8 +39,15 @@ from feap.decision.rows import PositionRows, Row
 REGIME_FOOTNOTE = '5'
 _FOOTNOTE = re.compile(r'\s(\d{1,2})\)$')
 _QUOTA = re.compile(r'в порядке, указанном в дополнительном примечании', re.IGNORECASE)
-_RESIDUAL = re.compile(r'(?<![А-Яа-яЁё])(прочие|прочий|прочая|прочее)(?![А-Яа-яЁё])', re.IGNORECASE)
-_ENUMERATION = re.compile(r'(?:^|\s)(?:и|или)\s*$')
+_RESIDUAL = re.compile(
+    r'(?<![А-Яа-яЁё])(прочие|прочий|прочая|прочее|прочих|прочим|прочими|прочего|прочему|прочем|прочей|прочую|'
+    r'прочею|любых других|любого другого|любой другой|любое другое)(?![А-Яа-яЁё])', re.IGNORECASE)
+#: Слово перед «прочие», после которого это перечисление, а не остаток.
+_NOT_RESIDUAL_AFTER = {'и', 'или', 'без', 'с', 'со', 'помимо', 'количествами', 'количеством',
+                       'прошедший', 'прошедшие', 'прошедшая', 'прошедшее'}
+#: «в другом месте (данной группы) не поименованные или не включенные» в тексте позиции.
+_NES = re.compile(r',?\s*в другом месте(?:\s+[а-яё]+){0,3}?\s+не поименованн\w*(?:\s+или\s+не включенн\w*)?',
+                  re.IGNORECASE)
 _INTERPRETIVE = re.compile(r'товарн\w*\s+позици|субпозици|примечани|групп[аыеи]\w*\s+\d', re.IGNORECASE)
 
 
@@ -55,8 +65,10 @@ def split_footnote(text: str) -> tuple[str, str | None]:
 def split_residual(text: str) -> tuple[bool, str]:
     """(это «прочие», уточнение без слова «прочие»)."""
     for m in _RESIDUAL.finditer(text):
-        if _ENUMERATION.search(text[:m.start()]):
-            continue  # «верблюды и прочие животные …» — перечисление
+        before = text[:m.start()].rstrip()
+        words = before.split()
+        if before.endswith(',') or (words and words[-1].lower() in _NOT_RESIDUAL_AFTER):
+            continue  # «верблюды и прочие животные …», «гормонов, прочих соединений» — перечисление
         rest = re.sub(r'\s+', ' ', text[:m.start()] + text[m.end():])
         rest = re.sub(r'\s+([,;:)])', r'\1', rest).strip(' ,;')
         return True, rest
@@ -66,8 +78,11 @@ def split_residual(text: str) -> tuple[bool, str]:
 def classify(text: str, *, heading: bool = False) -> dict:
     """Поля ``Condition`` по тексту строки (без id, позиции и контекста)."""
     if heading:
-        # «Мебель прочая и ее части» — остаток среди позиций группы; «… и прочие проводники» — нет
+        # «Мебель прочая и ее части», «… в другом месте не поименованные» — остаток среди позиций
+        # группы; «… и прочие проводники» — нет
         is_residual, rest = split_residual(text)
+        if _NES.search(rest):
+            is_residual, rest = True, _NES.sub('', rest).strip(' ,;')
         question = rest if is_residual and rest else text
         return {'kind': ConditionKind.SEMANTIC, 'residual': is_residual, 'question': question,
                 'interpretive': bool(_INTERPRETIVE.search(question)),
@@ -116,10 +131,11 @@ def nearest(siblings: list[Row], row: Row, cap: int) -> list[Row]:
 
 class _Builder:
     def __init__(self, trees: dict[str, PositionRows], cap: int,
-                 headings: dict[str, list[tuple[str, str]]] | None = None):
+                 headings: dict[str, list[tuple[str, str]]] | None = None, chosen: str | None = None):
         self.trees = trees
         self.cap = cap
         self.headings = headings or {}
+        self.chosen = chosen  # позиция каскада: всегда среди предшествующих для «прочие» позиции
         self.out = CaseConditions()
 
     def add(self, tree: PositionRows, row: Row) -> Condition:
@@ -147,6 +163,9 @@ class _Builder:
             return
         before = [(c, n) for c, n in self.headings.get(code[:2], []) if c < code]
         checked = before[-self.cap:] if self.cap else []
+        if self.chosen and self.chosen < code and self.chosen[:2] == code[:2] and all(
+                c != self.chosen for c, _ in checked):
+            checked = [h for h in before if h[0] == self.chosen] + checked
         for other, name in checked:
             self.add_heading(other, name)
         self.out.preceding[code] = [c for c, _ in checked]
@@ -185,7 +204,7 @@ def build_conditions(
         leaf = tree.leaf(chosen_code)
     except KeyError:
         raise ValueError(f'{chosen_code} — не лист позиции {tree.position}') from None
-    b = _Builder(trees, cap, headings)
+    b = _Builder(trees, cap, headings, chosen=tree.position)
     path = tree.path(leaf.id)
     b.out.chosen = [row.id for row in path]
     for row in path:

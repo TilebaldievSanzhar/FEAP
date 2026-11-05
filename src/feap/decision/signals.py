@@ -11,7 +11,7 @@
 | S3 | путь альтернативы весь T: сильный, если у выбранного есть U или F; иначе средний (зона ОПИ 3) |
 | S4 | собственное условие строки пути = U |
 | S5 | остаток «прочие» на пути = U |
-| S6 | на развилке пути два конкретных соседа = T, или описание — ассортимент |
+| S6 | описание — ассортимент (сильный); на развилке пути два конкретных соседа = T: сильный, если строка пути среди них не подтверждена, иначе средний — зона ОПИ 3 |
 | S7 | на пути режимное условие, а режим не подтверждён |
 """
 from __future__ import annotations
@@ -31,8 +31,8 @@ T, F, U = Status.T, Status.F, Status.U
 
 #: Политики предрегистрации (§5): вложены друг в друга, других для решения нет.
 #: Элемент — (сигнал, сила); сила None — любая.
-_P1 = {('S1', None), ('S2', None), ('S3', 'strong'), ('S6', None), ('S7', None)}
-_P2 = _P1 | {('S3', 'medium'), ('S4', None)}
+_P1 = {('S1', None), ('S2', None), ('S3', 'strong'), ('S6', 'strong'), ('S7', None)}
+_P2 = _P1 | {('S3', 'medium'), ('S6', 'medium'), ('S4', None)}
 _P3 = _P2 | {('S5', None)}
 POLICIES: dict[str, frozenset[tuple[str, str | None]]] = {
     'P1': frozenset(_P1), 'P2': frozenset(_P2), 'P3': frozenset(_P3),
@@ -121,8 +121,11 @@ def compute_signals(
                      and cc.conditions[cid].kind is not ConditionKind.REGIME
                      and statuses[cid].status is T]
         if len(confirmed) >= 2:
-            signals.append(Signal(name='S6', strength='strong', conditions=confirmed,
-                                  detail='подтверждены несовместимые соседи'))
+            # Строка пути подтверждена вместе с соседом — тексты пересекаются, решает ОПИ 3
+            # («газоанализаторы» и «хроматографы»), как S3 при чистом пути.
+            on_path = fork.row in confirmed
+            signals.append(Signal(name='S6', strength='medium' if on_path else 'strong', conditions=confirmed,
+                                  detail='подтверждены соседи одной развилки'))
     if assortment is T:
         signals.append(Signal(name='S6', strength='strong', conditions=['assortment'],
                               detail='в описании несколько товаров'))

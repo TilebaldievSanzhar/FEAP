@@ -49,6 +49,9 @@ def test_units_keep_their_physical_meaning():
     assert unit_of('м³').dimension == 'volume' and unit_of('куб.см').factor == Decimal('0.001')
     assert unit_of('литров').dimension == 'volume' and unit_of('л.').dimension == 'volume'
     assert unit_of('раз') is None and unit_of(None) is None
+    assert unit_of('м³/ч').dimension == 'flow' and unit_of('л/мин').factor == Decimal('0.06')
+    assert unit_of('кН').dimension == 'force' and unit_of('нм').dimension == 'length'
+    assert unit_of('дюйма').factor == Decimal('0.0254') and unit_of('мг/кг').dimension == 'mass_fraction'
 
 
 # ── Интервалы из строк ЕТТ ─────────────────────────────────────────────────
@@ -138,3 +141,8 @@ def test_missing_value_or_unknown_unit_is_unknown():
     assert compare(interval, None)[0] is U
     assert compare(interval, EvidenceFact(attribute='масса', note='не указано'))[0] is U
     assert compare(interval, _fact('70', 'пуд'))[0] is U
+
+
+def test_flow_rate_is_converted_not_guessed():
+    """M32: 250 л/мин = 15 м³/ч, это «не более 60 м³/ч»."""
+    assert compare(_interval('не более 60 м³/ч'), _fact('250', 'л/мин'))[0] is T

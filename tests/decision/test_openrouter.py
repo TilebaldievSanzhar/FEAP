@@ -136,3 +136,9 @@ async def test_extraction_needs_a_number_and_a_source(provider, payload, value, 
     fact = facts[REQUEST.key]
     assert (str(fact.value) if fact.value is not None else None) == value and fact.note == note
     assert len(calls) == 1
+
+
+def test_reading_rules_are_in_both_prompts():
+    from feap.decision.backend import READING_RULES
+    from feap.decision.providers.openrouter import SYSTEM_BATCH, SYSTEM_SINGLE
+    assert all(rule in SYSTEM_SINGLE and rule in SYSTEM_BATCH for rule in READING_RULES)

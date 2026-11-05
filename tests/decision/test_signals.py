@@ -69,9 +69,21 @@ def test_confirmed_alternative_s3_is_strong_when_the_chosen_path_is_not_clean():
 
 def test_two_confirmed_specific_siblings_s6_and_assortment():
     cc, statuses = _m02(**{'ножки и куски из них': T, 'грудки и куски из них': T})
-    assert ('S6', 'strong') in _names(compute_signals(cc, statuses))
+    assert ('S6', 'strong') in _names(compute_signals(cc, statuses))  # строка пути — «прочие», она F
     clean_cc, clean = _m02()
     assert _names(compute_signals(clean_cc, clean, assortment=T)) == [('S6', 'strong')]
+
+
+def test_confirmed_path_row_with_a_confirmed_sibling_is_the_opi3_zone():
+    """«газоанализаторы» и «хроматографы» обе T, выбран один из них — S6 средний, вне P1."""
+    t = tree('0207')
+    cc = build_conditions({'0207': t}, '0207146009', [])
+    own = _own(cc, F, **{cc.conditions[c].question: T for c in cc.chosen if cc.conditions[c].question})
+    own.update({cid: (T, Method.MODEL, None, []) for cid, c in cc.conditions.items()
+                if c.question == 'грудки и куски из них'})
+    signals = compute_signals(cc, evaluate(cc, own))
+    assert ('S6', 'medium') in _names(signals)
+    assert policy_flags(signals) == {'P1': False, 'P2': True, 'P3': True}
 
 
 def test_regime_on_the_chosen_path_always_asks_s7():

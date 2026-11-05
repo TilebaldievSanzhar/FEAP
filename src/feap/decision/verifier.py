@@ -38,7 +38,7 @@ from feap.decision.signals import OwnStatus, compute_signals, evaluate, policy_f
 
 #: Версия вопросов, вариантов и типизации строк. Меняется при любой их правке:
 #: прогоны с разными версиями не сравниваются (предрегистрация, §8).
-QUESTIONS_VERSION = 'e2lite-1'
+QUESTIONS_VERSION = 'e2lite-2'
 
 _LEADING = re.compile(r'^(?:с|со|на|при|в)\s+', re.IGNORECASE)
 

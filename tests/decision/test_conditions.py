@@ -43,8 +43,24 @@ def test_numeric_residual_and_enumerations():
     numeric = classify('прочие, с содержанием жира более 1 мас.%')
     assert numeric['residual'] and numeric['kind'] is K.NUMERIC and numeric['quantity'] == 'с содержанием жира'
     for text in ('верблюды и прочие животные семейства верблюдовых (Camelidae)',
-                 'печень, икра, молоки и прочие пищевые рыбные субпродукты', 'из прочих текстильных материалов'):
+                 'печень, икра, молоки и прочие пищевые рыбные субпродукты',
+                 'с добавлением сахара или других подслащивающих веществ, но без прочих ингредиентов',
+                 'не армированные или не комбинированные иным способом с прочими материалами',
+                 'средства химические контрацептивные на основе гормонов, прочих соединений товарной позиции 2937',
+                 'вагоны железнодорожные, оборудованные помимо прочего дизель-генераторной установкой'):
         assert not classify(text)['residual'], text
+
+
+@pytest.mark.parametrize('text, question', [
+    ('из прочих текстильных материалов', 'из текстильных материалов'),
+    ('соки прочих цитрусовых', 'соки цитрусовых'),
+    ('филе прочей рыбы, свежее или охлажденное', 'филе рыбы, свежее или охлажденное'),
+    ('для прочих целей', 'для целей'),
+    ('сок из одного вида любых других фруктов, орехов или овощей', 'сок из одного вида фруктов, орехов или овощей'),
+])
+def test_residual_in_oblique_cases(text, question):
+    fields = classify(text)
+    assert fields['residual'] and fields['question'] == question
 
 
 def test_references_and_numbers_are_marked():
@@ -146,3 +162,21 @@ def test_enumerated_others_in_a_heading_are_not_a_residual():
     fields = classify('Изделия прочие из пластмасс и изделия из прочих материалов товарных позиций 3901 – 3914',
                       heading=True)
     assert fields['residual'] and fields['question'].startswith('Изделия из пластмасс')
+
+
+def test_not_elsewhere_specified_heading_is_a_residual_and_sees_the_chosen_heading():
+    """M34: двигатель 8501 и альтернатива 8543 «… в другом месте данной группы не поименованные»."""
+    fields = classify('Машины электрические и аппаратура, имеющие индивидуальные функции, в другом месте данной '
+                      'группы не поименованные или не включенные', heading=True)
+    assert fields['residual'] and fields['question'] == 'Машины электрические и аппаратура, имеющие индивидуальные функции'
+    trees = {p: tree(p) for p in ('8501', '8543')}
+    cc = build_conditions(trees, '8501522001', ['8543'], headings=_headings())
+    assert cc.preceding['8543'][0] == '8501' and len(cc.preceding['8543']) == 16  # 15 ближайших + позиция каскада
+    assert cc.omitted_preceding['8543'] == 41 - 16  # 8501 проверяется, остальные до окна — нет
+
+
+def test_heading_text_duplicated_as_a_row_is_dropped():
+    """3209 90 000 0 назван по TWS: путь начинается с текста самой позиции."""
+    t = tree('3209')
+    assert [r.text for r in t.siblings(t.leaf('3209900000').id)] == [
+        'на основе акриловых или виниловых полимеров', 'прочие']

@@ -45,7 +45,10 @@ class PositionRows:
                 raise ValueError(f'{code} не относится к позиции {position}')
             node = self.rows[position]
             node.leaves.append(code)
-            for text in (full or name).split(SEP):
+            parts = (full or name).split(SEP)
+            if len(parts) > 1 and parts[0] == name:
+                parts = parts[1:]  # путь из TWS начинается с текста самой позиции (3209 90 000 0)
+            for text in parts:
                 child = next((c for c in node.children if self.rows[c].text == text), None)
                 if child is None:
                     prefix = f'{node.id}.' if node.parent else f'{position}/'
