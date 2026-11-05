@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 import httpx
 
@@ -32,11 +32,16 @@ from feap.decision.providers.openrouter import BudgetExhausted
 
 DECISIONS_URL = 'https://openrouter.ai/api/alpha/decisions'
 
-#: Контекст моделей по каталогу OpenRouter (5 ноября 2026), с запасом на служебные токены.
+#: Контекст моделей по каталогу OpenRouter (5–6 ноября 2026), с запасом на служебные токены.
 CONTEXT = {
     'typesafe/jev-1.14': 262_144,
     'liquid/d1.1': 65_536,
     'microsoft/microsoft-decision-1': 32_768,
+    'cloudflare/clef': 65_537,
+    'cloudflare/clef-flash': 16_384,
+    'upstage/solar-decide': 524_288,
+    'inception/mercury-decide': 65_536,
+    'openai/gpt-6-luna-decisions': 1_050_000,
 }
 _RULES = ' '.join(READING_RULES)
 
@@ -64,12 +69,18 @@ def _parse(question: DecisionQuestion, answer: dict | None, call_id: str) -> Dec
 
 
 class OpenRouterDecisions:
-    """V3: семантические вопросы верификатора как ``choice`` с тремя статусами."""
+    """V3: семантические вопросы верификатора как ``choice`` с тремя статусами.
+
+    ``instructions`` задаёт текст инструкции вопроса; по умолчанию — условие ЕТТ с правилами
+    чтения верификатора. Движок фактов передаёт свой текст (``FactBank.instructions_for``).
+    """
 
     def __init__(self, model: str, *, api_key: str | None = None, concurrency: int = 4, timeout: float = 120.0,
-                 questions_per_request: int = 40, transport: httpx.AsyncBaseTransport | None = None):
+                 questions_per_request: int = 40, transport: httpx.AsyncBaseTransport | None = None,
+                 instructions: Callable[[DecisionQuestion], str] | None = None):
         self.model = model
         self.name = f'V3:{model}'
+        self._instructions = instructions or _instructions
         self.api_key = api_key
         self.timeout = timeout
         self.questions_per_request = questions_per_request
@@ -91,7 +102,7 @@ class OpenRouterDecisions:
         current: list[DecisionQuestion] = []
         size = base
         for q in questions:
-            cost = estimate_tokens(_instructions(q) + str(q.options)) + 10
+            cost = estimate_tokens(self._instructions(q) + str(q.options)) + 10
             if current and (len(current) >= self.questions_per_request or size + cost > self.max_input_tokens):
                 chunks.append(current)
                 current, size = [], base
@@ -116,7 +127,7 @@ class OpenRouterDecisions:
         body = {
             'model': self.model,
             'state': _state(spans),
-            'questions': {key: {'type': 'choice', 'instructions': _instructions(q), 'criteria': dict(q.options)}
+            'questions': {key: {'type': 'choice', 'instructions': self._instructions(q), 'criteria': dict(q.options)}
                           for key, q in keys.items()},
         }
         if estimate_tokens(str(body)) > self.max_input_tokens:

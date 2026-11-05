@@ -1,0 +1,281 @@
+# Профили групп ТН ВЭД для движка фактов, версия profiles-1 (к банку facts-1).
+#
+# Для каждой группы — какие варианты ответов банка с ней совместимы. Это «скомпилированный тариф»:
+# составлено один раз (Claude Opus 5.5, 6 ноября 2026) по наименованиям и примечаниям групп и
+# общим правилам ТН ВЭД, до сбора ответов моделей и без опоры на кейсы оценки пилота.
+#
+# Правила чтения:
+# - вопрос не указан → ограничения нет;
+# - условный вопрос банка (с полем absent: food_base, food_preparation, chemical_form, textile_form,
+#   metal_form, vehicle_kind) не указан → допустим только вариант absent («не относится»);
+# - any → ограничения нет, в том числе для условного вопроса;
+# - unknown совместим с любой группой и в списки не пишется.
+# Профили нарочно широкие: они отсекают несовместимое, а различать близкие группы помогает
+# маршрутизатор, обученный на реестре.
+version: profiles-1
+bank: facts-1
+groups:
+  # ── I. Живые животные; продукты животного происхождения ──
+  '01': {kind: [live], material: [animal], state: [living], processing: [natural], completeness: [not_article],
+         function: [food, agriculture, leisure, other], food_base: any, food_preparation: any,
+         drive: [none], principle: [passive, chemical]}
+  '02': {kind: [animal_product], material: [animal], state: [solid], processing: [natural, primary],
+         completeness: [not_article], function: [food], food_base: [meat], food_preparation: [natural, preserved],
+         drive: [none], principle: [passive, chemical]}
+  '03': {kind: [animal_product, live], material: [animal], state: [solid, living], processing: [natural, primary],
+         completeness: [not_article], function: [food, feed], food_base: [fish], food_preparation: [natural, preserved],
+         drive: [none], principle: [passive, chemical]}
+  '04': {kind: [animal_product, food_preparation], material: [animal], state: [solid, liquid, paste],
+         processing: [natural, primary, compound], completeness: [not_article], function: [food],
+         food_base: [dairy, eggs_honey, mixed], food_preparation: [natural, preserved, with_additions],
+         drive: [none], principle: [passive, chemical]}
+  '05': {kind: [animal_product], material: [animal], state: [solid, article], processing: [natural, primary, waste],
+         completeness: [not_article], function: [raw_material, medicine, other], drive: [none],
+         principle: [passive, chemical]}
+  # ── II. Продукты растительного происхождения ──
+  '06': {kind: [live, plant_product], material: [plant], state: [living, solid, article], processing: [natural],
+         completeness: [not_article, complete], function: [agriculture, decoration, household, other],
+         drive: [none], principle: [passive, chemical]}
+  '07': {kind: [plant_product], material: [plant], state: [solid], processing: [natural, primary],
+         completeness: [not_article], function: [food, agriculture], food_base: [fruit_veg],
+         food_preparation: [natural, preserved], drive: [none], principle: [passive, chemical]}
+  '08': {kind: [plant_product], material: [plant], state: [solid], processing: [natural, primary],
+         completeness: [not_article], function: [food], food_base: [fruit_veg], food_preparation: [natural, preserved],
+         drive: [none], principle: [passive, chemical]}
+  '09': {kind: [plant_product], material: [plant], state: [solid], processing: [natural, primary, compound],
+         completeness: [not_article], function: [food], food_base: [coffee_tea_spice],
+         food_preparation: [natural, preserved, with_additions], drive: [none], principle: [passive, chemical]}
+  '10': {kind: [plant_product], material: [plant], state: [solid], processing: [natural], completeness: [not_article],
+         function: [food, feed, agriculture, raw_material], food_base: [cereal], food_preparation: [natural],
+         drive: [none], principle: [passive, chemical]}
+  '11': {kind: [plant_product], material: [plant], state: [solid], processing: [primary], completeness: [not_article],
+         function: [food, feed, raw_material], food_base: [cereal, fruit_veg], food_preparation: [natural],
+         drive: [none], principle: [passive, chemical]}
+  '12': {kind: [plant_product], material: [plant], state: [solid], processing: [natural, primary],
+         completeness: [not_article], function: [food, feed, agriculture, raw_material, medicine],
+         food_base: any, food_preparation: any, drive: [none], principle: [passive, chemical]}
+  '13': {kind: [plant_product, chemical], material: [plant, chemical], state: [solid, liquid, paste],
+         processing: [natural, primary, compound], completeness: [not_article],
+         function: [food, raw_material, medicine, other], food_base: any, food_preparation: any,
+         chemical_form: [natural_extract, mixture, not_chemical], drive: [none], principle: [passive, chemical]}
+  '14': {kind: [plant_product], material: [plant], state: [solid, sheet_profile], processing: [natural, primary],
+         completeness: [not_article], function: [raw_material, other], drive: [none], principle: [passive, chemical]}
+  # ── III. Жиры и масла ──
+  '15': {kind: [fat_oil], material: [plant, animal, chemical], state: [liquid, solid, paste],
+         processing: [natural, primary, compound], completeness: [not_article],
+         function: [food, raw_material, fuel, other], food_base: [fat], food_preparation: any, chemical_form: any,
+         drive: [none], principle: [passive, chemical]}
+  # ── IV. Готовые пищевые продукты; напитки; табак ──
+  '16': {kind: [food_preparation], material: [animal], state: [solid, paste], processing: [compound, primary],
+         completeness: [not_article], function: [food], food_base: [meat, fish, mixed],
+         food_preparation: [ready_meal, preserved, with_additions], drive: [none], principle: [passive, chemical]}
+  '17': {kind: [food_preparation, plant_product], material: [plant, chemical], state: [solid, liquid, paste],
+         processing: [primary, compound], completeness: [not_article], function: [food], food_base: [sugar, mixed],
+         food_preparation: [natural, with_additions, ready_meal], drive: [none], principle: [passive, chemical]}
+  '18': {kind: [food_preparation, plant_product], material: [plant], state: [solid, paste, liquid],
+         processing: [natural, primary, compound], completeness: [not_article], function: [food],
+         food_base: [cocoa, mixed], food_preparation: [natural, with_additions, ready_meal], drive: [none],
+         principle: [passive, chemical]}
+  '19': {kind: [food_preparation], material: [plant, animal], state: [solid, paste], processing: [compound],
+         completeness: [not_article], function: [food], food_base: [cereal, dairy, mixed],
+         food_preparation: [with_additions, ready_meal], drive: [none], principle: [passive, chemical]}
+  '20': {kind: [food_preparation], material: [plant], state: [solid, liquid, paste], processing: [compound, primary],
+         completeness: [not_article], function: [food], food_base: [fruit_veg, mixed],
+         food_preparation: [preserved, with_additions, ready_meal], drive: [none], principle: [passive, chemical]}
+  '21': {kind: [food_preparation], material: [plant, animal, chemical], state: [solid, liquid, paste],
+         processing: [compound], completeness: [not_article], function: [food, medicine, other], food_base: any,
+         food_preparation: [with_additions, ready_meal], chemical_form: any, drive: [none],
+         principle: [passive, chemical]}
+  '22': {kind: [beverage_tobacco], material: [plant, chemical], state: [liquid], processing: [compound, primary],
+         completeness: [not_article], function: [food, raw_material, other],
+         food_base: [water, alcohol, fruit_veg, mixed], food_preparation: [natural, preserved, with_additions, ready_meal],
+         chemical_form: any, drive: [none], principle: [passive, chemical]}
+  '23': {kind: [feed, plant_product], material: [plant, animal], state: [solid, liquid, paste],
+         processing: [primary, compound, waste], completeness: [not_article], function: [feed, raw_material],
+         food_base: any, food_preparation: any, drive: [none], principle: [passive, chemical]}
+  '24': {kind: [beverage_tobacco], material: [plant, chemical], state: [solid, liquid, article],
+         processing: [natural, compound, finished], completeness: [not_article, complete], function: [other, leisure]}
+  # ── V. Минеральные продукты ──
+  '25': {kind: [mineral_fuel], material: [mineral, chemical], state: [solid], processing: [natural, primary],
+         completeness: [not_article], function: [raw_material, construction, food, agriculture, other],
+         food_base: any, food_preparation: any, chemical_form: any, drive: [none], principle: [passive, chemical]}
+  '26': {kind: [mineral_fuel], material: [mineral], state: [solid], processing: [natural, primary, waste],
+         completeness: [not_article], function: [raw_material], drive: [none], principle: [passive, chemical]}
+  '27': {kind: [mineral_fuel, chemical], material: [petroleum, chemical], state: [liquid, solid, gas, paste],
+         processing: [natural, primary, compound], completeness: [not_article], function: [fuel, raw_material, other],
+         chemical_form: any, drive: [none], principle: [passive, chemical]}
+  # ── VI. Продукция химической промышленности ──
+  '28': {kind: [chemical], material: [chemical, mineral], state: [solid, liquid, gas], completeness: [not_article],
+         function: [raw_material, agriculture, other], chemical_form: [compound], drive: [none],
+         principle: [passive, chemical]}
+  '29': {kind: [chemical], material: [chemical], state: [solid, liquid, gas], completeness: [not_article],
+         function: [raw_material, food, medicine, other], chemical_form: [compound], drive: [none],
+         principle: [passive, chemical]}
+  '30': {kind: [chemical], material: [chemical, plant, animal, textile], completeness: [not_article, complete, set],
+         function: [medicine], user: [medical, household, universal], chemical_form: [mixture, compound, natural_extract],
+         textile_form: any, drive: [none], principle: [passive, chemical]}
+  '31': {kind: [chemical], material: [chemical, mineral, animal, plant], state: [solid, liquid],
+         completeness: [not_article], function: [agriculture], chemical_form: [compound, mixture, natural_extract],
+         drive: [none], principle: [passive, chemical]}
+  '32': {kind: [chemical], material: [chemical], state: [liquid, paste, solid], completeness: [not_article],
+         function: [construction, raw_material, decoration, protection, other],
+         chemical_form: [mixture, compound, natural_extract], drive: [none], principle: [passive, chemical]}
+  '33': {kind: [chemical], material: [chemical, plant], state: [liquid, paste, solid],
+         completeness: [not_article, complete, set], function: [hygiene_care],
+         chemical_form: [mixture, natural_extract], drive: [none], principle: [passive, chemical]}
+  '34': {kind: [chemical], material: [chemical, petroleum], state: [solid, liquid, paste, article],
+         function: [hygiene_care, household, lighting, decoration, fuel, leisure, raw_material, other],
+         chemical_form: [mixture, compound], drive: [none], principle: [passive, chemical]}
+  '35': {kind: [chemical], material: [chemical, plant, animal], state: [solid, liquid, paste],
+         completeness: [not_article], function: [raw_material, construction, food, other],
+         chemical_form: [mixture, compound, natural_extract], drive: [none], principle: [passive, chemical]}
+  '36': {kind: [chemical], material: [chemical], state: [solid, liquid, article],
+         function: [weapon, leisure, fuel, household, other], chemical_form: [mixture, compound],
+         principle: [passive, chemical]}
+  '37': {kind: [chemical], material: [chemical, plastic, paper], state: [sheet_profile, article, liquid],
+         function: [information, measurement, medicine, other], chemical_form: any, drive: [none],
+         principle: [passive, chemical, optical]}
+  '38': {kind: [chemical], material: [chemical], completeness: [not_article],
+         function: [agriculture, raw_material, medicine, fuel, protection, processing, other],
+         chemical_form: [mixture, compound, natural_extract], drive: [none], principle: [passive, chemical]}
+  # ── VII. Пластмассы, каучук, резина ──
+  '39': {kind: [plastic_rubber], material: [plastic], state: [solid, sheet_profile, article, liquid, paste],
+         processing: [material, finished, waste, compound], chemical_form: any, drive: [none], principle: [passive]}
+  '40': {kind: [plastic_rubber], material: [rubber], processing: [natural, material, finished, waste, compound],
+         chemical_form: any, vehicle_kind: any, drive: [none], principle: [passive]}
+  # ── VIII. Кожа, мех, изделия из них ──
+  '41': {kind: [leather_fur], material: [animal], state: [sheet_profile, solid], processing: [natural, primary, material],
+         completeness: [not_article], function: [raw_material], drive: [none], principle: [passive, chemical]}
+  '42': {kind: [leather_fur, textile, plastic_rubber], material: [animal, plastic, textile, paper, multiple],
+         state: [article], processing: [finished], completeness: [complete, accessory, set],
+         function: [packaging, clothing, household, leisure, protection, other], textile_form: any, drive: [none],
+         principle: [passive]}
+  '43': {kind: [leather_fur, textile], material: [animal, textile, plastic], state: [article, sheet_profile],
+         function: [clothing, raw_material, household], textile_form: any, drive: [none], principle: [passive]}
+  # ── IX. Древесина, пробка, плетёные изделия ──
+  '44': {kind: [wood], material: [wood], state: [solid, sheet_profile, article],
+         processing: [natural, primary, material, finished, waste], drive: [none], principle: [passive, chemical]}
+  '45': {kind: [wood], material: [wood], drive: [none], principle: [passive]}
+  '46': {kind: [wood, misc_article, plant_product], material: [plant, wood], state: [article, sheet_profile],
+         processing: [finished, material], drive: [none], principle: [passive]}
+  # ── X. Целлюлоза, бумага, печатная продукция ──
+  '47': {kind: [paper], material: [paper, wood], processing: [primary, material, waste], completeness: [not_article],
+         function: [raw_material], drive: [none], principle: [passive]}
+  '48': {kind: [paper], material: [paper], state: [sheet_profile, article], processing: [material, finished],
+         drive: [none], principle: [passive]}
+  '49': {kind: [paper], material: [paper], state: [article, sheet_profile], processing: [finished],
+         completeness: [complete, set], function: [information, leisure, decoration, other], drive: [none],
+         principle: [passive]}
+  # ── XI. Текстильные материалы и изделия ──
+  '50': {kind: [textile], material: [animal, textile], textile_form: [fibre, yarn, woven], drive: [none], principle: [passive]}
+  '51': {kind: [textile], material: [animal, textile], textile_form: [fibre, yarn, woven], drive: [none], principle: [passive]}
+  '52': {kind: [textile], material: [plant, textile], textile_form: [fibre, yarn, woven], drive: [none], principle: [passive]}
+  '53': {kind: [textile], material: [plant, textile], textile_form: [fibre, yarn, woven], drive: [none], principle: [passive]}
+  '54': {kind: [textile], material: [plastic, textile, chemical], textile_form: [yarn, woven, fibre], drive: [none],
+         principle: [passive]}
+  '55': {kind: [textile], material: [plastic, textile, chemical], textile_form: [fibre, yarn, woven], drive: [none],
+         principle: [passive]}
+  '56': {kind: [textile], material: [textile, plastic, plant], textile_form: [nonwoven, technical, yarn], drive: [none],
+         principle: [passive]}
+  '57': {kind: [textile], material: [textile, plastic, animal, plant], function: [household, construction, decoration],
+         textile_form: [carpet], drive: [none], principle: [passive]}
+  '58': {kind: [textile], material: [textile, plastic, plant, animal], textile_form: [woven, knitted, technical, home_textile],
+         drive: [none], principle: [passive]}
+  '59': {kind: [textile], material: [textile, plastic], textile_form: [woven, knitted, technical, nonwoven],
+         function: [raw_material, processing, construction, protection, other], drive: [none], principle: [passive]}
+  '60': {kind: [textile], material: [textile, plastic, plant, animal], state: [sheet_profile], processing: [material],
+         textile_form: [knitted], drive: [none], principle: [passive]}
+  '61': {kind: [textile], material: [textile, plastic, plant, animal], state: [article],
+         completeness: [complete, accessory, set], function: [clothing, protection, leisure],
+         textile_form: [garment_knitted], drive: [none], principle: [passive]}
+  '62': {kind: [textile], material: [textile, plastic, plant, animal], state: [article],
+         completeness: [complete, accessory, set], function: [clothing, protection, leisure],
+         textile_form: [garment_woven], drive: [none], principle: [passive]}
+  '63': {kind: [textile], material: [textile, plastic, plant, animal], state: [article], processing: [finished, waste],
+         function: [household, packaging, protection, clothing, leisure, other],
+         textile_form: [home_textile, technical, garment_woven, garment_knitted, carpet], drive: [none],
+         principle: [passive]}
+  # ── XII. Обувь, головные уборы, зонты, перья ──
+  '64': {kind: [footwear_headgear], state: [article], completeness: [complete, part_specific],
+         function: [clothing, protection, leisure], textile_form: any, drive: [none], principle: [passive]}
+  '65': {kind: [footwear_headgear, textile], state: [article], function: [clothing, protection], textile_form: any,
+         drive: [none], principle: [passive]}
+  '66': {kind: [footwear_headgear, misc_article], state: [article], function: [protection, household, other],
+         drive: [none], principle: [passive, mechanical]}
+  '67': {kind: [footwear_headgear, misc_article, animal_product], function: [decoration, clothing, other],
+         textile_form: any, drive: [none], principle: [passive]}
+  # ── XIII. Изделия из камня, керамики, стекла ──
+  '68': {kind: [stone_ceramic_glass, mineral_fuel], material: [mineral, chemical], state: [article, sheet_profile, solid],
+         processing: [primary, material, finished], function: [construction, processing, raw_material, protection,
+         decoration, other], drive: [none], principle: [passive]}
+  '69': {kind: [stone_ceramic_glass], material: [ceramic_glass, mineral], state: [article, sheet_profile],
+         function: [construction, household, processing, decoration, other], drive: [none], principle: [passive]}
+  '70': {kind: [stone_ceramic_glass], material: [ceramic_glass], state: [article, sheet_profile, solid],
+         textile_form: any, vehicle_kind: any, drive: [none], principle: [passive, optical]}
+  # ── XIV. Драгоценные металлы и камни, бижутерия ──
+  '71': {kind: [precious], function: [decoration, raw_material, other], metal_form: any, drive: [none],
+         principle: [passive]}
+  # ── XV. Недрагоценные металлы и изделия из них ──
+  '72': {kind: [base_metal], material: [ferrous], state: [solid, sheet_profile], processing: [primary, material, waste],
+         completeness: [not_article], function: [raw_material, construction], metal_form: [unwrought, semi],
+         drive: [none], principle: [passive]}
+  '73': {kind: [base_metal], material: [ferrous], state: [article, sheet_profile], processing: [finished, material],
+         completeness: [complete, part_general, part_specific, accessory, set],
+         function: [construction, household, fastening, packaging, fluids, thermal, transport, protection, other],
+         metal_form: [tube, structure, fastener_chain, household_ware, hardware, semi], vehicle_kind: any,
+         drive: [none, manual, other], principle: [passive, mechanical, chemical]}
+  '74': {kind: [base_metal], material: [copper], metal_form: [unwrought, semi, tube, structure, fastener_chain,
+         household_ware, hardware], drive: [none], principle: [passive]}
+  '75': {kind: [base_metal], material: [other_metal], metal_form: [unwrought, semi, tube, structure, fastener_chain,
+         hardware], drive: [none], principle: [passive]}
+  '76': {kind: [base_metal], material: [aluminium], metal_form: [unwrought, semi, tube, structure, fastener_chain,
+         household_ware, hardware], drive: [none], principle: [passive]}
+  '78': {kind: [base_metal], material: [other_metal], metal_form: [unwrought, semi, tube, hardware, structure],
+         drive: [none], principle: [passive]}
+  '79': {kind: [base_metal], material: [other_metal], metal_form: [unwrought, semi, tube, hardware, structure],
+         drive: [none], principle: [passive]}
+  '80': {kind: [base_metal], material: [other_metal], metal_form: [unwrought, semi, tube, hardware, structure],
+         drive: [none], principle: [passive]}
+  '81': {kind: [base_metal], material: [other_metal], metal_form: [unwrought, semi, tube, hardware, structure,
+         fastener_chain, household_ware], drive: [none], principle: [passive]}
+  '82': {kind: [base_metal, instrument], material: [ferrous, other_metal, copper, aluminium, multiple], state: [article],
+         processing: [finished], completeness: [complete, part_specific, accessory, set],
+         function: [processing, household, construction, agriculture, food, other], metal_form: [tool_cutlery],
+         drive: [manual, none], principle: [mechanical, passive]}
+  '83': {kind: [base_metal], material: [ferrous, copper, aluminium, other_metal, multiple], state: [article],
+         function: [fastening, protection, household, construction, decoration, packaging, information, other],
+         metal_form: [hardware, structure, fastener_chain, household_ware], vehicle_kind: any,
+         principle: [mechanical, passive, electric]}
+  # ── XVI. Машины, оборудование, электротехника ──
+  '84': {kind: [machine_electrical], state: [article], processing: [finished],
+         completeness: [complete, part_specific, part_general, accessory, set],
+         function: [processing, fluids, thermal, handling, power, information, household, agriculture, construction,
+         measurement, packaging, hygiene_care, other], principle: [mechanical, electric, electronic],
+         metal_form: any, vehicle_kind: any}
+  '85': {kind: [machine_electrical], state: [article, sheet_profile], processing: [finished, material],
+         function: [power, information, lighting, thermal, household, protection, measurement, processing,
+         hygiene_care, other], drive: [mains, battery, none, other], principle: [electric, electronic, optical],
+         metal_form: any, vehicle_kind: any}
+  # ── XVII. Транспорт ──
+  '86': {kind: [vehicle], function: [transport, protection, other], metal_form: any, vehicle_kind: [rail]}
+  '87': {kind: [vehicle], function: [transport, agriculture, handling, protection, other], metal_form: any,
+         vehicle_kind: [car, truck_bus, tractor, two_wheel, trailer, other_vehicle]}
+  '88': {kind: [vehicle], function: [transport, information, measurement, leisure, other], metal_form: any,
+         vehicle_kind: [aircraft]}
+  '89': {kind: [vehicle], function: [transport, leisure, processing, other], metal_form: any, vehicle_kind: [vessel]}
+  # ── XVIII. Приборы, часы, музыкальные инструменты ──
+  '90': {kind: [instrument, machine_electrical], state: [article],
+         function: [measurement, medicine, information, protection, other],
+         principle: [optical, electronic, mechanical, electric], metal_form: any, vehicle_kind: any}
+  '91': {kind: [instrument], state: [article], function: [measurement, decoration, clothing],
+         principle: [mechanical, electronic, electric], metal_form: any}
+  '92': {kind: [instrument], state: [article], function: [leisure], metal_form: any}
+  # ── XIX. Оружие ──
+  '93': {kind: [arms], function: [weapon, leisure, protection], metal_form: any}
+  # ── XX. Разные промышленные товары ──
+  '94': {kind: [misc_article], state: [article], function: [household, construction, lighting, medicine, other],
+         textile_form: any, metal_form: any, vehicle_kind: any}
+  '95': {kind: [misc_article], function: [leisure], textile_form: any, metal_form: any, vehicle_kind: any}
+  '96': {kind: [misc_article], textile_form: any, metal_form: any}
+  # ── XXI. Искусство и антиквариат ──
+  '97': {kind: [art], function: [decoration, other], drive: [none], principle: [passive]}

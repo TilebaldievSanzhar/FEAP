@@ -42,7 +42,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-feap = ["prompts/templates/**/*.jinja2"]
+feap = ["prompts/templates/**/*.jinja2", "decision/facts/*.yaml"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
