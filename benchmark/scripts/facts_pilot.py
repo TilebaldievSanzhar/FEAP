@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import gzip
 import json
 import math
 import random
@@ -141,9 +142,15 @@ def estimate_usd(bank: FactBank, model: str, descriptions: list[str]) -> float:
 
 
 def read_jsonl(path: Path) -> list[dict]:
-    if not path.exists():
+    """Rows of a JSONL file; the committed compact ``.jsonl.gz`` is read when the full file is absent."""
+    packed = path.with_name(path.name + '.gz')
+    if path.exists():
+        text = path.read_text(encoding='utf-8')
+    elif packed.exists():
+        text = gzip.decompress(packed.read_bytes()).decode('utf-8')
+    else:
         return []
-    return [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines() if line.strip()]
+    return [json.loads(line) for line in text.splitlines() if line.strip()]
 
 
 async def collect(args: argparse.Namespace) -> None:
@@ -236,6 +243,10 @@ def pct(x: float | None) -> str:
     return '—' if x is None else f'{x:.0%}'
 
 
+def ci(bounds: list[float] | None) -> str:
+    return '—' if not bounds else f'{bounds[0]:.0%}; {bounds[1]:.0%}'
+
+
 def phase_a(bank: FactBank, split: dict, cases: dict[str, CaseV2]) -> dict:
     d1 = load_facts(bank, 'train_d1', PRIMARY)
     jev = load_facts(bank, 'train_jev', SECOND)
@@ -284,8 +295,14 @@ def phase_a(bank: FactBank, split: dict, cases: dict[str, CaseV2]) -> dict:
     for name, rows in executors.items():
         pairs = [(top_label(rows[c]['facts'][q.id]), silver[c][q.id]) for c in silver if c in rows
                  for q in core if q.id in silver[c]]
+        answered = [(top_label(rows[c]['facts'][q.id]), silver[c][q.id]) for c in silver
+                    if c in rows and not rows[c].get('error') for q in core if q.id in silver[c]]
         cost = [rows[c]['cost_usd'] for c in silver if c in rows]
-        shoot[name] = {'n_cases': len(cost), 'core_accuracy': share(sum(a == b for a, b in pairs), len(pairs)),
+        errors = Counter((rows[c].get('error') or '')[:120] for c in silver if c in rows and rows[c].get('error'))
+        shoot[name] = {'n_cases': len(cost), 'failed_cases': sum(errors.values()),
+                       'failure': errors.most_common(1)[0][0] if errors else None,
+                       'core_accuracy': share(sum(a == b for a, b in pairs), len(pairs)),
+                       'core_accuracy_answered': share(sum(a == b for a, b in answered), len(answered)),
                        'core_unknown': share(sum(a == UNKNOWN for a, _ in pairs), len(pairs)),
                        'usd_per_case': round(sum(cost) / len(cost), 6) if cost else None}
     out['executors_on_silver'] = shoot
@@ -403,9 +420,11 @@ def report(a: dict, b: dict, bank: FactBank, profiles: Profiles) -> str:
     lines += ['', f"**G3:** {len(g3['passed'])} из {g3['core_questions']} базовых вопросов проходят "
               f"(unknown ≤ 15% и точность ≥ 80% у d1.1): {', '.join(g3['passed'])} — {'выполнено' if g3['ok'] else 'не выполнено'}.",
               '', '### Исполнители на серебряной разметке (базовые вопросы)', '',
-              '| Модель | кейсов | точность | unknown | $ на кейс |', '|---|---|---|---|---|']
+              '| Модель | кейсов | сбоев запроса | точность (сбой = unknown) | точность на отвеченных | unknown | $ на кейс |',
+              '|---|---|---|---|---|---|---|']
     for name, r in a['executors_on_silver'].items():
-        lines.append(f"| {name} | {r['n_cases']} | {pct(r['core_accuracy']['share'])} | {pct(r['core_unknown']['share'])} "
+        lines.append(f"| {name} | {r['n_cases']} | {r['failed_cases']} | {pct(r['core_accuracy']['share'])} "
+                     f"| {pct(r['core_accuracy_answered']['share'])} | {pct(r['core_unknown']['share'])} "
                      f"| {r['usd_per_case']} |")
     lines += ['', '## Фаза B — маршрутизация к группам', '',
               f"Оценка: dev148 + fresh145, {b['routers'][next(iter(b['routers']))]['n']} кейсов; каскад (R0 на dev, "
@@ -419,8 +438,8 @@ def report(a: dict, b: dict, bank: FactBank, profiles: Profiles) -> str:
                      f"| {pct(r['router_right_when_disagreeing']['share'])} | {r['net_if_router_followed']:+.1%} |")
     p = b['routers']['R3 закон+данные (d1.1, весь пул) — основной']
     lines += ['', f"**G1:** эталон в top-3 основного маршрутизатора на ошибках каскада — {pct(b['G1']['rescue3'])} "
-              f"(95% ДИ {p['rescue3_ci95']}), порог 50% — {'выполнено' if b['G1']['ok'] else 'не выполнено'}.",
-              f"**G2:** top-3 — {pct(b['G2']['top3'])} (95% ДИ {p['top3_ci95']}), порог 85% — "
+              f"(95% ДИ {ci(p['rescue3_ci95'])}), порог 50% — {'выполнено' if b['G1']['ok'] else 'не выполнено'}.",
+              f"**G2:** top-3 — {pct(b['G2']['top3'])} (95% ДИ {ci(p['top3_ci95'])}), порог 85% — "
               f"{'выполнено' if b['G2']['ok'] else 'не выполнено'}.", '',
               f"Каскад с прецедентами (C1) на fresh145 верно выбрал группу в {pct(b['cascade_c1_fresh']['top1']['share'])}; "
               f"основной маршрутизатор относительно C1: эталон в top-3 на его ошибках — "

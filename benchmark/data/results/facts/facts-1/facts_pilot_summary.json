@@ -1,0 +1,4415 @@
+{
+ "bank": {
+  "version": "facts-1",
+  "sha256": "0157be9a5b89e6458aa36e3477c581d4f66f3d9b3efeaa72a8459511328faa13"
+ },
+ "profiles": {
+  "version": "profiles-1",
+  "sha256": "1daec88e386b8b85c33c39b2458db77140e80e9ea07b1fbc6cd42fa00794a53c"
+ },
+ "phase_a": {
+  "questions": {
+   "kind": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 111,
+     "n": 5732,
+     "share": 0.01936496859734822,
+     "ci95": [
+      0.0161,
+      0.0233
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 900,
+     "n": 1000,
+     "share": 0.9,
+     "ci95": [
+      0.8798,
+      0.9171
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 71,
+      "n": 80,
+      "share": 0.8875,
+      "ci95": [
+       0.7998,
+       0.9397
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 71,
+      "n": 80,
+      "share": 0.8875,
+      "ci95": [
+       0.7998,
+       0.9397
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 42,
+      "n": 80,
+      "share": 0.525,
+      "ci95": [
+       0.417,
+       0.6308
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 42,
+      "n": 45,
+      "share": 0.9333333333333333,
+      "ci95": [
+       0.8214,
+       0.9771
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 71,
+      "n": 80,
+      "share": 0.8875,
+      "ci95": [
+       0.7998,
+       0.9397
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 71,
+      "n": 80,
+      "share": 0.8875,
+      "ci95": [
+       0.7998,
+       0.9397
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     }
+    },
+    "mutual_information_bits": 1.68
+   },
+   "material": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 333,
+     "n": 5732,
+     "share": 0.05809490579204466,
+     "ci95": [
+      0.0523,
+      0.0645
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 3,
+     "n": 1000,
+     "share": 0.003,
+     "ci95": [
+      0.001,
+      0.0088
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 858,
+     "n": 1000,
+     "share": 0.858,
+     "ci95": [
+      0.835,
+      0.8783
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 60,
+      "n": 80,
+      "share": 0.75,
+      "ci95": [
+       0.6452,
+       0.8319
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 60,
+      "n": 77,
+      "share": 0.7792207792207793,
+      "ci95": [
+       0.6746,
+       0.8573
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 67,
+      "n": 80,
+      "share": 0.8375,
+      "ci95": [
+       0.7416,
+       0.9025
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 67,
+      "n": 80,
+      "share": 0.8375,
+      "ci95": [
+       0.7416,
+       0.9025
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 68,
+      "n": 80,
+      "share": 0.85,
+      "ci95": [
+       0.7559,
+       0.9121
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 68,
+      "n": 80,
+      "share": 0.85,
+      "ci95": [
+       0.7559,
+       0.9121
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 38,
+      "n": 80,
+      "share": 0.475,
+      "ci95": [
+       0.3692,
+       0.583
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 38,
+      "n": 45,
+      "share": 0.8444444444444444,
+      "ci95": [
+       0.7122,
+       0.9225
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 1,
+      "n": 80,
+      "share": 0.0125,
+      "ci95": [
+       0.0022,
+       0.0675
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 68,
+      "n": 80,
+      "share": 0.85,
+      "ci95": [
+       0.7559,
+       0.9121
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 68,
+      "n": 80,
+      "share": 0.85,
+      "ci95": [
+       0.7559,
+       0.9121
+      ]
+     }
+    },
+    "mutual_information_bits": 1.361
+   },
+   "state": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 56,
+     "n": 5732,
+     "share": 0.009769713886950453,
+     "ci95": [
+      0.0075,
+      0.0127
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 950,
+     "n": 1000,
+     "share": 0.95,
+     "ci95": [
+      0.9347,
+      0.9619
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 74,
+      "n": 79,
+      "share": 0.9367088607594937,
+      "ci95": [
+       0.8603,
+       0.9727
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 43,
+      "n": 80,
+      "share": 0.5375,
+      "ci95": [
+       0.429,
+       0.6425
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 43,
+      "n": 45,
+      "share": 0.9555555555555556,
+      "ci95": [
+       0.8517,
+       0.9877
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 71,
+      "n": 80,
+      "share": 0.8875,
+      "ci95": [
+       0.7998,
+       0.9397
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 71,
+      "n": 79,
+      "share": 0.8987341772151899,
+      "ci95": [
+       0.8127,
+       0.9478
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     }
+    },
+    "mutual_information_bits": 0.852
+   },
+   "processing": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 224,
+     "n": 5732,
+     "share": 0.039078855547801813,
+     "ci95": [
+      0.0344,
+      0.0444
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 1,
+     "n": 1000,
+     "share": 0.001,
+     "ci95": [
+      0.0002,
+      0.0056
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 923,
+     "n": 1000,
+     "share": 0.923,
+     "ci95": [
+      0.9048,
+      0.938
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 73,
+      "n": 80,
+      "share": 0.9125,
+      "ci95": [
+       0.8302,
+       0.957
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 73,
+      "n": 78,
+      "share": 0.9358974358974359,
+      "ci95": [
+       0.8586,
+       0.9723
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 71,
+      "n": 80,
+      "share": 0.8875,
+      "ci95": [
+       0.7998,
+       0.9397
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 71,
+      "n": 79,
+      "share": 0.8987341772151899,
+      "ci95": [
+       0.8127,
+       0.9478
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 41,
+      "n": 80,
+      "share": 0.5125,
+      "ci95": [
+       0.4049,
+       0.6189
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 41,
+      "n": 45,
+      "share": 0.9111111111111111,
+      "ci95": [
+       0.7927,
+       0.9649
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 76,
+      "n": 80,
+      "share": 0.95,
+      "ci95": [
+       0.8784,
+       0.9804
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 76,
+      "n": 79,
+      "share": 0.9620253164556962,
+      "ci95": [
+       0.8942,
+       0.987
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     }
+    },
+    "mutual_information_bits": 0.818
+   },
+   "completeness": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 12,
+     "n": 5732,
+     "share": 0.00209351011863224,
+     "ci95": [
+      0.0012,
+      0.0037
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 898,
+     "n": 1000,
+     "share": 0.898,
+     "ci95": [
+      0.8777,
+      0.9153
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 77,
+      "n": 80,
+      "share": 0.9625,
+      "ci95": [
+       0.8955,
+       0.9872
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 77,
+      "n": 80,
+      "share": 0.9625,
+      "ci95": [
+       0.8955,
+       0.9872
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 71,
+      "n": 80,
+      "share": 0.8875,
+      "ci95": [
+       0.7998,
+       0.9397
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 71,
+      "n": 80,
+      "share": 0.8875,
+      "ci95": [
+       0.7998,
+       0.9397
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 41,
+      "n": 80,
+      "share": 0.5125,
+      "ci95": [
+       0.4049,
+       0.6189
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 41,
+      "n": 45,
+      "share": 0.9111111111111111,
+      "ci95": [
+       0.7927,
+       0.9649
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 72,
+      "n": 79,
+      "share": 0.9113924050632911,
+      "ci95": [
+       0.8282,
+       0.9564
+      ]
+     }
+    },
+    "mutual_information_bits": 0.808
+   },
+   "function": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 26,
+     "n": 5732,
+     "share": 0.0045359385903698535,
+     "ci95": [
+      0.0031,
+      0.0066
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 895,
+     "n": 1000,
+     "share": 0.895,
+     "ci95": [
+      0.8745,
+      0.9125
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 61,
+      "n": 80,
+      "share": 0.7625,
+      "ci95": [
+       0.6586,
+       0.8424
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 61,
+      "n": 80,
+      "share": 0.7625,
+      "ci95": [
+       0.6586,
+       0.8424
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 65,
+      "n": 80,
+      "share": 0.8125,
+      "ci95": [
+       0.7134,
+       0.8829
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 65,
+      "n": 80,
+      "share": 0.8125,
+      "ci95": [
+       0.7134,
+       0.8829
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 64,
+      "n": 80,
+      "share": 0.8,
+      "ci95": [
+       0.6995,
+       0.873
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 64,
+      "n": 80,
+      "share": 0.8,
+      "ci95": [
+       0.6995,
+       0.873
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 36,
+      "n": 80,
+      "share": 0.45,
+      "ci95": [
+       0.3458,
+       0.5588
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 36,
+      "n": 45,
+      "share": 0.8,
+      "ci95": [
+       0.6618,
+       0.891
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 65,
+      "n": 80,
+      "share": 0.8125,
+      "ci95": [
+       0.7134,
+       0.8829
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 65,
+      "n": 80,
+      "share": 0.8125,
+      "ci95": [
+       0.7134,
+       0.8829
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 63,
+      "n": 80,
+      "share": 0.7875,
+      "ci95": [
+       0.6858,
+       0.8629
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 63,
+      "n": 80,
+      "share": 0.7875,
+      "ci95": [
+       0.6858,
+       0.8629
+      ]
+     }
+    },
+    "mutual_information_bits": 1.732
+   },
+   "drive": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 672,
+     "n": 5732,
+     "share": 0.11723656664340544,
+     "ci95": [
+      0.1092,
+      0.1258
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 27,
+     "n": 1000,
+     "share": 0.027,
+     "ci95": [
+      0.0186,
+      0.039
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 856,
+     "n": 1000,
+     "share": 0.856,
+     "ci95": [
+      0.8329,
+      0.8764
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 66,
+      "n": 80,
+      "share": 0.825,
+      "ci95": [
+       0.7274,
+       0.8928
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 64,
+      "n": 70,
+      "share": 0.9142857142857143,
+      "ci95": [
+       0.8253,
+       0.9601
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 60,
+      "n": 80,
+      "share": 0.75,
+      "ci95": [
+       0.6452,
+       0.8319
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 58,
+      "n": 67,
+      "share": 0.8656716417910447,
+      "ci95": [
+       0.764,
+       0.9277
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 40,
+      "n": 80,
+      "share": 0.5,
+      "ci95": [
+       0.393,
+       0.607
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 38,
+      "n": 41,
+      "share": 0.926829268292683,
+      "ci95": [
+       0.8057,
+       0.9748
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 4,
+      "n": 80,
+      "share": 0.05,
+      "ci95": [
+       0.0196,
+       0.1216
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 68,
+      "n": 80,
+      "share": 0.85,
+      "ci95": [
+       0.7559,
+       0.9121
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 65,
+      "n": 72,
+      "share": 0.9027777777777778,
+      "ci95": [
+       0.8126,
+       0.9521
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 70,
+      "n": 75,
+      "share": 0.9333333333333333,
+      "ci95": [
+       0.8532,
+       0.9712
+      ]
+     }
+    },
+    "mutual_information_bits": 0.729
+   },
+   "principle": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 489,
+     "n": 5732,
+     "share": 0.08531053733426379,
+     "ci95": [
+      0.0784,
+      0.0928
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 1,
+     "n": 1000,
+     "share": 0.001,
+     "ci95": [
+      0.0002,
+      0.0056
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 833,
+     "n": 1000,
+     "share": 0.833,
+     "ci95": [
+      0.8086,
+      0.8548
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 65,
+      "n": 80,
+      "share": 0.8125,
+      "ci95": [
+       0.7134,
+       0.8829
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 65,
+      "n": 75,
+      "share": 0.8666666666666667,
+      "ci95": [
+       0.7717,
+       0.9259
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 73,
+      "n": 80,
+      "share": 0.9125,
+      "ci95": [
+       0.8302,
+       0.957
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 73,
+      "n": 80,
+      "share": 0.9125,
+      "ci95": [
+       0.8302,
+       0.957
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 38,
+      "n": 80,
+      "share": 0.475,
+      "ci95": [
+       0.3692,
+       0.583
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 38,
+      "n": 45,
+      "share": 0.8444444444444444,
+      "ci95": [
+       0.7122,
+       0.9225
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 73,
+      "n": 80,
+      "share": 0.9125,
+      "ci95": [
+       0.8302,
+       0.957
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 73,
+      "n": 80,
+      "share": 0.9125,
+      "ci95": [
+       0.8302,
+       0.957
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     }
+    },
+    "mutual_information_bits": 1.056
+   },
+   "user": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 92,
+     "n": 5732,
+     "share": 0.016050244242847175,
+     "ci95": [
+      0.0131,
+      0.0196
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 1,
+     "n": 1000,
+     "share": 0.001,
+     "ci95": [
+      0.0002,
+      0.0056
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 921,
+     "n": 1000,
+     "share": 0.921,
+     "ci95": [
+      0.9026,
+      0.9362
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 68,
+      "n": 80,
+      "share": 0.85,
+      "ci95": [
+       0.7559,
+       0.9121
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 67,
+      "n": 78,
+      "share": 0.8589743589743589,
+      "ci95": [
+       0.7649,
+       0.9194
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 68,
+      "n": 80,
+      "share": 0.85,
+      "ci95": [
+       0.7559,
+       0.9121
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 68,
+      "n": 80,
+      "share": 0.85,
+      "ci95": [
+       0.7559,
+       0.9121
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 65,
+      "n": 80,
+      "share": 0.8125,
+      "ci95": [
+       0.7134,
+       0.8829
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 65,
+      "n": 80,
+      "share": 0.8125,
+      "ci95": [
+       0.7134,
+       0.8829
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 39,
+      "n": 80,
+      "share": 0.4875,
+      "ci95": [
+       0.3811,
+       0.5951
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 37,
+      "n": 45,
+      "share": 0.8222222222222222,
+      "ci95": [
+       0.6867,
+       0.9071
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 4,
+      "n": 80,
+      "share": 0.05,
+      "ci95": [
+       0.0196,
+       0.1216
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 66,
+      "n": 80,
+      "share": 0.825,
+      "ci95": [
+       0.7274,
+       0.8928
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 64,
+      "n": 75,
+      "share": 0.8533333333333334,
+      "ci95": [
+       0.7562,
+       0.9161
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 69,
+      "n": 79,
+      "share": 0.8734177215189873,
+      "ci95": [
+       0.7824,
+       0.9298
+      ]
+     }
+    },
+    "mutual_information_bits": 0.692
+   },
+   "packaging": {
+    "conditional": false,
+    "unknown_liquid/d1.1": {
+     "k": 802,
+     "n": 5732,
+     "share": 0.13991625959525472,
+     "ci95": [
+      0.1312,
+      0.1491
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 21,
+     "n": 1000,
+     "share": 0.021,
+     "ci95": [
+      0.0138,
+      0.0319
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 823,
+     "n": 1000,
+     "share": 0.823,
+     "ci95": [
+      0.7981,
+      0.8454
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 64,
+      "n": 80,
+      "share": 0.8,
+      "ci95": [
+       0.6995,
+       0.873
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 60,
+      "n": 68,
+      "share": 0.8823529411764706,
+      "ci95": [
+       0.7847,
+       0.9392
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 67,
+      "n": 80,
+      "share": 0.8375,
+      "ci95": [
+       0.7416,
+       0.9025
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 66,
+      "n": 79,
+      "share": 0.8354430379746836,
+      "ci95": [
+       0.7385,
+       0.9012
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 62,
+      "n": 80,
+      "share": 0.775,
+      "ci95": [
+       0.6721,
+       0.8527
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 58,
+      "n": 68,
+      "share": 0.8529411764705882,
+      "ci95": [
+       0.75,
+       0.9181
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 42,
+      "n": 80,
+      "share": 0.525,
+      "ci95": [
+       0.417,
+       0.6308
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 36,
+      "n": 42,
+      "share": 0.8571428571428571,
+      "ci95": [
+       0.7216,
+       0.9328
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 12,
+      "n": 80,
+      "share": 0.15,
+      "ci95": [
+       0.0879,
+       0.2441
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 64,
+      "n": 72,
+      "share": 0.8888888888888888,
+      "ci95": [
+       0.7958,
+       0.9426
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 66,
+      "n": 80,
+      "share": 0.825,
+      "ci95": [
+       0.7274,
+       0.8928
+      ]
+     },
+     "applicable_accuracy": null,
+     "precision": {
+      "k": 62,
+      "n": 74,
+      "share": 0.8378378378378378,
+      "ci95": [
+       0.7376,
+       0.9047
+      ]
+     }
+    },
+    "mutual_information_bits": 0.669
+   },
+   "food_base": {
+    "conditional": true,
+    "unknown_liquid/d1.1": {
+     "k": 65,
+     "n": 5732,
+     "share": 0.011339846475924634,
+     "ci95": [
+      0.0089,
+      0.0144
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 1,
+     "n": 1000,
+     "share": 0.001,
+     "ci95": [
+      0.0002,
+      0.0056
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 958,
+     "n": 1000,
+     "share": 0.958,
+     "ci95": [
+      0.9437,
+      0.9688
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 75,
+      "n": 80,
+      "share": 0.9375,
+      "ci95": [
+       0.8619,
+       0.973
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 6,
+      "n": 8,
+      "share": 0.75,
+      "ci95": [
+       0.4093,
+       0.9285
+      ]
+     },
+     "precision": {
+      "k": 75,
+      "n": 79,
+      "share": 0.9493670886075949,
+      "ci95": [
+       0.8769,
+       0.9801
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 6,
+      "n": 8,
+      "share": 0.75,
+      "ci95": [
+       0.4093,
+       0.9285
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 6,
+      "n": 8,
+      "share": 0.75,
+      "ci95": [
+       0.4093,
+       0.9285
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 43,
+      "n": 80,
+      "share": 0.5375,
+      "ci95": [
+       0.429,
+       0.6425
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 3,
+      "n": 8,
+      "share": 0.375,
+      "ci95": [
+       0.1368,
+       0.6943
+      ]
+     },
+     "precision": {
+      "k": 43,
+      "n": 45,
+      "share": 0.9555555555555556,
+      "ci95": [
+       0.8517,
+       0.9877
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 0,
+      "n": 8,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.3244
+      ]
+     },
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 76,
+      "n": 80,
+      "share": 0.95,
+      "ci95": [
+       0.8784,
+       0.9804
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 5,
+      "n": 8,
+      "share": 0.625,
+      "ci95": [
+       0.3057,
+       0.8632
+      ]
+     },
+     "precision": {
+      "k": 76,
+      "n": 78,
+      "share": 0.9743589743589743,
+      "ci95": [
+       0.9112,
+       0.9929
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 76,
+      "n": 80,
+      "share": 0.95,
+      "ci95": [
+       0.8784,
+       0.9804
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 6,
+      "n": 8,
+      "share": 0.75,
+      "ci95": [
+       0.4093,
+       0.9285
+      ]
+     },
+     "precision": {
+      "k": 76,
+      "n": 80,
+      "share": 0.95,
+      "ci95": [
+       0.8784,
+       0.9804
+      ]
+     }
+    },
+    "mutual_information_bits": 0.495
+   },
+   "food_preparation": {
+    "conditional": true,
+    "unknown_liquid/d1.1": {
+     "k": 92,
+     "n": 5732,
+     "share": 0.016050244242847175,
+     "ci95": [
+      0.0131,
+      0.0196
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 971,
+     "n": 1000,
+     "share": 0.971,
+     "ci95": [
+      0.9587,
+      0.9797
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 79,
+      "n": 80,
+      "share": 0.9875,
+      "ci95": [
+       0.9325,
+       0.9978
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 7,
+      "n": 8,
+      "share": 0.875,
+      "ci95": [
+       0.5291,
+       0.9776
+      ]
+     },
+     "precision": {
+      "k": 79,
+      "n": 79,
+      "share": 1.0,
+      "ci95": [
+       0.9536,
+       1.0
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 6,
+      "n": 8,
+      "share": 0.75,
+      "ci95": [
+       0.4093,
+       0.9285
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 80,
+      "n": 80,
+      "share": 1.0,
+      "ci95": [
+       0.9542,
+       1.0
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 8,
+      "n": 8,
+      "share": 1.0,
+      "ci95": [
+       0.6756,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 80,
+      "n": 80,
+      "share": 1.0,
+      "ci95": [
+       0.9542,
+       1.0
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 44,
+      "n": 80,
+      "share": 0.55,
+      "ci95": [
+       0.4412,
+       0.6542
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 4,
+      "n": 8,
+      "share": 0.5,
+      "ci95": [
+       0.2152,
+       0.7848
+      ]
+     },
+     "precision": {
+      "k": 44,
+      "n": 45,
+      "share": 0.9777777777777777,
+      "ci95": [
+       0.8843,
+       0.9961
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 0,
+      "n": 8,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.3244
+      ]
+     },
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 77,
+      "n": 80,
+      "share": 0.9625,
+      "ci95": [
+       0.8955,
+       0.9872
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 5,
+      "n": 8,
+      "share": 0.625,
+      "ci95": [
+       0.3057,
+       0.8632
+      ]
+     },
+     "precision": {
+      "k": 77,
+      "n": 80,
+      "share": 0.9625,
+      "ci95": [
+       0.8955,
+       0.9872
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 6,
+      "n": 8,
+      "share": 0.75,
+      "ci95": [
+       0.4093,
+       0.9285
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "mutual_information_bits": 0.386
+   },
+   "chemical_form": {
+    "conditional": true,
+    "unknown_liquid/d1.1": {
+     "k": 7,
+     "n": 5732,
+     "share": 0.0012212142358688067,
+     "ci95": [
+      0.0006,
+      0.0025
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 967,
+     "n": 1000,
+     "share": 0.967,
+     "ci95": [
+      0.954,
+      0.9764
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 8,
+      "n": 11,
+      "share": 0.7272727272727273,
+      "ci95": [
+       0.4344,
+       0.9025
+      ]
+     },
+     "precision": {
+      "k": 70,
+      "n": 79,
+      "share": 0.8860759493670886,
+      "ci95": [
+       0.7975,
+       0.9389
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 8,
+      "n": 11,
+      "share": 0.7272727272727273,
+      "ci95": [
+       0.4344,
+       0.9025
+      ]
+     },
+     "precision": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 9,
+      "n": 11,
+      "share": 0.8181818181818182,
+      "ci95": [
+       0.523,
+       0.9486
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 44,
+      "n": 80,
+      "share": 0.55,
+      "ci95": [
+       0.4412,
+       0.6542
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 3,
+      "n": 11,
+      "share": 0.2727272727272727,
+      "ci95": [
+       0.0975,
+       0.5656
+      ]
+     },
+     "precision": {
+      "k": 44,
+      "n": 45,
+      "share": 0.9777777777777777,
+      "ci95": [
+       0.8843,
+       0.9961
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 0,
+      "n": 11,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.2588
+      ]
+     },
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 9,
+      "n": 11,
+      "share": 0.8181818181818182,
+      "ci95": [
+       0.523,
+       0.9486
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 7,
+      "n": 11,
+      "share": 0.6363636363636364,
+      "ci95": [
+       0.3538,
+       0.8483
+      ]
+     },
+     "precision": {
+      "k": 70,
+      "n": 80,
+      "share": 0.875,
+      "ci95": [
+       0.785,
+       0.9307
+      ]
+     }
+    },
+    "mutual_information_bits": 0.646
+   },
+   "textile_form": {
+    "conditional": true,
+    "unknown_liquid/d1.1": {
+     "k": 57,
+     "n": 5732,
+     "share": 0.00994417306350314,
+     "ci95": [
+      0.0077,
+      0.0129
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 974,
+     "n": 1000,
+     "share": 0.974,
+     "ci95": [
+      0.9622,
+      0.9822
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 2,
+      "n": 2,
+      "share": 1.0,
+      "ci95": [
+       0.3424,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 1,
+      "n": 2,
+      "share": 0.5,
+      "ci95": [
+       0.0945,
+       0.9055
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 1,
+      "n": 2,
+      "share": 0.5,
+      "ci95": [
+       0.0945,
+       0.9055
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 45,
+      "n": 80,
+      "share": 0.5625,
+      "ci95": [
+       0.4534,
+       0.6659
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 0,
+      "n": 2,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.6576
+      ]
+     },
+     "precision": {
+      "k": 45,
+      "n": 45,
+      "share": 1.0,
+      "ci95": [
+       0.9213,
+       1.0
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 0,
+      "n": 2,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.6576
+      ]
+     },
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 79,
+      "n": 80,
+      "share": 0.9875,
+      "ci95": [
+       0.9325,
+       0.9978
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 2,
+      "n": 2,
+      "share": 1.0,
+      "ci95": [
+       0.3424,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 79,
+      "n": 80,
+      "share": 0.9875,
+      "ci95": [
+       0.9325,
+       0.9978
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 2,
+      "n": 2,
+      "share": 1.0,
+      "ci95": [
+       0.3424,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "mutual_information_bits": 0.168
+   },
+   "metal_form": {
+    "conditional": true,
+    "unknown_liquid/d1.1": {
+     "k": 822,
+     "n": 5732,
+     "share": 0.14340544312630846,
+     "ci95": [
+      0.1346,
+      0.1527
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 806,
+     "n": 1000,
+     "share": 0.806,
+     "ci95": [
+      0.7803,
+      0.8293
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 59,
+      "n": 80,
+      "share": 0.7375,
+      "ci95": [
+       0.6318,
+       0.8214
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 50,
+      "n": 57,
+      "share": 0.8771929824561403,
+      "ci95": [
+       0.7675,
+       0.9392
+      ]
+     },
+     "precision": {
+      "k": 59,
+      "n": 66,
+      "share": 0.8939393939393939,
+      "ci95": [
+       0.7969,
+       0.9477
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 50,
+      "n": 57,
+      "share": 0.8771929824561403,
+      "ci95": [
+       0.7675,
+       0.9392
+      ]
+     },
+     "precision": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 46,
+      "n": 57,
+      "share": 0.8070175438596491,
+      "ci95": [
+       0.6866,
+       0.8887
+      ]
+     },
+     "precision": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 31,
+      "n": 80,
+      "share": 0.3875,
+      "ci95": [
+       0.2882,
+       0.4971
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 21,
+      "n": 57,
+      "share": 0.3684210526315789,
+      "ci95": [
+       0.2552,
+       0.4982
+      ]
+     },
+     "precision": {
+      "k": 29,
+      "n": 45,
+      "share": 0.6444444444444445,
+      "ci95": [
+       0.4984,
+       0.7678
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 3,
+      "n": 80,
+      "share": 0.0375,
+      "ci95": [
+       0.0128,
+       0.1045
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 3,
+      "n": 57,
+      "share": 0.05263157894736842,
+      "ci95": [
+       0.0181,
+       0.1437
+      ]
+     },
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 50,
+      "n": 57,
+      "share": 0.8771929824561403,
+      "ci95": [
+       0.7675,
+       0.9392
+      ]
+     },
+     "precision": {
+      "k": 72,
+      "n": 80,
+      "share": 0.9,
+      "ci95": [
+       0.8149,
+       0.9485
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 69,
+      "n": 80,
+      "share": 0.8625,
+      "ci95": [
+       0.7703,
+       0.9215
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 47,
+      "n": 57,
+      "share": 0.8245614035087719,
+      "ci95": [
+       0.7063,
+       0.9018
+      ]
+     },
+     "precision": {
+      "k": 69,
+      "n": 79,
+      "share": 0.8734177215189873,
+      "ci95": [
+       0.7824,
+       0.9298
+      ]
+     }
+    },
+    "mutual_information_bits": 0.887
+   },
+   "vehicle_kind": {
+    "conditional": true,
+    "unknown_liquid/d1.1": {
+     "k": 160,
+     "n": 5732,
+     "share": 0.027913468248429867,
+     "ci95": [
+      0.024,
+      0.0325
+     ]
+    },
+    "failed_liquid/d1.1": {
+     "k": 0,
+     "n": 5732,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0007
+     ]
+    },
+    "unknown_typesafe/jev-1.14": {
+     "k": 6,
+     "n": 1000,
+     "share": 0.006,
+     "ci95": [
+      0.0028,
+      0.013
+     ]
+    },
+    "failed_typesafe/jev-1.14": {
+     "k": 0,
+     "n": 1000,
+     "share": 0.0,
+     "ci95": [
+      0.0,
+      0.0038
+     ]
+    },
+    "agreement": {
+     "k": 954,
+     "n": 1000,
+     "share": 0.954,
+     "ci95": [
+      0.9392,
+      0.9653
+     ]
+    },
+    "silver_liquid/d1.1": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 1,
+      "n": 1,
+      "share": 1.0,
+      "ci95": [
+       0.2065,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 74,
+      "n": 77,
+      "share": 0.961038961038961,
+      "ci95": [
+       0.8916,
+       0.9867
+      ]
+     }
+    },
+    "silver_typesafe/jev-1.14": {
+     "accuracy": {
+      "k": 77,
+      "n": 80,
+      "share": 0.9625,
+      "ci95": [
+       0.8955,
+       0.9872
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 1,
+      "n": 1,
+      "share": 1.0,
+      "ci95": [
+       0.2065,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 77,
+      "n": 80,
+      "share": 0.9625,
+      "ci95": [
+       0.8955,
+       0.9872
+      ]
+     }
+    },
+    "silver_microsoft/microsoft-decision-1": {
+     "accuracy": {
+      "k": 75,
+      "n": 80,
+      "share": 0.9375,
+      "ci95": [
+       0.8619,
+       0.973
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 1,
+      "n": 1,
+      "share": 1.0,
+      "ci95": [
+       0.2065,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 75,
+      "n": 80,
+      "share": 0.9375,
+      "ci95": [
+       0.8619,
+       0.973
+      ]
+     }
+    },
+    "silver_cloudflare/clef-flash": {
+     "accuracy": {
+      "k": 43,
+      "n": 80,
+      "share": 0.5375,
+      "ci95": [
+       0.429,
+       0.6425
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 0,
+      "n": 1,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.7935
+      ]
+     },
+     "precision": {
+      "k": 43,
+      "n": 45,
+      "share": 0.9555555555555556,
+      "ci95": [
+       0.8517,
+       0.9877
+      ]
+     }
+    },
+    "silver_upstage/solar-decide": {
+     "accuracy": {
+      "k": 0,
+      "n": 80,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.0458
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 0,
+      "n": 1,
+      "share": 0.0,
+      "ci95": [
+       0.0,
+       0.7935
+      ]
+     },
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "share": null,
+      "ci95": null
+     }
+    },
+    "silver_inception/mercury-decide": {
+     "accuracy": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 1,
+      "n": 1,
+      "share": 1.0,
+      "ci95": [
+       0.2065,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 74,
+      "n": 80,
+      "share": 0.925,
+      "ci95": [
+       0.8459,
+       0.9652
+      ]
+     }
+    },
+    "silver_openai/gpt-6-luna-decisions": {
+     "accuracy": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     },
+     "applicable_accuracy": {
+      "k": 1,
+      "n": 1,
+      "share": 1.0,
+      "ci95": [
+       0.2065,
+       1.0
+      ]
+     },
+     "precision": {
+      "k": 78,
+      "n": 80,
+      "share": 0.975,
+      "ci95": [
+       0.9134,
+       0.9931
+      ]
+     }
+    },
+    "mutual_information_bits": 0.141
+   }
+  },
+  "silver_n": 80,
+  "G3": {
+   "core_questions": 10,
+   "passed": [
+    "kind",
+    "state",
+    "processing",
+    "completeness",
+    "drive",
+    "principle",
+    "user",
+    "packaging"
+   ],
+   "ok": true
+  },
+  "executors_on_silver": {
+   "liquid/d1.1": {
+    "n_cases": 80,
+    "failed_cases": 0,
+    "failure": null,
+    "core_accuracy": {
+     "k": 678,
+     "n": 800,
+     "share": 0.8475,
+     "ci95": [
+      0.8209,
+      0.8707
+     ]
+    },
+    "core_accuracy_answered": {
+     "k": 678,
+     "n": 800,
+     "share": 0.8475,
+     "ci95": [
+      0.8209,
+      0.8707
+     ]
+    },
+    "core_unknown": {
+     "k": 35,
+     "n": 800,
+     "share": 0.04375,
+     "ci95": [
+      0.0316,
+      0.0602
+     ]
+    },
+    "usd_per_case": 0.000138
+   },
+   "typesafe/jev-1.14": {
+    "n_cases": 80,
+    "failed_cases": 0,
+    "failure": null,
+    "core_accuracy": {
+     "k": 702,
+     "n": 800,
+     "share": 0.8775,
+     "ci95": [
+      0.853,
+      0.8984
+     ]
+    },
+    "core_accuracy_answered": {
+     "k": 702,
+     "n": 800,
+     "share": 0.8775,
+     "ci95": [
+      0.853,
+      0.8984
+     ]
+    },
+    "core_unknown": {
+     "k": 1,
+     "n": 800,
+     "share": 0.00125,
+     "ci95": [
+      0.0002,
+      0.007
+     ]
+    },
+    "usd_per_case": 0.000617
+   },
+   "microsoft/microsoft-decision-1": {
+    "n_cases": 80,
+    "failed_cases": 0,
+    "failure": null,
+    "core_accuracy": {
+     "k": 676,
+     "n": 800,
+     "share": 0.845,
+     "ci95": [
+      0.8183,
+      0.8684
+     ]
+    },
+    "core_accuracy_answered": {
+     "k": 676,
+     "n": 800,
+     "share": 0.845,
+     "ci95": [
+      0.8183,
+      0.8684
+     ]
+    },
+    "core_unknown": {
+     "k": 26,
+     "n": 800,
+     "share": 0.0325,
+     "ci95": [
+      0.0223,
+      0.0472
+     ]
+    },
+    "usd_per_case": 0.000251
+   },
+   "cloudflare/clef-flash": {
+    "n_cases": 80,
+    "failed_cases": 35,
+    "failure": "HTTP 400: {\"error\":{\"message\":\"HTTP 400: {\\\"error\\\":{\\\"message\\\":\\\"question 'q6': at most 26 options for this model\\\",\\\"",
+    "core_accuracy": {
+     "k": 400,
+     "n": 800,
+     "share": 0.5,
+     "ci95": [
+      0.4654,
+      0.5346
+     ]
+    },
+    "core_accuracy_answered": {
+     "k": 391,
+     "n": 450,
+     "share": 0.8688888888888889,
+     "ci95": [
+      0.8346,
+      0.897
+     ]
+    },
+    "core_unknown": {
+     "k": 357,
+     "n": 800,
+     "share": 0.44625,
+     "ci95": [
+      0.4121,
+      0.4809
+     ]
+    },
+    "usd_per_case": 0.000119
+   },
+   "upstage/solar-decide": {
+    "n_cases": 80,
+    "failed_cases": 80,
+    "failure": "HTTP 422: {\"error\":{\"message\":\"HTTP 422: {\\\"error\\\":{\\\"type\\\":\\\"validation_failed\\\",\\\"message\\\":\\\"question q6: 27 candid",
+    "core_accuracy": {
+     "k": 21,
+     "n": 800,
+     "share": 0.02625,
+     "ci95": [
+      0.0172,
+      0.0398
+     ]
+    },
+    "core_accuracy_answered": {
+     "k": 0,
+     "n": 0,
+     "share": null,
+     "ci95": null
+    },
+    "core_unknown": {
+     "k": 800,
+     "n": 800,
+     "share": 1.0,
+     "ci95": [
+      0.9952,
+      1.0
+     ]
+    },
+    "usd_per_case": 0.0
+   },
+   "inception/mercury-decide": {
+    "n_cases": 80,
+    "failed_cases": 0,
+    "failure": null,
+    "core_accuracy": {
+     "k": 701,
+     "n": 800,
+     "share": 0.87625,
+     "ci95": [
+      0.8516,
+      0.8973
+     ]
+    },
+    "core_accuracy_answered": {
+     "k": 701,
+     "n": 800,
+     "share": 0.87625,
+     "ci95": [
+      0.8516,
+      0.8973
+     ]
+    },
+    "core_unknown": {
+     "k": 23,
+     "n": 800,
+     "share": 0.02875,
+     "ci95": [
+      0.0192,
+      0.0428
+     ]
+    },
+    "usd_per_case": 0.000161
+   },
+   "openai/gpt-6-luna-decisions": {
+    "n_cases": 80,
+    "failed_cases": 0,
+    "failure": null,
+    "core_accuracy": {
+     "k": 696,
+     "n": 800,
+     "share": 0.87,
+     "ci95": [
+      0.8449,
+      0.8915
+     ]
+    },
+    "core_accuracy_answered": {
+     "k": 696,
+     "n": 800,
+     "share": 0.87,
+     "ci95": [
+      0.8449,
+      0.8915
+     ]
+    },
+    "core_unknown": {
+     "k": 13,
+     "n": 800,
+     "share": 0.01625,
+     "ci95": [
+      0.0095,
+      0.0276
+     ]
+    },
+    "usd_per_case": 0.000758
+   }
+  }
+ },
+ "phase_b": {
+  "routers": {
+   "R3 закон+данные (d1.1, весь пул) — основной": {
+    "n": 293,
+    "top1": {
+     "k": 153,
+     "n": 293,
+     "share": 0.5221843003412969,
+     "ci95": [
+      0.4651,
+      0.5787
+     ]
+    },
+    "top3": {
+     "k": 204,
+     "n": 293,
+     "share": 0.6962457337883959,
+     "ci95": [
+      0.6413,
+      0.7461
+     ]
+    },
+    "top3_ci95": [
+     0.6416,
+     0.7509
+    ],
+    "cascade_errors": 62,
+    "rescue1": {
+     "k": 18,
+     "n": 62,
+     "share": 0.2903225806451613,
+     "ci95": [
+      0.1922,
+      0.4129
+     ]
+    },
+    "rescue3": {
+     "k": 36,
+     "n": 62,
+     "share": 0.5806451612903226,
+     "ci95": [
+      0.4567,
+      0.6952
+     ]
+    },
+    "rescue3_ci95": [
+     0.4516,
+     0.7097
+    ],
+    "gold_above_cascade": {
+     "k": 30,
+     "n": 62,
+     "share": 0.4838709677419355,
+     "ci95": [
+      0.3641,
+      0.6055
+     ]
+    },
+    "damage1": {
+     "k": 96,
+     "n": 231,
+     "share": 0.4155844155844156,
+     "ci95": [
+      0.3539,
+      0.48
+     ]
+    },
+    "disagreements": 140,
+    "router_right_when_disagreeing": {
+     "k": 18,
+     "n": 140,
+     "share": 0.12857142857142856,
+     "ci95": [
+      0.0829,
+      0.1941
+     ]
+    },
+    "net_if_router_followed": -0.2662
+   },
+   "R2 данные (d1.1, весь пул)": {
+    "n": 293,
+    "top1": {
+     "k": 141,
+     "n": 293,
+     "share": 0.4812286689419795,
+     "ci95": [
+      0.4246,
+      0.5383
+     ]
+    },
+    "top3": {
+     "k": 190,
+     "n": 293,
+     "share": 0.6484641638225256,
+     "ci95": [
+      0.5922,
+      0.7009
+     ]
+    },
+    "top3_ci95": [
+     0.5939,
+     0.7031
+    ],
+    "cascade_errors": 62,
+    "rescue1": {
+     "k": 16,
+     "n": 62,
+     "share": 0.25806451612903225,
+     "ci95": [
+      0.1655,
+      0.3788
+     ]
+    },
+    "rescue3": {
+     "k": 32,
+     "n": 62,
+     "share": 0.5161290322580645,
+     "ci95": [
+      0.3945,
+      0.6359
+     ]
+    },
+    "rescue3_ci95": [
+     0.3871,
+     0.6452
+    ],
+    "gold_above_cascade": {
+     "k": 25,
+     "n": 62,
+     "share": 0.4032258064516129,
+     "ci95": [
+      0.2902,
+      0.5275
+     ]
+    },
+    "damage1": {
+     "k": 106,
+     "n": 231,
+     "share": 0.4588744588744589,
+     "ci95": [
+      0.3958,
+      0.5233
+     ]
+    },
+    "disagreements": 149,
+    "router_right_when_disagreeing": {
+     "k": 16,
+     "n": 149,
+     "share": 0.10738255033557047,
+     "ci95": [
+      0.0672,
+      0.1673
+     ]
+    },
+    "net_if_router_followed": -0.3072
+   },
+   "R1 закон: профили (d1.1)": {
+    "n": 293,
+    "top1": {
+     "k": 145,
+     "n": 293,
+     "share": 0.4948805460750853,
+     "ci95": [
+      0.4381,
+      0.5518
+     ]
+    },
+    "top3": {
+     "k": 233,
+     "n": 293,
+     "share": 0.7952218430034129,
+     "ci95": [
+      0.7453,
+      0.8375
+     ]
+    },
+    "top3_ci95": [
+     0.7474,
+     0.8396
+    ],
+    "cascade_errors": 62,
+    "rescue1": {
+     "k": 18,
+     "n": 62,
+     "share": 0.2903225806451613,
+     "ci95": [
+      0.1922,
+      0.4129
+     ]
+    },
+    "rescue3": {
+     "k": 38,
+     "n": 62,
+     "share": 0.6129032258064516,
+     "ci95": [
+      0.4885,
+      0.7242
+     ]
+    },
+    "rescue3_ci95": [
+     0.5,
+     0.7258
+    ],
+    "gold_above_cascade": {
+     "k": 35,
+     "n": 62,
+     "share": 0.5645161290322581,
+     "ci95": [
+      0.4409,
+      0.6806
+     ]
+    },
+    "damage1": {
+     "k": 104,
+     "n": 231,
+     "share": 0.45021645021645024,
+     "ci95": [
+      0.3874,
+      0.5147
+     ]
+    },
+    "disagreements": 155,
+    "router_right_when_disagreeing": {
+     "k": 18,
+     "n": 155,
+     "share": 0.11612903225806452,
+     "ci95": [
+      0.0747,
+      0.1761
+     ]
+    },
+    "net_if_router_followed": -0.2935
+   },
+   "R3 (Jev, 1000)": {
+    "n": 293,
+    "top1": {
+     "k": 113,
+     "n": 293,
+     "share": 0.3856655290102389,
+     "ci95": [
+      0.3318,
+      0.4425
+     ]
+    },
+    "top3": {
+     "k": 164,
+     "n": 293,
+     "share": 0.5597269624573379,
+     "ci95": [
+      0.5025,
+      0.6154
+     ]
+    },
+    "top3_ci95": [
+     0.5017,
+     0.6177
+    ],
+    "cascade_errors": 62,
+    "rescue1": {
+     "k": 11,
+     "n": 62,
+     "share": 0.1774193548387097,
+     "ci95": [
+      0.1021,
+      0.2904
+     ]
+    },
+    "rescue3": {
+     "k": 27,
+     "n": 62,
+     "share": 0.43548387096774194,
+     "ci95": [
+      0.3194,
+      0.5591
+     ]
+    },
+    "rescue3_ci95": [
+     0.3065,
+     0.5645
+    ],
+    "gold_above_cascade": {
+     "k": 24,
+     "n": 62,
+     "share": 0.3870967741935484,
+     "ci95": [
+      0.2758,
+      0.5115
+     ]
+    },
+    "damage1": {
+     "k": 129,
+     "n": 231,
+     "share": 0.5584415584415584,
+     "ci95": [
+      0.494,
+      0.621
+     ]
+    },
+    "disagreements": 168,
+    "router_right_when_disagreeing": {
+     "k": 11,
+     "n": 168,
+     "share": 0.06547619047619048,
+     "ci95": [
+      0.037,
+      0.1134
+     ]
+    },
+    "net_if_router_followed": -0.4027
+   },
+   "R3 (d1.1, 1000)": {
+    "n": 293,
+    "top1": {
+     "k": 106,
+     "n": 293,
+     "share": 0.36177474402730375,
+     "ci95": [
+      0.3089,
+      0.4183
+     ]
+    },
+    "top3": {
+     "k": 158,
+     "n": 293,
+     "share": 0.5392491467576792,
+     "ci95": [
+      0.482,
+      0.5954
+     ]
+    },
+    "top3_ci95": [
+     0.4812,
+     0.5973
+    ],
+    "cascade_errors": 62,
+    "rescue1": {
+     "k": 9,
+     "n": 62,
+     "share": 0.14516129032258066,
+     "ci95": [
+      0.0783,
+      0.2534
+     ]
+    },
+    "rescue3": {
+     "k": 29,
+     "n": 62,
+     "share": 0.46774193548387094,
+     "ci95": [
+      0.3491,
+      0.5902
+     ]
+    },
+    "rescue3_ci95": [
+     0.3387,
+     0.5968
+    ],
+    "gold_above_cascade": {
+     "k": 23,
+     "n": 62,
+     "share": 0.3709677419354839,
+     "ci95": [
+      0.2616,
+      0.4954
+     ]
+    },
+    "damage1": {
+     "k": 134,
+     "n": 231,
+     "share": 0.5800865800865801,
+     "ci95": [
+      0.5156,
+      0.6419
+     ]
+    },
+    "disagreements": 173,
+    "router_right_when_disagreeing": {
+     "k": 9,
+     "n": 173,
+     "share": 0.05202312138728324,
+     "ci95": [
+      0.0276,
+      0.0959
+     ]
+    },
+    "net_if_router_followed": -0.4266
+   },
+   "R1 закон: профили (Jev)": {
+    "n": 293,
+    "top1": {
+     "k": 161,
+     "n": 293,
+     "share": 0.5494880546075085,
+     "ci95": [
+      0.4922,
+      0.6055
+     ]
+    },
+    "top3": {
+     "k": 239,
+     "n": 293,
+     "share": 0.8156996587030717,
+     "ci95": [
+      0.7673,
+      0.8559
+     ]
+    },
+    "top3_ci95": [
+     0.7679,
+     0.8601
+    ],
+    "cascade_errors": 62,
+    "rescue1": {
+     "k": 18,
+     "n": 62,
+     "share": 0.2903225806451613,
+     "ci95": [
+      0.1922,
+      0.4129
+     ]
+    },
+    "rescue3": {
+     "k": 36,
+     "n": 62,
+     "share": 0.5806451612903226,
+     "ci95": [
+      0.4567,
+      0.6952
+     ]
+    },
+    "rescue3_ci95": [
+     0.4516,
+     0.7097
+    ],
+    "gold_above_cascade": {
+     "k": 29,
+     "n": 62,
+     "share": 0.46774193548387094,
+     "ci95": [
+      0.3491,
+      0.5902
+     ]
+    },
+    "damage1": {
+     "k": 88,
+     "n": 231,
+     "share": 0.38095238095238093,
+     "ci95": [
+      0.3208,
+      0.445
+     ]
+    },
+    "disagreements": 133,
+    "router_right_when_disagreeing": {
+     "k": 18,
+     "n": 133,
+     "share": 0.13533834586466165,
+     "ci95": [
+      0.0874,
+      0.2038
+     ]
+    },
+    "net_if_router_followed": -0.2389
+   },
+   "BM25 по обучающему пулу": {
+    "n": 293,
+    "top1": {
+     "k": 105,
+     "n": 293,
+     "share": 0.3583617747440273,
+     "ci95": [
+      0.3056,
+      0.4148
+     ]
+    },
+    "top3": {
+     "k": 170,
+     "n": 293,
+     "share": 0.5802047781569966,
+     "ci95": [
+      0.523,
+      0.6353
+     ]
+    },
+    "top3_ci95": [
+     0.5256,
+     0.6382
+    ],
+    "cascade_errors": 62,
+    "rescue1": {
+     "k": 11,
+     "n": 62,
+     "share": 0.1774193548387097,
+     "ci95": [
+      0.1021,
+      0.2904
+     ]
+    },
+    "rescue3": {
+     "k": 27,
+     "n": 62,
+     "share": 0.43548387096774194,
+     "ci95": [
+      0.3194,
+      0.5591
+     ]
+    },
+    "rescue3_ci95": [
+     0.3065,
+     0.5645
+    ],
+    "gold_above_cascade": {
+     "k": 17,
+     "n": 62,
+     "share": 0.27419354838709675,
+     "ci95": [
+      0.1788,
+      0.3959
+     ]
+    },
+    "damage1": {
+     "k": 137,
+     "n": 231,
+     "share": 0.5930735930735931,
+     "ci95": [
+      0.5287,
+      0.6544
+     ]
+    },
+    "disagreements": 179,
+    "router_right_when_disagreeing": {
+     "k": 11,
+     "n": 179,
+     "share": 0.061452513966480445,
+     "ci95": [
+      0.0347,
+      0.1067
+     ]
+    },
+    "net_if_router_followed": -0.43
+   },
+   "R3 + BM25 (исследовательский)": {
+    "n": 293,
+    "top1": {
+     "k": 156,
+     "n": 293,
+     "share": 0.5324232081911263,
+     "ci95": [
+      0.4752,
+      0.5888
+     ]
+    },
+    "top3": {
+     "k": 207,
+     "n": 293,
+     "share": 0.7064846416382252,
+     "ci95": [
+      0.6519,
+      0.7557
+     ]
+    },
+    "top3_ci95": [
+     0.6553,
+     0.7577
+    ],
+    "cascade_errors": 62,
+    "rescue1": {
+     "k": 15,
+     "n": 62,
+     "share": 0.24193548387096775,
+     "ci95": [
+      0.1525,
+      0.3615
+     ]
+    },
+    "rescue3": {
+     "k": 35,
+     "n": 62,
+     "share": 0.5645161290322581,
+     "ci95": [
+      0.4409,
+      0.6806
+     ]
+    },
+    "rescue3_ci95": [
+     0.4355,
+     0.6935
+    ],
+    "gold_above_cascade": {
+     "k": 27,
+     "n": 62,
+     "share": 0.43548387096774194,
+     "ci95": [
+      0.3194,
+      0.5591
+     ]
+    },
+    "damage1": {
+     "k": 90,
+     "n": 231,
+     "share": 0.38961038961038963,
+     "ci95": [
+      0.329,
+      0.4538
+     ]
+    },
+    "disagreements": 131,
+    "router_right_when_disagreeing": {
+     "k": 15,
+     "n": 131,
+     "share": 0.11450381679389313,
+     "ci95": [
+      0.0706,
+      0.1803
+     ]
+    },
+    "net_if_router_followed": -0.256
+   }
+  },
+  "cascade": {
+   "top1": {
+    "k": 231,
+    "n": 293,
+    "share": 0.78839590443686,
+    "ci95": [
+     0.738,
+     0.8313
+    ]
+   }
+  },
+  "cascade_c1_fresh": {
+   "top1": {
+    "k": 124,
+    "n": 145,
+    "share": 0.8551724137931035,
+    "ci95": [
+     0.7887,
+     0.9033
+    ]
+   }
+  },
+  "primary_on_c1_fresh": {
+   "n": 145,
+   "top1": {
+    "k": 79,
+    "n": 145,
+    "share": 0.5448275862068965,
+    "ci95": [
+     0.4637,
+     0.6237
+    ]
+   },
+   "top3": {
+    "k": 112,
+    "n": 145,
+    "share": 0.7724137931034483,
+    "ci95": [
+     0.6977,
+     0.8331
+    ]
+   },
+   "top3_ci95": [
+    0.7034,
+    0.8345
+   ],
+   "cascade_errors": 21,
+   "rescue1": {
+    "k": 2,
+    "n": 21,
+    "share": 0.09523809523809523,
+    "ci95": [
+     0.0265,
+     0.2891
+    ]
+   },
+   "rescue3": {
+    "k": 9,
+    "n": 21,
+    "share": 0.42857142857142855,
+    "ci95": [
+     0.2447,
+     0.6345
+    ]
+   },
+   "rescue3_ci95": [
+    0.2381,
+    0.619
+   ],
+   "gold_above_cascade": {
+    "k": 6,
+    "n": 21,
+    "share": 0.2857142857142857,
+    "ci95": [
+     0.1381,
+     0.4996
+    ]
+   },
+   "damage1": {
+    "k": 47,
+    "n": 124,
+    "share": 0.3790322580645161,
+    "ci95": [
+     0.2985,
+     0.4668
+    ]
+   },
+   "disagreements": 60,
+   "router_right_when_disagreeing": {
+    "k": 2,
+    "n": 60,
+    "share": 0.03333333333333333,
+    "ci95": [
+     0.0092,
+     0.1136
+    ]
+   },
+   "net_if_router_followed": -0.3103
+  },
+  "G1": {
+   "rescue3": 0.5806451612903226,
+   "ok": true
+  },
+  "G2": {
+   "top3": 0.6962457337883959,
+   "ok": false
+  },
+  "eval_coverage": {
+   "d1.1": 293,
+   "jev": 293,
+   "n": 293
+  }
+ }
+}
