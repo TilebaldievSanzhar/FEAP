@@ -33,6 +33,7 @@ import psycopg2
 
 from benchmark.evaluator.fingerprint import database_fingerprint, libpq_dsn
 from benchmark.holdout import Holdout
+from benchmark.scripts.baseline_report import error_level
 from benchmark.metrics.outcome import CaseOutcome, Outcome, case_outcome
 from benchmark.metrics.stats import share
 from benchmark.schema.case_v2 import CaseV2, load_cases
@@ -208,7 +209,8 @@ def wrong_cases(outcomes: list[CaseOutcome], runs: dict[str, dict[str, VerifyTra
     for o in outcomes:
         if not o.wrong_code:
             continue
-        row = {'case_id': o.case_id, 'gold': o.gold_code, 'predicted': o.predicted_code, 'V0': o.flagged}
+        row = {'case_id': o.case_id, 'gold': o.gold_code, 'predicted': o.predicted_code, 'V0': o.flagged,
+               'level': error_level(o.gold_code, o.predicted_code)}
         for arm, traces in runs.items():
             trace = traces.get(o.case_id)
             row[arm] = {'flags': {p: flagged(trace, p) for p in POLICIES},
@@ -216,6 +218,18 @@ def wrong_cases(outcomes: list[CaseOutcome], runs: dict[str, dict[str, VerifyTra
                         'error': trace.error if trace else 'not run'}
         rows.append(row)
     return rows
+
+
+def by_level(rows: list[dict], arm: str) -> dict:
+    """Recall of wrong codes per level where the cascade went wrong (exploratory, not in §8)."""
+    levels = sorted({r['level'] for r in rows}, key=['group', 'heading', 'subheading', 'eight_digit',
+                                                       'national', 'beyond_gold'].index)
+    out = {}
+    for level in levels:
+        group = [r for r in rows if r['level'] == level]
+        out[level] = {'V0': share(sum(r['V0'] for r in group), len(group)),
+                      **{p: share(sum(r[arm]['flags'][p] for r in group), len(group)) for p in POLICIES}}
+    return out
 
 
 def _pct(s: dict | None) -> str:
@@ -247,21 +261,29 @@ def report(summary: dict) -> str:
         for kind, r in data['h2'].items():
             lines.append(f"| {kind} | {r['n']} | {_pct(r['accuracy'])} | {_pct(r['false_F_on_gold_path'])} | "
                          f"{_pct(r['false_T_on_siblings'])} | {_pct(r['U'])} |")
+        levels = data.get('by_level') or {}
+        if levels:
+            lines += ['', '| Где ошибся каскад | n | V0 | ' + ' | '.join(POLICIES) + ' |',
+                      '|---|---|---|' + '---|' * len(POLICIES)]
+            for level, r in levels.items():
+                lines.append(f"| {level} | {r['V0']['n']} | {_pct(r['V0'])} | "
+                             + ' | '.join(_pct(r[p]) for p in POLICIES) + ' |')
         c = data['costs']
         if c:
             lines += ['', f"Стоимость ${c['usd_per_case']:.4f} на кейс (${c['usd_total']:.2f} всего), "
                           f"p50 {c['latency_ms_p50'] / 1000:.1f} с, p95 {c['latency_ms_p95'] / 1000:.1f} с, "
                           f"{c['questions_per_case']} вопросов на кейс, сбоев исполнителя "
                           f"{_pct(c['executor_failures'])}, ошибок верификатора {len(c['errors'])}.", '']
-    lines += ['## Неверные коды', '', '| Кейс | эталон | каскад | V0 | ' + ' | '.join(summary['arms']) + ' |',
-              '|---|---|---|---|' + '---|' * len(summary['arms'])]
+    lines += ['## Неверные коды', '', '| Кейс | эталон | каскад | уровень | V0 | ' + ' | '.join(summary['arms']) + ' |',
+              '|---|---|---|---|---|' + '---|' * len(summary['arms'])]
     for row in summary['wrong_cases']:
         cells = []
         for arm in summary['arms']:
             a = row[arm]
             flags = ''.join(p[-1] if on else '·' for p, on in a['flags'].items())
             cells.append(f"{flags} {' '.join(a['signals'] or [])}".strip() if not a['error'] else a['error'])
-        lines.append(f"| {row['case_id']} | {row['gold']} | {row['predicted']} | {'⚑' if row['V0'] else ''} | "
+        lines.append(f"| {row['case_id']} | {row['gold']} | {row['predicted']} | {row['level']} | "
+                     f"{'⚑' if row['V0'] else ''} | "
                      + ' | '.join(cells) + ' |')
     return '\n'.join(lines) + '\n'
 
@@ -298,6 +320,7 @@ def main() -> None:
         summary['arms'][arm] = {
             'h1': rows, 'decision': h1_decision(rows) if arm == 'V1' else None,
             'h2': h2(traces, by_id, trees), 'costs': costs(traces),
+            'by_level': by_level(summary['wrong_cases'], arm),
             'manifest': {k: (manifests[arm] or {}).get(k) for k in ('git_revision', 'model', 'questions_version')},
         }
     out_dir = args.out_dir or RESULTS_ROOT / args.run_id

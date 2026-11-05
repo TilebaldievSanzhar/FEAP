@@ -1,0 +1,983 @@
+{
+  "run_id": "score_passport100",
+  "pool": "all",
+  "cases": {
+    "scored": 88,
+    "wrong": 9,
+    "correct": 79
+  },
+  "arms": {
+    "V1": {
+      "h1": {
+        "V0": {
+          "recall_wrong": {
+            "k": 1,
+            "n": 9,
+            "share": 0.1111111111111111,
+            "ci95": [
+              0.0199,
+              0.435
+            ]
+          },
+          "flags_correct": {
+            "k": 5,
+            "n": 79,
+            "share": 0.06329113924050633,
+            "ci95": [
+              0.0273,
+              0.1397
+            ]
+          }
+        },
+        "P1": {
+          "recall_wrong": {
+            "k": 7,
+            "n": 9,
+            "share": 0.7777777777777778,
+            "ci95": [
+              0.4526,
+              0.9368
+            ]
+          },
+          "flags_correct": {
+            "k": 24,
+            "n": 79,
+            "share": 0.3037974683544304,
+            "ci95": [
+              0.2134,
+              0.4123
+            ]
+          },
+          "minus_v0": {
+            "diff": 0.6667,
+            "ci95": [
+              0.3333,
+              1.0
+            ]
+          },
+          "with_v0": {
+            "recall_wrong": {
+              "k": 7,
+              "n": 9,
+              "share": 0.7777777777777778,
+              "ci95": [
+                0.4526,
+                0.9368
+              ]
+            },
+            "flags_correct": {
+              "k": 26,
+              "n": 79,
+              "share": 0.3291139240506329,
+              "ci95": [
+                0.2355,
+                0.4385
+              ]
+            },
+            "silent_errors_left": 2
+          }
+        },
+        "P2": {
+          "recall_wrong": {
+            "k": 8,
+            "n": 9,
+            "share": 0.8888888888888888,
+            "ci95": [
+              0.565,
+              0.9801
+            ]
+          },
+          "flags_correct": {
+            "k": 39,
+            "n": 79,
+            "share": 0.4936708860759494,
+            "ci95": [
+              0.3863,
+              0.6016
+            ]
+          },
+          "minus_v0": {
+            "diff": 0.7778,
+            "ci95": [
+              0.4444,
+              1.0
+            ]
+          },
+          "with_v0": {
+            "recall_wrong": {
+              "k": 8,
+              "n": 9,
+              "share": 0.8888888888888888,
+              "ci95": [
+                0.565,
+                0.9801
+              ]
+            },
+            "flags_correct": {
+              "k": 41,
+              "n": 79,
+              "share": 0.5189873417721519,
+              "ci95": [
+                0.4105,
+                0.6257
+              ]
+            },
+            "silent_errors_left": 1
+          }
+        },
+        "P3": {
+          "recall_wrong": {
+            "k": 9,
+            "n": 9,
+            "share": 1.0,
+            "ci95": [
+              0.7009,
+              1.0
+            ]
+          },
+          "flags_correct": {
+            "k": 47,
+            "n": 79,
+            "share": 0.5949367088607594,
+            "ci95": [
+              0.4847,
+              0.6963
+            ]
+          },
+          "minus_v0": {
+            "diff": 0.8889,
+            "ci95": [
+              0.6667,
+              1.0
+            ]
+          },
+          "with_v0": {
+            "recall_wrong": {
+              "k": 9,
+              "n": 9,
+              "share": 1.0,
+              "ci95": [
+                0.7009,
+                1.0
+              ]
+            },
+            "flags_correct": {
+              "k": 47,
+              "n": 79,
+              "share": 0.5949367088607594,
+              "ci95": [
+                0.4847,
+                0.6963
+              ]
+            },
+            "silent_errors_left": 0
+          }
+        }
+      },
+      "decision": "H1 не подтверждена",
+      "h2": {
+        "semantic": {
+          "n": 599,
+          "accuracy": {
+            "k": 534,
+            "n": 599,
+            "share": 0.8914858096828047,
+            "ci95": [
+              0.864,
+              0.9139
+            ]
+          },
+          "false_F_on_gold_path": {
+            "k": 4,
+            "n": 252,
+            "share": 0.015873015873015872,
+            "ci95": [
+              0.0062,
+              0.0401
+            ]
+          },
+          "false_T_on_siblings": {
+            "k": 23,
+            "n": 347,
+            "share": 0.06628242074927954,
+            "ci95": [
+              0.0446,
+              0.0975
+            ]
+          },
+          "U": {
+            "k": 38,
+            "n": 599,
+            "share": 0.06343906510851419,
+            "ci95": [
+              0.0466,
+              0.0859
+            ]
+          }
+        },
+        "residual": {
+          "n": 178,
+          "accuracy": {
+            "k": 141,
+            "n": 178,
+            "share": 0.7921348314606742,
+            "ci95": [
+              0.7267,
+              0.8453
+            ]
+          },
+          "false_F_on_gold_path": {
+            "k": 8,
+            "n": 103,
+            "share": 0.07766990291262135,
+            "ci95": [
+              0.0399,
+              0.1458
+            ]
+          },
+          "false_T_on_siblings": {
+            "k": 0,
+            "n": 75,
+            "share": 0.0,
+            "ci95": [
+              0.0,
+              0.0487
+            ]
+          },
+          "U": {
+            "k": 29,
+            "n": 178,
+            "share": 0.16292134831460675,
+            "ci95": [
+              0.1159,
+              0.2242
+            ]
+          }
+        },
+        "numeric": {
+          "n": 47,
+          "accuracy": {
+            "k": 34,
+            "n": 47,
+            "share": 0.723404255319149,
+            "ci95": [
+              0.5824,
+              0.8306
+            ]
+          },
+          "false_F_on_gold_path": {
+            "k": 0,
+            "n": 17,
+            "share": 0.0,
+            "ci95": [
+              0.0,
+              0.1843
+            ]
+          },
+          "false_T_on_siblings": {
+            "k": 0,
+            "n": 30,
+            "share": 0.0,
+            "ci95": [
+              0.0,
+              0.1135
+            ]
+          },
+          "U": {
+            "k": 13,
+            "n": 47,
+            "share": 0.2765957446808511,
+            "ci95": [
+              0.1694,
+              0.4176
+            ]
+          }
+        },
+        "all": {
+          "n": 824,
+          "accuracy": {
+            "k": 709,
+            "n": 824,
+            "share": 0.8604368932038835,
+            "ci95": [
+              0.8351,
+              0.8824
+            ]
+          },
+          "false_F_on_gold_path": {
+            "k": 12,
+            "n": 372,
+            "share": 0.03225806451612903,
+            "ci95": [
+              0.0185,
+              0.0555
+            ]
+          },
+          "false_T_on_siblings": {
+            "k": 23,
+            "n": 452,
+            "share": 0.05088495575221239,
+            "ci95": [
+              0.0341,
+              0.0752
+            ]
+          },
+          "U": {
+            "k": 80,
+            "n": 824,
+            "share": 0.0970873786407767,
+            "ci95": [
+              0.0787,
+              0.1192
+            ]
+          }
+        }
+      },
+      "costs": {
+        "cases": 88,
+        "errors": [],
+        "usd_per_case": 0.002619,
+        "usd_total": 0.2304,
+        "latency_ms_p50": 5115.1,
+        "latency_ms_p95": 11493.4,
+        "questions_per_case": 13.65,
+        "executor_failures": {
+          "k": 0,
+          "n": 1201,
+          "share": 0.0,
+          "ci95": [
+            0.0,
+            0.0032
+          ]
+        }
+      },
+      "manifest": {
+        "git_revision": "70e627ba10609527b36934d9db0daa08cbf6c217",
+        "model": "google/gemini-3.5-flash-lite",
+        "questions_version": "e2lite-1"
+      }
+    },
+    "V2": {
+      "h1": {
+        "V0": {
+          "recall_wrong": {
+            "k": 1,
+            "n": 9,
+            "share": 0.1111111111111111,
+            "ci95": [
+              0.0199,
+              0.435
+            ]
+          },
+          "flags_correct": {
+            "k": 5,
+            "n": 79,
+            "share": 0.06329113924050633,
+            "ci95": [
+              0.0273,
+              0.1397
+            ]
+          }
+        },
+        "P1": {
+          "recall_wrong": {
+            "k": 6,
+            "n": 9,
+            "share": 0.6666666666666666,
+            "ci95": [
+              0.3542,
+              0.8794
+            ]
+          },
+          "flags_correct": {
+            "k": 6,
+            "n": 79,
+            "share": 0.0759493670886076,
+            "ci95": [
+              0.0353,
+              0.156
+            ]
+          },
+          "minus_v0": {
+            "diff": 0.5556,
+            "ci95": [
+              0.2222,
+              0.8889
+            ]
+          },
+          "with_v0": {
+            "recall_wrong": {
+              "k": 6,
+              "n": 9,
+              "share": 0.6666666666666666,
+              "ci95": [
+                0.3542,
+                0.8794
+              ]
+            },
+            "flags_correct": {
+              "k": 11,
+              "n": 79,
+              "share": 0.13924050632911392,
+              "ci95": [
+                0.0796,
+                0.2324
+              ]
+            },
+            "silent_errors_left": 3
+          }
+        },
+        "P2": {
+          "recall_wrong": {
+            "k": 8,
+            "n": 9,
+            "share": 0.8888888888888888,
+            "ci95": [
+              0.565,
+              0.9801
+            ]
+          },
+          "flags_correct": {
+            "k": 18,
+            "n": 79,
+            "share": 0.22784810126582278,
+            "ci95": [
+              0.1493,
+              0.3317
+            ]
+          },
+          "minus_v0": {
+            "diff": 0.7778,
+            "ci95": [
+              0.4444,
+              1.0
+            ]
+          },
+          "with_v0": {
+            "recall_wrong": {
+              "k": 8,
+              "n": 9,
+              "share": 0.8888888888888888,
+              "ci95": [
+                0.565,
+                0.9801
+              ]
+            },
+            "flags_correct": {
+              "k": 21,
+              "n": 79,
+              "share": 0.26582278481012656,
+              "ci95": [
+                0.1809,
+                0.3724
+              ]
+            },
+            "silent_errors_left": 1
+          }
+        },
+        "P3": {
+          "recall_wrong": {
+            "k": 9,
+            "n": 9,
+            "share": 1.0,
+            "ci95": [
+              0.7009,
+              1.0
+            ]
+          },
+          "flags_correct": {
+            "k": 31,
+            "n": 79,
+            "share": 0.3924050632911392,
+            "ci95": [
+              0.2921,
+              0.5027
+            ]
+          },
+          "minus_v0": {
+            "diff": 0.8889,
+            "ci95": [
+              0.6667,
+              1.0
+            ]
+          },
+          "with_v0": {
+            "recall_wrong": {
+              "k": 9,
+              "n": 9,
+              "share": 1.0,
+              "ci95": [
+                0.7009,
+                1.0
+              ]
+            },
+            "flags_correct": {
+              "k": 31,
+              "n": 79,
+              "share": 0.3924050632911392,
+              "ci95": [
+                0.2921,
+                0.5027
+              ]
+            },
+            "silent_errors_left": 0
+          }
+        }
+      },
+      "decision": null,
+      "h2": {
+        "semantic": {
+          "n": 599,
+          "accuracy": {
+            "k": 539,
+            "n": 599,
+            "share": 0.8998330550918197,
+            "ci95": [
+              0.8732,
+              0.9214
+            ]
+          },
+          "false_F_on_gold_path": {
+            "k": 2,
+            "n": 252,
+            "share": 0.007936507936507936,
+            "ci95": [
+              0.0022,
+              0.0285
+            ]
+          },
+          "false_T_on_siblings": {
+            "k": 7,
+            "n": 347,
+            "share": 0.020172910662824207,
+            "ci95": [
+              0.0098,
+              0.041
+            ]
+          },
+          "U": {
+            "k": 51,
+            "n": 599,
+            "share": 0.08514190317195326,
+            "ci95": [
+              0.0654,
+              0.1102
+            ]
+          }
+        },
+        "residual": {
+          "n": 178,
+          "accuracy": {
+            "k": 142,
+            "n": 178,
+            "share": 0.797752808988764,
+            "ci95": [
+              0.7327,
+              0.8502
+            ]
+          },
+          "false_F_on_gold_path": {
+            "k": 2,
+            "n": 103,
+            "share": 0.019417475728155338,
+            "ci95": [
+              0.0053,
+              0.0681
+            ]
+          },
+          "false_T_on_siblings": {
+            "k": 0,
+            "n": 75,
+            "share": 0.0,
+            "ci95": [
+              0.0,
+              0.0487
+            ]
+          },
+          "U": {
+            "k": 34,
+            "n": 178,
+            "share": 0.19101123595505617,
+            "ci95": [
+              0.14,
+              0.255
+            ]
+          }
+        },
+        "numeric": {
+          "n": 47,
+          "accuracy": {
+            "k": 34,
+            "n": 47,
+            "share": 0.723404255319149,
+            "ci95": [
+              0.5824,
+              0.8306
+            ]
+          },
+          "false_F_on_gold_path": {
+            "k": 0,
+            "n": 17,
+            "share": 0.0,
+            "ci95": [
+              0.0,
+              0.1843
+            ]
+          },
+          "false_T_on_siblings": {
+            "k": 0,
+            "n": 30,
+            "share": 0.0,
+            "ci95": [
+              0.0,
+              0.1135
+            ]
+          },
+          "U": {
+            "k": 13,
+            "n": 47,
+            "share": 0.2765957446808511,
+            "ci95": [
+              0.1694,
+              0.4176
+            ]
+          }
+        },
+        "all": {
+          "n": 824,
+          "accuracy": {
+            "k": 715,
+            "n": 824,
+            "share": 0.8677184466019418,
+            "ci95": [
+              0.8429,
+              0.8892
+            ]
+          },
+          "false_F_on_gold_path": {
+            "k": 4,
+            "n": 372,
+            "share": 0.010752688172043012,
+            "ci95": [
+              0.0042,
+              0.0273
+            ]
+          },
+          "false_T_on_siblings": {
+            "k": 7,
+            "n": 452,
+            "share": 0.015486725663716814,
+            "ci95": [
+              0.0075,
+              0.0316
+            ]
+          },
+          "U": {
+            "k": 98,
+            "n": 824,
+            "share": 0.11893203883495146,
+            "ci95": [
+              0.0986,
+              0.1428
+            ]
+          }
+        }
+      },
+      "costs": {
+        "cases": 88,
+        "errors": [],
+        "usd_per_case": 0.001878,
+        "usd_total": 0.1653,
+        "latency_ms_p50": 1789.5,
+        "latency_ms_p95": 3114.9,
+        "questions_per_case": 13.65,
+        "executor_failures": {
+          "k": 0,
+          "n": 1201,
+          "share": 0.0,
+          "ci95": [
+            0.0,
+            0.0032
+          ]
+        }
+      },
+      "manifest": {
+        "git_revision": "70e627ba10609527b36934d9db0daa08cbf6c217",
+        "model": "google/gemini-3.5-flash-lite",
+        "questions_version": "e2lite-1"
+      }
+    }
+  },
+  "wrong_cases": [
+    {
+      "case_id": "BENCH-E22",
+      "gold": "7604210000",
+      "predicted": "7610909000",
+      "V0": false,
+      "V1": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S3:strong"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S3:strong"
+        ],
+        "error": null
+      }
+    },
+    {
+      "case_id": "BENCH-M02",
+      "gold": "0207146009",
+      "predicted": "0207147009",
+      "V0": false,
+      "V1": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S3:strong"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S3:strong"
+        ],
+        "error": null
+      }
+    },
+    {
+      "case_id": "BENCH-M10",
+      "gold": "2204219800",
+      "predicted": "2204219600",
+      "V0": false,
+      "V1": {
+        "flags": {
+          "P1": false,
+          "P2": false,
+          "P3": true
+        },
+        "signals": [
+          "S5:weak"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": false,
+          "P2": false,
+          "P3": true
+        },
+        "signals": [
+          "S5:weak"
+        ],
+        "error": null
+      }
+    },
+    {
+      "case_id": "BENCH-M17",
+      "gold": "3923309090",
+      "predicted": "3923900000",
+      "V0": false,
+      "V1": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong"
+        ],
+        "error": null
+      }
+    },
+    {
+      "case_id": "BENCH-M27",
+      "gold": "7307991000",
+      "predicted": "7307929000",
+      "V0": false,
+      "V1": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S1:strong",
+          "S5:weak",
+          "S6:strong"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S4:medium",
+          "S6:strong"
+        ],
+        "error": null
+      }
+    },
+    {
+      "case_id": "BENCH-H03",
+      "gold": "3305100000",
+      "predicted": "3305900009",
+      "V0": true,
+      "V1": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S3:strong",
+          "S5:weak"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S3:strong",
+          "S5:weak"
+        ],
+        "error": null
+      }
+    },
+    {
+      "case_id": "BENCH-H08",
+      "gold": "8544499108",
+      "predicted": "8544499509",
+      "V0": false,
+      "V1": {
+        "flags": {
+          "P1": false,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S4:medium",
+          "S5:weak"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": false,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S4:medium",
+          "S5:weak"
+        ],
+        "error": null
+      }
+    },
+    {
+      "case_id": "BENCH-H22",
+      "gold": "9401490000",
+      "predicted": "9401710009",
+      "V0": false,
+      "V1": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S3:strong"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S3:strong"
+        ],
+        "error": null
+      }
+    },
+    {
+      "case_id": "BENCH-H27",
+      "gold": "3808918000",
+      "predicted": "3808911000",
+      "V0": false,
+      "V1": {
+        "flags": {
+          "P1": true,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S2:strong",
+          "S4:medium",
+          "S6:strong"
+        ],
+        "error": null
+      },
+      "V2": {
+        "flags": {
+          "P1": false,
+          "P2": true,
+          "P3": true
+        },
+        "signals": [
+          "S4:medium",
+          "S5:weak"
+        ],
+        "error": null
+      }
+    }
+  ]
+}
