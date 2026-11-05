@@ -201,3 +201,10 @@ async def test_result_reports_precedents(monkeypatch, codes, final, match):
     monkeypatch.setattr(validator, 'get_leaf_by_code', leaf)
     result = await validator.validate_and_build_result(state, db=None)
     assert result.precedent_match is match and result.precedent_codes == codes
+
+
+def test_precedent_block_keeps_decisions_apart():
+    from feap.prompts.registry import render
+    text = render('context/precedents.jinja2', precedents=level3.precedent_evidence(
+        [_p('7315119000', description='Цепь'), _p('8431310000', country=None, description='Кронштейн')], 5))
+    assert '**Код:** 7315 11 900 0\n  **Источник:** предварительное решение таможенного органа (KZ)\n\n- **Товар:** Кронштейн' in text
